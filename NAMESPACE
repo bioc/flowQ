@@ -1,4 +1,5 @@
-importClassesFrom("flowCore", "fcsFrame", "fcsSet", "transformation","linearTransformation",
-              "quadraticTransformation", "lnTransformation", "logTransformation","biexponentialTransformation",
-              "filter", "rectangleGate", "polygonGate",
-              "filterResult", "norm2Filter", "filterTree")
+import("flowCore")
+
+exportMethods("outliers")
+
+exportClasses("outlierResult")
