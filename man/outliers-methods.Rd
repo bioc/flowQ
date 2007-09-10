@@ -1,6 +1,7 @@
 \name{outliers-methods}
 \docType{methods}
 \alias{outliers-methods}
+\alias{outliers}
 \alias{outliers,flowSet-method}
 \title{ ~~ Methods for Function outliers in Package `.GlobalEnv' ~~}
 \description{
@@ -12,4 +13,3 @@
 \item{x = "flowSet"}{ ~~describe this method here }
 }}
 \keyword{methods}
-\keyword{ ~~ other possible keyword(s)}

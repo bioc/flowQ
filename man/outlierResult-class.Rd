@@ -2,8 +2,8 @@
 \docType{class}
 \alias{outlierResult-class}
 
-\title{Class "outlierResult" ~~~ }
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\title{Class "outlierResult"}
+\description{A class to hold the results of an outlier test}
 \section{Objects from the Class}{
 Objects can be created by calls of the form \code{new("outlierResult", ...)}.
 	 ~~ describe objects here ~~ 
@@ -26,11 +26,9 @@ No methods defined with class "outlierResult" in the signature.
 \author{ ~~who you are~~ }
 \note{ ~~further notes~~ }
 
- ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-	~~objects to See Also as \code{\link{~~fun~~}}, ~~~
-	or \code{\linkS4class{CLASSNAME}} for links to other classes
+
 }
 \examples{
 showClass("outlierResult")

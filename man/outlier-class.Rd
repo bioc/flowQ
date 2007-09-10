@@ -2,8 +2,8 @@
 \docType{class}
 \alias{outlier-class}
 
-\title{Class "outlier" ~~~ }
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\title{Virtual Class "outlier"}
+\description{A class to represent outlier tests}
 \section{Objects from the Class}{A virtual Class: No objects may be created from it.}
 \section{Slots}{
 	 \describe{
@@ -18,11 +18,8 @@ No methods defined with class "outlier" in the signature.
 \author{ ~~who you are~~ }
 \note{ ~~further notes~~ }
 
- ~Make other sections like Warning with \section{Warning }{....} ~
-
 \seealso{
-	~~objects to See Also as \code{\link{~~fun~~}}, ~~~
-	or \code{\linkS4class{CLASSNAME}} for links to other classes
+
 }
 \examples{
 showClass("outlier")
