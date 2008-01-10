@@ -1,30 +1,146 @@
-qaProcess.timeline <- function(set, channel, outdir)
+## Create quasi-random guids. This is only based on the time stamp,
+## not on MAC address.
+guid <- function()
+    format.hexmode(as.integer(Sys.time())/runif(1))
+
+
+## QA process indicating too many events on the margins
+qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=2)
 {
-    id <- paste("timeLine", channel, sep="_")
-    tmp <- tempdir()
-    sfile <- file.path(tmp, paste(id, "summary.jpg", sep="_"))
-    jpeg(file=sfile)
-    summary <- timeLinePlot(set, channel)
-    dev.off()
-    idir <- file.path(outdir, "images")
-    sgraph <- qaSummaryGraph(sfile, idir)
-    aggr <- list()
-    fileNames <- NULL
-    for(i in 1:length(set)){
-        fid <- sampleNames(set)[i]
-        tfile <- file.path(tmp, paste(id, "_", sprintf("%0.2d", i), ".jpg",
-                                      sep=""))
-        jpeg(file=tfile)
-        timeLinePlot(set[i], channel)
-        dev.off()
-        aggr[[i]] <- new("binaryAgregator", frameID=fid, passed=TRUE)
-        fileNames <- c(fileNames, tfile)
+    ## count events on the margins
+    frameIDs <- sampleNames(set)
+    if(is.null(channels))
+        parms <- setdiff(colnames(set[[1]]), c("time", "Time"))
+    else{
+        if(!all(channels %in% colnames(set[[1]])))
+            stop("Invalid channel(s)")
+        parms <- channels
     }
-    glist <- qaGraphList(fileNames, sampleNames(set), idir)
-    alist <- agregatorList(aggr)
-    return(new("qaProcess", name=paste("timeLine", channel), type="time line",
-               frameGraphs=list(glist), summaryGraphs=list(sgraph),
-               agregators=list(alist), frameIDs=sampleNames(set),
-               path=outdir))
+    ranges <- range(set[[1]], parms)
+    sums <- matrix(ncol=length(set), nrow=length(parms),
+               dimnames=list(parms, frameIDs))
+    cat("computing margin events...")
+    for(p in parms){
+        exp <- parse(text=paste("`", p, "`==", ranges[p,], sep="",
+                     collapse="|"))
+        attributes(exp) <- NULL
+        ef <- expressionFilter(exp, filterId=p)
+        sums[p,] <- sapply(filter(set, ef), function(x) summary(x)$p)
+        cat(".")
+    }
+    cat("\n")
+
+    ## create summary plot
+    require("lattice")
+    gid <- guid()
+    tmp <- tempdir()
+    sfile <- file.path(tmp, "summary.pdf")
+    pdf(file=sfile)
+    col.regions=colorRampPalette(c("white",  "darkblue"))(256)
+    print(levelplot(sums*100, scales = list(x = list(rot = 90)),
+                    xlab="", ylab="", main="% margin events",
+                    col.regions=col.regions))
+    dev.off()
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=300)
+    
+    ## create graphs and aggregators for each frame (and each channel)
+    cat("creating frame plots...")
+    frameProcesses <- list()
+    for(i in 1:length(set)){
+        fnames <- NULL
+        agTmp <- aggregatorList()
+        for(j in 1:length(parms)){
+            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+                                          parms[j], ".pdf", sep=""))
+            pdf(file=tfile, height=3)
+            plot(density(exprs(set[[i]][,j])), ann=FALSE, axes=FALSE,
+                 col="darkred", lwd=2)
+            axis(1)
+            dev.off()
+            fnames <- c(fnames, tfile)
+            agTmp[[j]] <- new("rangeAggregator",
+                              passed=sums[j,i]<(mean(sums[j,])*cFactor),
+                              x=sums[j,i], min=0, max=1)
+            cat(".")
+        }
+        ba <- new("binaryAggregator",
+                  passed=all(sapply(agTmp, slot, "passed")))
+        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150)
+        fid <- frameIDs[i]
+        frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
+                                                summaryAggregator=ba,
+                                                frameAggregators=agTmp,
+                                                frameGraphs=fGraphs)
+    }
+    
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name="margin events",
+               type="margin events", frameIDs=frameIDs, summaryGraph=sgraph,
+               frameProcesses=frameProcesses))
     
 }    
+
+        
+
+## QA process indicating strange patterns over time
+qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
+{
+    ## create summary plot and its associated qaGraph object
+    cat("creating summary plots...")
+    gid <- guid()
+    tmp <- tempdir()
+    sfile <- file.path(tmp, "summary.pdf")
+    pdf(file=sfile)
+    summary <- timeLinePlot(set, channel)
+    dev.off()
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=300)
+
+    ## create graphs and aggregators for each frame and wrap in object
+    frameIDs <- sampleNames(set)
+    frameProcesses <- list()
+    cat("\ncreating frame plots...")
+    for(i in 1:length(set)){
+        tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
+                                      sep=""))
+        pdf(file=tfile)
+        timeLinePlot(set[i], channel)
+        dev.off()
+        ba <- new("binaryAggregator", passed=summary[i]<cutoff)
+        fg <- qaGraph(fileName=tfile, imageDir=idir, width=150)
+        fid <- frameIDs[i]
+        frameProcesses[[fid]] <- qaProcessFrame(fid, ba, fg)
+        cat(".")
+    }
+
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name=paste("timeLine", channel),
+               type="time line", frameIDs=frameIDs, summaryGraph=sgraph,
+               frameProcesses=frameProcesses))
+    
+}    
+
+
+library(flowViz)
+if(!exists("fs507t"))
+    load("~/projects/flow/ITN/data/rawdata.Rda")
+set <- fs507t[25:26]
+outdir <- "~/tmp/qatesting"
+channel <- "PE-A"
+channels <- colnames(set[[1]])[2:4]
+
+if(!exists("qp1"))
+    qp1 <- qaProcess.timeline(set, channel, outdir)
+if(!exists("qp2"))
+    qp2 <- qaProcess.marginevents(set, channels, outdir)
+processes <- list(qp1, qp2)
+
+#up <- function(){
+#    source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
+#    source("~/Rpacks/flowQ/constructionSite/qaReport.R")
+#    source("~/Rpacks/flowQ/constructionSite/aggregators.R")
+#    writeQAReport(set, processes, outdir)
+#}

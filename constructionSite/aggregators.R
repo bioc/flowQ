@@ -1,292 +1,215 @@
-## Classes and methods to implement agregated values of a quality
+## Classes and methods to implement aggregated values of a quality
 ## assessment process on one individual flowFrame
 
 
 
 
 ## ===========================================================================
-## Virtual agregator
+## Virtual qaAggregator
 ## ---------------------------------------------------------------------------
-## A class describing an agregated QA value for a single flowFrame. Derived
-## subclasses describe the various subtypes of agregators. Slot 'frameID'
-## stores the reference to the flowFrame and slot 'passed' contains a logical
+## A class describing an aggregated QA value for a single flowFrame. Derived
+## subclasses describe the various subtypes of aggregators. Slot 'frameID'
+## stores the reference to the flowFrame (i.e., the sample name in the
+## respective flowSet) and slot 'passed' contains a logical
 ## indicating whether the QA requirements have been met. Dedicated write
 ## methods of these subclasses produce the appropriate HTML output.
 ## ---------------------------------------------------------------------------
-setClass("agregator",
-         representation("VIRTUAL", frameID="character", passed="logical"),
+setClass("qaAggregator",
+         representation("VIRTUAL", passed="logical"),
          prototype=list(passed=TRUE))
 
 
 
 ## ===========================================================================
-## binaryAgregator
+## binaryAggregator
 ## ---------------------------------------------------------------------------
-## A class describing agregated QA value of the most simple binary type,
+## A class describing aggregated QA value of the most simple binary type,
 ## i.e. indicating whether a QA requirement has been passed or not 
 ## ---------------------------------------------------------------------------
-setClass("binaryAgregator",
-         contains="agregator")
+setClass("binaryAggregator",
+         contains="qaAggregator")
 
 
 ## write method to create HTML output
-setMethod("write", signature("binaryAgregator", "file", "missing",
-                             "missing", "missing"),
-          function(x, file){
-              if(x@passed)
-                  writeLines(paste("<img class=\"agregator\"",
-                                   "src=\"images/bulbGreen.png\">"), file)
+setMethod("writeLines", signature("binaryAggregator", "file", "missing"),
+          function(text, con){
+              if(text@passed)
+                  writeLines(paste("<img class=\"QABinAggr\"",
+                                   " src=\"images/bulbGreen.png\">"), con)
               else
-                  writeLines(paste("<img class=\"agregator\"",
-                                   "src=\"images/bulbRed.png\">"), file) 
+                  writeLines(paste("<img class=\"QABinAggr\"",
+                                   " src=\"images/bulbRed.png\">"), con) 
           })
 
-## display details about agregator
-setMethod("show", signature("binaryAgregator"),
+## display details about aggregator
+setMethod("show", signature("binaryAggregator"),
           function(object){
-              cat("Binary quality score ", ifelse(object@passed, "", "not"),
-                  "passing the requirements\n(linked to flowFrame '",
-                  object@frameID, "')\n", sep="") 
+              cat("Binary quality score ", ifelse(object@passed, "", "not "),
+                  "passing the requirements\n", sep="") 
           })
 
 ## ===========================================================================
-## factorAgregator
+## factorAggregator
 ## ---------------------------------------------------------------------------
-## A class describing agregated QA value of the factor type, i.e.
+## A class describing aggregated QA value of the factor type, i.e.
 ## indicating the states of the QA results from a selection of
 ## different outcomes
 ## ---------------------------------------------------------------------------
-setClass("factorAgregator",
+setClass("factorAggregator",
          representation(x="factor"),
-         contains="agregator")
+         contains="qaAggregator")
 
 
 ## write method to create HTML output
-setMethod("write", signature("factorAgregator", "file", "missing",
-                             "missing", "missing"),
-          function(x, file){
-              col <- ifelse(x@passed, "green", "red")
-              lx <- levels(x@x)
+setMethod("writeLines", signature("factorAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
+              lx <- levels(text@x)
               fcol <- rep("lightgray", length(lx))
-              fcol[match(x@x, lx)] <- col
+              fcol[match(text@x, lx)] <- col
               writeLines("<b>", con)
               writeLines(paste("<span style=\"margin:0 3px; ",
                                "color:", fcol, ";\">", lx,
-                               "</span>", sep=""), file)
+                               "</span>", sep=""), con)
               writeLines("</b><br>", con)
           })
 
 
-## display details about agregator
-setMethod("show", signature("factorAgregator"),
+## display details about aggregator
+setMethod("show", signature("factorAggregator"),
           function(object){
-              cat("Factorized quality score ", ifelse(object@passed, "", "not"),
+              cat("Factorized quality score ", ifelse(object@passed, "",
+                                                      "not "),
                   "passing the requirements of value=", object@x,
-                  "\n(linked to flowFrame '",
-                  object@frameID, "')\n", sep="") 
+                  "\n", sep="") 
           })
 
 
 ## ===========================================================================
-## stringAgregator
+## stringAggregator
 ## ---------------------------------------------------------------------------
-## A class describing agregated QA value of the string type, i.e. a
+## A class describing aggregated QA value of the string type, i.e. a
 ## character vector that was created by the QA process with a textual
 ## description of the result
 ## ---------------------------------------------------------------------------
-setClass("stringAgregator",
+setClass("stringAggregator",
          representation(x="character"),
-         contains="agregator")
+         contains="qaAggregator")
 
 ## write method to create HTML output
-setMethod("write", signature("stringAgregator", "file", "missing",
-                             "missing", "missing"),
-          function(x, file){
-              col <- ifelse(x@passed, "green", "red")
+setMethod("writeLines", signature("stringAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
               writeLines(paste("<b><p style=\"margin:0 3px; ",
-                               "color:", col, ";\">", x@x,
-                               "</p></b>", sep=""), file)
+                               "color:", col, ";\">", text@x,
+                               "</p></b>", sep=""), con)
           })
 
-## display details about agregator
-setMethod("show", signature("stringAgregator"),
+## display details about aggregator
+setMethod("show", signature("stringAggregator"),
           function(object){
-              cat("Textual quality score ", ifelse(object@passed, "", "not"),
+              cat("Textual quality score ", ifelse(object@passed, "", "not "),
                   "passing the requirements of value=", object@x,
-                  "\n(linked to flowFrame '",
-                  object@frameID, "')\n", sep="") 
+                  "\n", sep="") 
           })
 
 
 
 
 ## ===========================================================================
-## numericAgregator
+## numericAggregator
 ## ---------------------------------------------------------------------------
-## A class describing agregated QA value of the numeric type, i.e. a
+## A class describing aggregated QA value of the numeric type, i.e. a
 ## numeric skalar that was created by the QA process
 ## ---------------------------------------------------------------------------
-setClass("numericAgregator",
+setClass("numericAggregator",
          representation(x="numeric"),
-         contains="agregator")
+         contains="qaAggregator")
 
 ## write method to create HTML output
-setMethod("write", signature("numericAgregator", "file", "missing",
-                             "missing", "missing"),
-          function(x, file){
-              col <- ifelse(x@passed, "green", "red")
+setMethod("writeLines", signature("numericAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
               writeLines(paste("<b><span style=\"margin:0 3px; ",
-                               "color:", col, ";\">", signif(x@x,2),
-                               "</span></b><br>", sep=""), file)
+                               "color:", col, ";\">", signif(text@x,2),
+                               "</span></b><br>", sep=""), con)
           })
 
-## display details about agregator
-setMethod("show", signature("numericAgregator"),
+## display details about aggregator
+setMethod("show", signature("numericAggregator"),
           function(object){
-              cat("Numeric quality score ", ifelse(object@passed, "", "not"),
+              cat("Numeric quality score ", ifelse(object@passed, "", "not "),
                   "passing the requirements of value=", object@x,
-                  "\n(linked to flowFrame '",
-                  object@frameID, "')\n", sep="") 
+                  "\n", sep="") 
           })
 
 
 ## ===========================================================================
-## rangeAgregator
+## rangeAggregator
 ## ---------------------------------------------------------------------------
-## A class describing agregated QA value of the range type, i.e. a
+## A class describing aggregated QA value of the range type, i.e. a
 ## numeric value within a defined range of values (e.g. a percentage)
 ## ---------------------------------------------------------------------------
-setClass("rangeAgregator",
+setClass("rangeAggregator",
          representation(min="numeric", max="numeric"),
-         contains="numericAgregator")
+         contains="numericAggregator")
          
 ## write method to create HTML output
-setMethod("write", signature("rangeAgregator", "file", "missing",
-                             "missing", "missing"),
-          function(x, file){
+setMethod("writeLines", signature("rangeAggregator", "file", "missing"),
+          function(text, con){
+              x <- text
               perc <- (x@x-x@min)/diff(c(x@min, x@max))*100
-              col <- ifelse(x@passed, "green", "red")
-              writeLines(paste("<table class=\"agregator\" width=\"40px\" ",
-                               "height=\"10px\" style=\"border:1px solid ",
-                               "black; border-spacing:0px; padding:1px; ",
-                               "margin:2px\">",
-                               "<tr><td width=\"", perc, "%\" ",
-                               "height=\"10px\" style=\"background-color:",
-                               col, "; padding:0px; margin:0px;\"></td>",
-                               "<td width=\"", 100-perc, "%\" ",
-                               "style=\"padding:0px; margin:0px;\"></td>",
-                               "</tr></table>", sep=""), file)
+              class <- ifelse(x@passed, "QARangeAggrPass", "QARangeAggrFail")
+              writeLines(paste("<table class=\"QARangeAggr\">\n",
+                               "<tr>\n<td class=\"", class, "\" width=\"",
+                               perc, "%\" >\n</td>\n<td class=\"QARangeAggr",
+                               "\" width=\"", 100-perc, "%\" >\n</td>\n",
+                               "</tr>\n</table>", sep=""), con)
           })
 
-## display details about agregator
-setMethod("show", signature("rangeAgregator"),
+## display details about aggregator
+setMethod("show", signature("rangeAggregator"),
           function(object){
-              cat("Range quality score ", ifelse(object@passed, "", "not"),
+              cat("Range quality score ", ifelse(object@passed, "", "not "),
                   "passing the requirements of value=", object@x,
-                  "\n(linked to flowFrame '",
-                  object@frameID, "')\n", sep="") 
+                  "\n", sep="") 
           })
 
 
 ## ===========================================================================
-## agregatorList
+## aggregatorList
 ## ---------------------------------------------------------------------------
-## A list of agregators for a whole flow set. All elements of the list must
-## be agregators of equal type. The class should be initiated via it's
+## A list of aggregators for a whole flow set. All elements of the list must
+## be aggregators. The class should be initiated via it's
 ## constructor
 ## ---------------------------------------------------------------------------
-setClass("agregatorList",
+setClass("aggregatorList",
          contains="list")
 
-setMethod("initialize", "agregatorList",
+setMethod("initialize", "aggregatorList",
           function(.Object, ...) {
-              if(is.list(..1))
-              input <- ..1
-              else
-                  input <- list(...)
-              if(!all(sapply(input, is, "agregator")))
-                  stop("All items of an agregator list must ",
-                       "inherit from class 'agregator'")
-              if(length(unique(sapply(input, class))) !=1)
-                  stop("All items of an agregator list must be ",
-                       "of the same class")
-              .Object@.Data=input
+              if(length(list(...))>0){
+                  if(is.list(..1))
+                      input <- ..1
+                  else
+                      input <- list(...)
+                  if(!all(sapply(input, is, "qaAggregator")))
+                      stop("All items of an aggregator list must ",
+                           "inherit from class 'qaAggregator'")
+                  .Object@.Data=input
+              }
               return(.Object)
           })
 
-agregatorList <- function(...)
-    new("agregatorList", ...)
+aggregatorList <- function(...)
+    new("aggregatorList", ...)
 
 ## display details about list
-setMethod("show", signature("agregatorList"),
+setMethod("show", signature("aggregatorList"),
           function(object)
-              cat("List of", length(object), "agregators\n")
+              cat("List of", length(object), "aggregators\n")
           )
 
-
-## ===========================================================================
-## qaSummaryGraph
-## ---------------------------------------------------------------------------
-## A class that describes graphical output of a QA operation for a whole.
-## flowSet, which is a summary over the outcome.
-## This contains information about the type, the dimensions
-## and the name of the image file. During initiation of the class we make
-## sure that both bitmap and vector versions of the image are present and
-## that the files are copied to the correct location. Object of the class
-## should be created using the constructor
-## ---------------------------------------------------------------------------
-setClass("qaSummaryGraph",
-         representation(fileName="character",
-                        dimensions="numeric",
-                        types="character"))
-
-## copy and convert images during object instantiation
-initiateGraphs <-  function(.Object, fileName, frameID, imageDir)
-{
-    ## get file information
-    if(!file.exists(fileName))
-        stop("Unable to find file '", fileName, "'")
-    if(!file.exists(imageDir))
-        dir.create(imageDir, recursive=TRUE)
-    imageInfo <- strsplit(system(paste("identify", fileName),
-                                 intern=TRUE), " ")[[1]][1:3]
-    names(imageInfo) <- c("file", "type", "dimensions")
-    bname <- basename(gsub("\\..*$", "", fileName))
-    dims <- strsplit(imageInfo["dimensions"], "x")[[1]]
-    .Object@dimensions <- c(width=as.numeric(dims[1]),
-                            height=as.numeric(dims[2]))
-    ## copy file to image directory
-    cf <- file.path(imageDir, basename(fileName))
-    if(!file.exists(cf))
-        file.copy(fileName, cf)
-    .Object@fileName <- cf
-    ## convert image to pdf or jpg if missing
-    convType <- ifelse(tolower(imageInfo["type"])=="pdf", "jpg", "pdf")
-    newFileName <- file.path(imageDir, paste(bname, convType,
-                                             sep="."))
-    if(!file.exists(newFileName))
-        system(paste("convert", fileName, newFileName))
-    .Object@types <- c(tolower(imageInfo["type"]), convType)
-    if(!missing(frameID))
-        .Object@frameID <- as.character(frameID)
-    return(.Object)
-}
-
-setMethod("initialize", "qaSummaryGraph",
-          initiateGraphs
-         )    
-
-qaSummaryGraph <- function(fileName, imageDir="./images")
-    new("qaSummaryGraph", fileName, imageDir=imageDir)
-
-
-## display details about image files
-setMethod("show", signature("qaSummaryGraph"),
-          function(object)
-              cat(object@types[1], " and ", object@types[2], " images '",
-                 object@fileName, "' (",object@dimensions["width"],
-                  "x", object@dimensions["height"],  ")\n", sep="")
-          )
 
 ## ===========================================================================
 ## qaGraph
@@ -299,58 +222,182 @@ setMethod("show", signature("qaSummaryGraph"),
 ## should be created using the constructor
 ## ---------------------------------------------------------------------------
 setClass("qaGraph",
-         representation(frameID="character"),
-         contains="qaSummaryGraph")
+         representation(fileNames="character",
+                        dimensions="matrix",
+                        types="character",
+                        id="character"))
 
+
+## copy and convert images during object instantiation
+ifun <-  function(.Object, fileName, imageDir, width=NULL, empty=FALSE){
+    
+    if(!empty){
+        ## check arguments
+        if(!is.null(width) && (length(width)!=1 ||
+                                !is.numeric(width)))
+            stop("'width' must be numeric scalar")
+        if(!file.exists(fileName))
+            stop("Unable to find file '", fileName, "'")
+        
+        ## get file information
+        if(!file.exists(imageDir))
+            dir.create(imageDir, recursive=TRUE)
+        imageInfo <- strsplit(system(paste("identify", fileName),
+                                     intern=TRUE), " ")[[1]][1:3]
+        names(imageInfo) <- c("file", "type", "dimensions")
+        bname <- basename(gsub("\\..*$", "", fileName))
+        dims <- as.numeric(strsplit(imageInfo["dimensions"], "x")[[1]])
+        newDims <- dims
+        if(!is.null(width)){
+            scaleFac <- width/dims[1]
+            if(scaleFac!=1)
+                newDims <-  dims*scaleFac
+        }
+        ft <- c("vectorized", "bitmap")
+        cf <- file.path(imageDir, basename(fileName))
+
+        ## convert image to vectorized or bitmap version
+        if(tolower(imageInfo["type"])=="pdf"){## original image is vectorized
+            convType <- "jpg"
+            newFileName <- file.path(imageDir, paste(bname, convType,
+                                                     sep="."))
+            if(!file.exists(newFileName))
+                system(paste("convert -resize", paste(newDims, collapse="x"),
+                             fileName, newFileName))
+            type <- c("pdf", "jpg")
+            files <- c(cf, newFileName)
+            if(!file.exists(cf))
+                file.copy(fileName, cf)
+        }else{## original image is bitmap
+            convType <- "pdf"
+            newFileName <- file.path(imageDir, paste(bname, convType,
+                                                     sep="."))
+            if(!file.exists(newFileName))
+                system(paste("convert", fileName, newFileName))
+            if(!file.exists(cf))
+                system(paste("convert -resize", paste(newDims, collapse="x"),
+                             fileName, cf))
+            type <- c("pdf",tolower(imageInfo["type"]))
+            files <- c(newFileName, cf)
+        }
+        ## fill qaGraph object
+        .Object@dimensions <-  matrix(c(dims, newDims), ncol=2, byrow=TRUE,
+                                      dimnames=list(ft, c("width", "height")))
+        names(type) <- names(files) <- ft
+        .Object@types <- type
+        .Object@fileNames <- files
+        .Object@id=guid()
+    }
+    return(.Object)
+}
+              
 setMethod("initialize", "qaGraph",
-          initiateGraphs
-         )      
+          ifun
+              )
 
-qaGraph <- function(fileName, frameID, imageDir="./images")
-    new("qaGraph", fileName, frameID, imageDir)
+qaGraph <- function(...)
+    new("qaGraph", ...)
+
 
 ## display details about image files
 setMethod("show", signature("qaGraph"),
           function(object)
-              cat(object@types[1], " and ", object@types[2], " images '",
-                 object@fileName, "' (",object@dimensions["width"],
-                  "x", object@dimensions["height"],  ")\n",
-                  "(linked to flowFrame '", object@frameID, "')\n",sep="")
+              cat("QA process image information\n")
           )
+
+## display details about image files
+setMethod("names", signature("qaGraph"),
+          function(x){
+          if(length(x@fileNames)==0)
+              return(NULL)
+          basename(x@fileNames["bitmap"])
+          })
+
 
 ## ===========================================================================
 ## qaGraphList
 ## ---------------------------------------------------------------------------
-## A list of qaGraphs for a whole flow set. Elements of the list are
-## qaGraphs for the individual flowFrames. Objects of the class should
-## be created using the constructor
+## A list of qaGraphs. Elements of the list are individual qaGraphs. This
+## mainly exists for the sake of a constructor to facilitate object creation
 ## ---------------------------------------------------------------------------
 setClass("qaGraphList",
          contains="list")
 
 setMethod("initialize", "qaGraphList",
-          function(.Object, imageFiles, frameIDs, imageDir) {
+          function(.Object, imageFiles, imageDir, width=NULL) {
               if(!all(file.exists(imageFiles)))
                   stop("'imageFiles' must be character vector of ",
                        "paths to image files")
-              if(missing(frameIDs))
-                  frameIDs <- names(imageFiles)
-              if(is.null(frameIDs))
-                  stop("Need frameIDs to match files to frames")
-              input <- mapply(qaGraph, imageFiles, as.character(frameIDs),
-                              MoreArgs=list(imageDir=imageDir))
+              
+              input <- lapply(imageFiles, qaGraph, imageDir=imageDir,
+                              width=width)
               .Object@.Data=input
               return(.Object)
           })
 
-qaGraphList <- function(imageFiles, frameIDs, imageDir="./images")
-    new("qaGraphList", imageFiles, frameIDs, imageDir)
+qaGraphList <- function(...)
+    new("qaGraphList", ...)
 
 
 ## display details about list
 setMethod("show", signature("qaGraphList"),
           function(object)
               cat("List of", length(object), "images\n")
+          )
+
+
+
+
+## ===========================================================================
+## qaProcessFrame
+## ---------------------------------------------------------------------------
+## A class that bundles all information about the QA output for a single
+## flowFrame. Slots of this class are:
+##   id: a unique identifier for the whole block
+##   frameID: the id of the respective flowFrame
+##   summaryAggregator: a binaryAggregator indicating status
+##   summaryGraph: an optional image linked to the summaryAggregator
+##   frameAggregators: a list of aggregators for this frame
+##   frameGraphs: a list of optional images linked to the respective
+##                frameaggregators
+## ---------------------------------------------------------------------------
+setClass("qaProcessFrame",
+         representation(id="character",
+                        frameID="character",
+                        summaryAggregator="binaryAggregator",
+                        summaryGraph="qaGraph",
+                        frameAggregators="aggregatorList",
+                        frameGraphs="qaGraphList"))
+
+
+
+setMethod("initialize", "qaProcessFrame",
+          function(.Object, frameID, summaryAggregator, summaryGraph,
+                   frameAggregators, frameGraphs){
+              .Object@id <- guid()
+              .Object@frameID <- frameID
+              .Object@summaryAggregator <- summaryAggregator
+              if(missing(summaryGraph))
+                  summaryGraph <- new("qaGraph", empty=TRUE)
+              .Object@summaryGraph <- summaryGraph
+              if(xor(missing(frameAggregators), missing(frameGraphs)))
+                 stop("Both 'frameAggregators' and 'frameGraphs' must be ",
+                       "specified")
+              else if(!missing(frameAggregators)){
+                 .Object@frameAggregators <- frameAggregators
+                 .Object@frameGraphs <- frameGraphs
+             }
+              return(.Object)
+          })
+
+qaProcessFrame <- function(...)
+    new("qaProcessFrame", ...)
+
+## display details about process
+setMethod("show", signature("qaProcessFrame"),
+          function(object)
+              cat("Quality process output for frame '", object@frameID, "'\n",
+                  sep="")
           )
 
 
@@ -362,44 +409,40 @@ setMethod("show", signature("qaGraphList"),
 ## that is generated during this process. Objects of this class encapsulate
 ## all the necessary information to generate the HTML output including all
 ## links that is bundled in a QA report as generated by function
-## 'createQAReport'
+## 'qaReport'
 ## ---------------------------------------------------------------------------
 setClass("qaProcess",
-         representation(name="character",
+         representation(id="character",
+                        name="character",
                         type="character",
-                        frameGraphs="list",
-                        summaryGraphs="list",
-                        agregators="list",
                         frameIDs="character",
-                        path="character"))
+                        summaryGraph="qaGraph",
+                        frameProcesses="list"))
+                        
 
 
 setMethod("initialize", "qaProcess",
-          function(.Object, name, type, summaryGraphs,
-                   frameGraphs, agregators, frameIDs, path) {
-              if(!file.exists(path))
-                  stop(path, " is not a valid directory")
-              imageFiles <- c(sapply(frameGraphs, function(x)
-                                     sapply(x, slot, "fileName")),
-                              sapply(summaryGraphs, slot, "fileName"))
-              missing <- !file.exists(imageFiles)
-              if(any(missing))
-                  stop(paste("Unable to find file", imagesFiles[missing])) 
-              fids <- sapply(frameGraphs, function(x)
-                                     sapply(x, slot, "frameID"))
-              if(any(!fids %in% frameIDs))
+          function(.Object, id, name, type, frameIDs, summaryGraph,
+                   frameProcesses) {
+
+              
+              fids <- names(frameProcesses)
+              if(is.null(fids) || (!fids %in% frameIDs))
                   stop("frameIDs don't match")
+              if(missing(name))
+                  name <- "anonymous QA Process"
+              .Object@id <- id
               .Object@name <- name
               .Object@type <- type
-              .Object@summaryGraphs <- summaryGraphs
-              .Object@frameGraphs <- frameGraphs
-              .Object@agregators <- agregators
               .Object@frameIDs <- frameIDs
-              .Object@path <- path
+              .Object@summaryGraph <- summaryGraph
+              .Object@frameProcesses <- frameProcesses
+              validProcess(.Object)
               return(.Object)
           })
 
-
+qaProcess <- function(...)
+    new("qaProcess", ...)
 
 
 ## display details about process
@@ -410,46 +453,42 @@ setMethod("show", signature("qaProcess"),
           )
 
 
+## validity checking of a qaProcess object. Among the object's integrity
+## this checks for the presence of all image files.
+validProcess <- function(object)
+{
+    ## Are all mandatory slots present?
+    if(is.null(object@id) || length(object@id)==0)
+        stop("Slot 'id' can not be empty")
+    if(is.null(object@frameIDs) || length(object@frameIDs)==0)
+        stop("Slot 'frameIDs' can not be empty")
+    if(is.null(object@name) || length(object@name)==0)
+        stop("Slot 'name' can not be empty")
+    if(is.null(object@frameProcesses) || length(object@frameProcesses)==0)
+        stop("Slot 'frameProcesses' can not be empty")
+    
+   
+    ## Are all image files existing?
+    imageFiles <- unlist(c(sapply(object@frameProcesses, function(x)
+                                  c(x@summaryGraph@fileNames["bitmap"],
+                                    sapply(x@frameGraphs, function(y)
+                                           y@fileNames["bitmap"]))),
+                           object@summaryGraph@fileNames["bitmap"]))
+    imageFiles <- imageFiles[!is.na(imageFiles)]
+    missing <- !sapply(imageFiles, file.exists)
+    if(any(missing))
+        stop(paste("Unable to find image file", imageFiles[missing]))
+    ## Do the frameIDs match
+    mismatch <- ! names(object@frameProcesses) %in% object@frameIDs
+    if(any(mismatch))
+       stop(paste("IDs for frame", which(mismatch), "do not match\n"))
+    return(invisible(NULL))
 
+    ## Are frameProcesses valid?
+    if(!all((sapply(object@frameProcesses, function(x)
+                   length(x@frameAggregators))) ==
+            (sapply(object@frameProcesses, function(x)
+                    length(x@frameGraphs)))))
+        stop("Each qaGraph needs an associated aggregator")
+}
 
-
-library(geneplotter)
-
-
-con <- openHtmlPage("test")
-
-y <- new("binaryAgregator")
-write(y, con)
-y@passed <- FALSE
-write(y, con)
-
-
-x <- new("rangeAgregator", x=11, min=3, max=13)
-write(x, con)
-x@passed <- FALSE
-x@x <- 6
-write(x, con)
-
-
-f <- factor("b", levels=c("a", "b", "c"))
-z <- new("factorAgregator", x=f)
-write(z, con)
-z@passed <- FALSE
-write(z, con)
-
-
-n <- new("numericAgregator", x=0.54212123)
-write(n, con)
-n@passed <- FALSE
-write(n, con)
-
-
-s <- new("stringAgregator", x="This is sample output")
-write(s, con)
-s@passed <- FALSE
-write(s, con)
-
-
-
-
-closeHtmlPage(con)
