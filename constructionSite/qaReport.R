@@ -69,10 +69,16 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
     classes <- paste("QAFrameHeader",
                      c("Even", "Odd")[(seq_along(frameIDs)%%2)+1], sep="")
     names(classes) <- frameIDs
+    fpp <- 12
+    lf <- length(frameIDs)
+    nrPages <- (lf %/% fpp) +1
     counter <- 1
+    page <- 1
     for(f in frameIDs){
+        showRow <- ifelse(counter>fpp, "none", "table-row") 
         ## new table row and column header for aggregators
-        writeLines(paste("<tr class=\"", classes[f], "\">\n<th ",
+        writeLines(paste("<tr class=\"", classes[f], "\" id=\"frow1_",
+                         counter, "\" style=\"display:", showRow, ";\">\n<th ",
                          "class=\"QAFrameHeader\" id=\"",
                          f, "_sumHeader\">\n<div class=\"QARowButton\"",
                          " id=\"", f, "_button\">frame ", f,
@@ -88,23 +94,26 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
             nrDetAgr <- length(thisProcess@frameAggregators)
             offset <- ""
             ## add trigger to access details
-            if(counter==1 && nrDetAgr>0){
+            if((counter==1 || (counter-1) %% fpp == 0) && nrDetAgr>0){
                 writeLines(paste("<div class=\"QADetTrigger\" id=\"",
-                                 pid, "_detTriggerIn\" onClick=\"",
+                                 pIDs[p], "_detTriggerIn_", page, "\" ",
+                                 "onClick=\"",
                                  "toggleDetails(", nrDetAgr, ", ",
                                  length(frameIDs), ", ", p, 
-                                 ", this, '", pid, "_detTriggerOut')\">",
+                                 ", '", pIDs[p], "', ", nrPages, ")\">",
                                  "\n+\n</div>", sep=""), con)
                 writeLines(paste("<div class=\"QADetTrigger\" id=\"",
-                                 pid, "_detTriggerOut\" onClick=\"",
+                                 pIDs[p], "_detTriggerOut_", page, "\" ",
+                                 "onClick=\"",
                                  "toggleDetails(", nrDetAgr, ", ",
                                  length(frameIDs), ", ", p, 
-                                 ", this, '", pid, "_detTriggerIn')\"",
+                                 ", '",  pIDs[p], "', ", nrPages, ")\"",
                                  " style=\"display:none;\">\n&#150;\n</div>",
                                  sep=""), con)
                 offset <- paste(" style=\"position:relative; left:-7px;",
                                 "margin-left:15px; margin-right:0px;",
-                                "z-index:0\"")
+                                "z-index:0;\"")
+                page <- page+1
             }
             ## add summary aggregator and link to image if necessary
             if(length(sid)>0)
@@ -119,6 +128,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
             writeLines("</div>\n</td>", con)
             ## add detailed aggregators and links to images if necessary
             for(d in seq_along(thisProcess@frameAggregators)){
+                fname <- names(thisProcess@frameAggregators)[d]
+                fname  <- ifelse(is.null(fname), "", paste(fname, "\n<br>\n"))
                 did <- thisProcess@frameGraphs[[d]]@id
                 id <- paste(p, d, counter, sep="_")
                 writeLines(paste("<td class=\"QADetAggr\" id=\"row_", id,
@@ -127,9 +138,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
                     writeLines(paste("<div class=\"",
                                      "QADetButton\" ", "id=\"button_",id,
                                      "\" onClick=\"toggleImage('", id,
-                                     "')\">", sep=""), con)
+                                     "')\">", fname, sep=""), con)
                 else
-                    writeLines("<span>", con)
+                    writeLines("<div>", con)
                 writeLines(thisProcess@frameAggregators[[d]], con)
                 writeLines("</div>\n</td>", con)
             }## end for d
@@ -137,7 +148,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
         writeLines("</tr>", con)
         
         ## new table row and column header for images
-        writeLines(paste("<tr class=\"", classes[f], "\">\n<th ",
+        writeLines(paste("<tr class=\"", classes[f], "\" id=\"frow2_",
+                         counter, "\" style=\"display:", showRow, ";\">\n<th ",
                          "class=\"QAFrameHeader\">\n</th>", sep=""), con)
         ## now the images, each process is one column
         for(p in seq_along(processes)){
@@ -177,7 +189,22 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
         writeLines("</tr>", con)
     }## end for f
     ## table footer
-    writeLines("</table>", con)
+
+
+    ## the page navigation
+    writeLines("<div class=\"QAPagesTile\">", con)
+    if(lf>fpp){
+        from <- c(seq(1, lf, fpp))
+        nt <- length(from)
+        to <- c(seq(fpp, lf, fpp), lf)[1:nt]
+        writeLines(paste("<span class=\"QAPages\" id=\"pages_", 1:nt,
+                         "\" onClick=\"togglePages(", from, ", ", to, ", ",
+                         nt, ", ", lf, ")\">Page ", from, "-", to, "</span>",
+                         sep=""), con)
+    }
+    writeLines("</div>", con)
+    writeLines("</table>", con)      
+    
     closeHtmlPage(con)
 }
 

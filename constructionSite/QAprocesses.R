@@ -37,12 +37,12 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=2)
     sfile <- file.path(tmp, "summary.pdf")
     pdf(file=sfile)
     col.regions=colorRampPalette(c("white",  "darkblue"))(256)
-    print(levelplot(sums*100, scales = list(x = list(rot = 90)),
+    print(levelplot(t(sums)*100, scales = list(x = list(rot = 90)),
                     xlab="", ylab="", main="% margin events",
                     col.regions=col.regions))
     dev.off()
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=300)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
     
     ## create graphs and aggregators for each frame (and each channel)
     cat("creating frame plots...")
@@ -64,6 +64,7 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=2)
                               x=sums[j,i], min=0, max=1)
             cat(".")
         }
+        names(agTmp) <- parms
         ba <- new("binaryAggregator",
                   passed=all(sapply(agTmp, slot, "passed")))
         fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150)
@@ -96,7 +97,7 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
     summary <- timeLinePlot(set, channel)
     dev.off()
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=300)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
 
     ## create graphs and aggregators for each frame and wrap in object
     frameIDs <- sampleNames(set)
@@ -109,7 +110,7 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
         timeLinePlot(set[i], channel)
         dev.off()
         ba <- new("binaryAggregator", passed=summary[i]<cutoff)
-        fg <- qaGraph(fileName=tfile, imageDir=idir, width=150)
+        fg <- qaGraph(fileName=tfile, imageDir=idir, width=220)
         fid <- frameIDs[i]
         frameProcesses[[fid]] <- qaProcessFrame(fid, ba, fg)
         cat(".")
@@ -127,10 +128,12 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
 library(flowViz)
 if(!exists("fs507t"))
     load("~/projects/flow/ITN/data/rawdata.Rda")
-set <- fs507t[25:26]
+set <- fs507t[20:32]
+#set <- fs507t
 outdir <- "~/tmp/qatesting"
 channel <- "PE-A"
-channels <- colnames(set[[1]])[2:4]
+#channels <- colnames(set[[1]])[2:4]
+channels <- colnames(set[[1]])
 
 if(!exists("qp1"))
     qp1 <- qaProcess.timeline(set, channel, outdir)
@@ -138,9 +141,9 @@ if(!exists("qp2"))
     qp2 <- qaProcess.marginevents(set, channels, outdir)
 processes <- list(qp1, qp2)
 
-#up <- function(){
-#    source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
-#    source("~/Rpacks/flowQ/constructionSite/qaReport.R")
-#    source("~/Rpacks/flowQ/constructionSite/aggregators.R")
-#    writeQAReport(set, processes, outdir)
-#}
+## up <- function(){                       #
+##     source("~/Rpacks/flowQ/constructionSite/aggregators.R")
+##     source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
+##     source("~/Rpacks/flowQ/constructionSite/qaReport.R")
+##     writeQAReport(set, processes, outdir)
+## }
