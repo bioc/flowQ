@@ -128,8 +128,8 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
 library(flowViz)
 if(!exists("fs507t"))
     load("~/projects/flow/ITN/data/rawdata.Rda")
-set <- fs507t[20:32]
-#set <- fs507t
+#set <- fs507t[20:32]
+set <- fs507t
 outdir <- "~/tmp/qatesting"
 channel <- "PE-A"
 #channels <- colnames(set[[1]])[2:4]

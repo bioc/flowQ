@@ -199,7 +199,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport")
         to <- c(seq(fpp, lf, fpp), lf)[1:nt]
         writeLines(paste("<span class=\"QAPages\" id=\"pages_", 1:nt,
                          "\" onClick=\"togglePages(", from, ", ", to, ", ",
-                         nt, ", ", lf, ")\">Page ", from, "-", to, "</span>",
+                         nt, ", ", lf, ")\">Frames ", from, "-", to, "</span>",
                          sep=""), con)
     }
     writeLines("</div>", con)

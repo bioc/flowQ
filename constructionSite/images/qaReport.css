@@ -65,7 +65,8 @@ td.QASummary
 
 div.QASumButton
 {  
-  margin:10px 10px;
+  color:#05006d;
+  margin:10px 20px;
   padding:5px 0px;
 }
 
@@ -76,15 +77,15 @@ div.QASumButton:hover
 
 img.QASummary
 {
+  background-color:transparent;
   margin:20px 0px;
-  padding:0px;
+  padding:3px;
   display:none;
   
 }
 img.QASummary:hover
 {
-  outline:2px solid #76ade0;
-  border:2px solid #76ade0;
+  background-color:#76ade0;
 }
 
 
@@ -137,6 +138,7 @@ td.QADetGraph
 
 div.QAFrameButton
 {  
+  color:#05006d;
   margin:15px 10px;
   padding:0px;
   width:20px;
@@ -164,39 +166,38 @@ div.QADetButton:hover
 
 
 img.QASumGraph
-{
+{ 
   margin:5px;
-  padding:0px;
+  padding:3px;
   display:none;
   
 }
 
 img.QASumGraph:hover
 {
-  outline:2px solid #76ade0;
-  border:2px solid #76ade0;
+  background-color:#76ade0;
 }
 
 img.QADetGraph
 {
   margin:5px;
-  padding:0px;
+  padding:3px;
   display:none;
 }
 
 img.QADetGraph:hover
 {
-  outline:2px solid #76ade0;
-  border:2px solid #76ade0;
+  background-color:#76ade0;
 }
 
 div.QADetTrigger
 {
-  margin-left:1px;
+  color:#05006d;
+  margin-left:3px;
   float:left;
   position:relative;
-  top:-20px;
-  font-size:17px;
+  top:-38px;
+  font-size:20px;
   font-weight:bold;
   z-index:10;
 }
@@ -208,6 +209,7 @@ div.QADetTrigger:hover
 
 span.QAPages
 {
+  color:#05006d;
   padding:5px 8px;
 }
 
