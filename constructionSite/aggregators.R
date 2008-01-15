@@ -48,6 +48,42 @@ setMethod("show", signature("binaryAggregator"),
                   "passing the requirements\n", sep="") 
           })
 
+
+## ===========================================================================
+## discreteAggregator
+## ---------------------------------------------------------------------------
+## A class describing aggregated QA value of the most discrete type,
+## i.e. it can have three states: passed(1), warning(2) and failed(0) 
+## ---------------------------------------------------------------------------
+setClass("discreteAggregator",
+         representation(x="factor"),
+         contains="qaAggregator",
+         prototype=list(x=factor(1)))
+
+
+## write method to create HTML output
+setMethod("writeLines", signature("discreteAggregator", "file", "missing"),
+          function(text, con){
+              switch(as.character(text@x),
+                     "1"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbGreen.png\">"), con),
+                     "0"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbRed.png\">"), con),
+                     "2"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbYellow.png\">"), con),
+                     stop("Unknown state"))
+          })
+
+## display details about aggregator
+setMethod("show", signature("discreteAggregator"),
+          function(object){
+                cat("Discrete quality score ",
+                    ifelse(object@passed, "", "not "), "passing the ",
+                    "requirements with state ", object@x, "\n", sep="") 
+          })
+
+
+
 ## ===========================================================================
 ## factorAggregator
 ## ---------------------------------------------------------------------------
@@ -364,7 +400,7 @@ setMethod("show", signature("qaGraphList"),
 setClass("qaProcessFrame",
          representation(id="character",
                         frameID="character",
-                        summaryAggregator="binaryAggregator",
+                        summaryAggregator="qaAggregator",
                         summaryGraph="qaGraph",
                         frameAggregators="aggregatorList",
                         frameGraphs="qaGraphList"))
@@ -476,8 +512,10 @@ validProcess <- function(object)
                            object@summaryGraph@fileNames["bitmap"]))
     imageFiles <- imageFiles[!is.na(imageFiles)]
     missing <- !sapply(imageFiles, file.exists)
+    if(all(missing))
+        stop("No image files available. Check file paths")
     if(any(missing))
-        stop(paste("Unable to find image file", imageFiles[missing]))
+        stop(paste("Unable to find image file", imageFiles[missing], "\n"))
     ## Do the frameIDs match
     mismatch <- ! names(object@frameProcesses) %in% object@frameIDs
     if(any(mismatch))

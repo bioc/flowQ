@@ -5,7 +5,7 @@ guid <- function()
 
 
 ## QA process indicating too many events on the margins
-qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=2)
+qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=3)
 {
     ## count events on the margins
     frameIDs <- sampleNames(set)
@@ -65,8 +65,11 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=2)
             cat(".")
         }
         names(agTmp) <- parms
-        ba <- new("binaryAggregator",
-                  passed=all(sapply(agTmp, slot, "passed")))
+        nfail <- !sapply(agTmp, slot, "passed")
+        val <- if(sum(nfail)==1) factor(2) else factor(0)
+        if(sum(nfail)==0)
+            val <- factor(1)
+        ba <- new("discreteAggregator", x=val)
         fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150)
         fid <- frameIDs[i]
         frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
@@ -128,22 +131,25 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
 library(flowViz)
 if(!exists("fs507t"))
     load("~/projects/flow/ITN/data/rawdata.Rda")
-set <- fs507t[10:15]
-#set <- fs507t
+#set <- fs507t[1:15]
+set <- fs507t
 outdir <- "~/tmp/qatesting"
 channel <- "PE-A"
 channels <- colnames(set[[1]])[2:4]
 #channels <- colnames(set[[1]])
+grouping <- "Groupid"
+sampleNames(set) <- paste("patient ", sprintf("%0.2d", pData(set)$SiteCode),
+                          sprintf("%0.3d", pData(set)$Participantid), sep="")
 
-if(!exists("qp1"))
+if(!exists("qp1") || is(try(validProcess(qp1), TRUE), "try-error"))
     qp1 <- qaProcess.timeline(set, channel, outdir)
-if(!exists("qp2"))
+if(!exists("qp2") || is(try(validProcess(qp2), TRUE), "try-error"))
     qp2 <- qaProcess.marginevents(set, channels, outdir)
 processes <- list(qp1, qp2)
 
-## up <- function(){                       #
-##     source("~/Rpacks/flowQ/constructionSite/aggregators.R")
-##     source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
-##     source("~/Rpacks/flowQ/constructionSite/qaReport.R")
-##     writeQAReport(set, processes, outdir)
-## }
+up <- function(){                       
+    source("~/Rpacks/flowQ/constructionSite/aggregators.R")
+    source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
+    source("~/Rpacks/flowQ/constructionSite/qaReport.R")
+    writeQAReport(set, processes, outdir)
+}
