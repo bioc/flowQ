@@ -42,9 +42,16 @@ qaReport(set, qaFunctions, outdir = "./qaReport", argLists, grouping = NULL)
 
 \seealso{ \code{\link{qaProcess.marginevents}}, \code{\link{writeQAReport}},
   \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}}}
-% \examples{
-
-% }
+\examples{
+\dontrun{
+data(GvHD)
+dest <- tempdir()
+qaReport(GvHD, c("qaProcess.timeline", "qaProcess.marginevents"), dest,
+ list(list(channel="FL1-H", cutoff=10), list(channels=c("FL1-H",
+  "FL2-H"), cFactor=4)))
+browseURL(file.path(dest, "index.html"))
+}
+}
 
 \keyword{ IO }
 \keyword{ dynamic }
