@@ -30,13 +30,14 @@ writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
              "class 'qaProcess'")
     if(!all(sapply(set, is, "flowSet")))
         stop("'set' must be a flow set")
+
+    ## copy infrastructure
+        sdir <- system.file("htmlTemplates", package = "flowQ")
+        file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"))
     
     ## iterate over panels
     for(s in seq_along(set)){
-        ## copy infrastructure
-        sdir <- system.file("inst/htmlTemplates", package = "flowQ")
-        file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"))
-        
+       
         ## rearange set according to grouping
         grps <- NULL
         if(!is.null(grouping)){

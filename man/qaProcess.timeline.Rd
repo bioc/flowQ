@@ -46,8 +46,8 @@ qaProcess.timeline(set, channel, outdir, cutoff = 0.1)
 \dontrun{
 data(GvHD)
 dest <- tempdir()
-qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest)
-qp1
+qp <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest)
+qp
 }
 
 }

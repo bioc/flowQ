@@ -55,12 +55,12 @@ writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL)
 \dontrun{
 data(GvHD)
 dest <- tempdir()
-qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest)
+qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=10)
 qp2 <- qaProcess.marginevents(GvHD, channels=c("FL1-H", "FL2-H"),
   outdir=dest)
 writeQAReport(GvHD, processes=list(qp1, qp2), outdir=dest,
   grouping="Patient")
-browse(file.path(dest, "index.html"))
+browseURL(file.path(dest, "index.html"))
 }
 }
 

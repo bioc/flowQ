@@ -43,9 +43,16 @@ qaProcess.marginevents(set, channels = NULL, outdir, cFactor = 3)
 \seealso{ \code{\link{writeQAReport}}, \code{\link{qaReport}},
   \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}}}
 
-% \examples{
+ \examples{
+\dontrun{
+data(GvHD)
+dest <- tempdir()
+qp <- qaProcess.marginevents(GvHD, channels=c("FL1-H", "FL2-H"),
+  outdir=dest)
+qp
+}
 
-% }
+ }
 
 \keyword{ dynamic }
 

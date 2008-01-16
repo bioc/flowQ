@@ -1,7 +1,7 @@
 ## Create quasi-random guids. This is only based on the time stamp,
 ## not on MAC address.
 guid <- function()
-    format.hexmode(as.integer(Sys.time())/runif(1))
+    format.hexmode(as.integer(Sys.time())/runif(1)*proc.time()["elapsed"])
 
 
 ## QA process indicating too many events on the margins

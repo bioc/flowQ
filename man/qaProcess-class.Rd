@@ -11,7 +11,7 @@
   needed by \code{\link{writeQAReport}} to produce such HTML reports.}
 \section{Objects from the Class}{ Objects should be created using the
   constructor functions. See \code{\link{qaProcess.timeline}} and
-  \code{\link{qaReport.Process}} for details.
+  \code{\link{qaProcess.marginevents}} for details.
 	
 }
 \section{Slots}{
@@ -39,7 +39,7 @@
 
 \author{ Florian Hahne}
 
-\seealso{ \code{\linkS4class{qaGraphList}}, \code{\link{writeQAReport}}, \code{\linkS4class{qaFrameProcess}}
+\seealso{ \code{\linkS4class{qaGraphList}}, \code{\link{writeQAReport}}, \code{\linkS4class{qaProcessFrame}}
 }
 
 \examples{
