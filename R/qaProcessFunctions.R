@@ -5,6 +5,7 @@ guid <- function()
 
 
 ## QA process indicating too many events on the margins
+## FIXME: include grouping
 qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=3)
 {
     ## count events on the margins
@@ -127,45 +128,3 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
     
 }    
 
-
-library(flowViz)
-if(!exists("fs507t"))
-    load("~/projects/flow/ITN/data/rawdata.Rda")
-#set <- fs507t[1:15]
-set <- fs507t
-outdir <- "~/tmp/qatesting"
-channel <- "PE-A"
-channels <- colnames(set[[1]])[2:4]
-#channels <- colnames(set[[1]])
-grouping <- "Groupid"
-sampleNames(set) <- paste("patient ", sprintf("%0.2d", pData(set)$SiteCode),
-                          sprintf("%0.3d", pData(set)$Participantid), sep="")
-
-if(!exists("qp1") || is(try(validProcess(qp1), TRUE), "try-error"))
-    qp1 <- qaProcess.timeline(set, channel, outdir)
-if(!exists("qp2") || is(try(validProcess(qp2), TRUE), "try-error"))
-    qp2 <- qaProcess.marginevents(set, channels, outdir)
-processes <- list(qp1, qp2)
-
-
-outdir2 <- "~/tmp/qapanels"
-subset1 <- set[1:15]
-if(!exists("s1qp1") || is(try(validProcess(s1qp1), TRUE), "try-error"))
-    s1qp1 <- qaProcess.timeline(subset1, channel, outdir2)
-if(!exists("s1qp2") || is(try(validProcess(s1qp2), TRUE), "try-error"))
-    s1qp2 <- qaProcess.marginevents(subset1, channels, outdir2)
-subset2 <- set[16:42]
-if(!exists("s2qp1") || is(try(validProcess(s2qp1), TRUE), "try-error"))
-    s2qp1 <- qaProcess.timeline(subset2, channel, outdir2)
-if(!exists("s2qp2") || is(try(validProcess(s2qp2), TRUE), "try-error"))
-    s2qp2 <- qaProcess.marginevents(subset2, channels, outdir2)
-processes2 <- list(list(s1qp1, s1qp2), list(s2qp1, s2qp2))
-
-
-up <- function(){                       
-    source("~/Rpacks/flowQ/constructionSite/aggregators.R")
-    source("~/Rpacks/flowQ/constructionSite/QAprocesses.R")
-    source("~/Rpacks/flowQ/constructionSite/qaReport.R")
-    writeQAReport(set, processes, outdir, grouping)
-    writeQAReport(list(subset1, subset2), processes2, outdir2, grouping)
-}

@@ -18,10 +18,9 @@ No methods defined with class "outlier" in the signature.
 \author{ ~~who you are~~ }
 \note{ ~~further notes~~ }
 
-\seealso{
 
-}
 \examples{
-showClass("outlier")
+## showClass("outlier")
 }
 \keyword{classes}
+

@@ -1,5 +1,35 @@
 import("flowCore")
+import("flowViz")
+importClassesFrom("geneplotter", "file")
 
-exportMethods("outliers")
+exportMethods("outliers",
+             "initialize",
+              "show",
+              "names",
+              "writeLines")
 
-exportClasses("outlierResult")
+exportClasses("outlierResult",
+              "qaAggregator",
+              "binaryAggregator",
+              "discreteAggregator",
+              "factorAggregator",
+              "stringAggregator",
+              "numericAggregator",
+              "rangeAggregator",
+              "aggregatorList",
+              "qaGraph",
+              "qaGraphList",
+              "qaProcessFrame",
+              "qaProcess")
+
+
+export("validProcess",
+       "qaProcess",
+       "aggregatorList",
+       "qaGraph",
+       "qaGraphList",
+       "qaProcessFrame",
+       "writeQAReport",
+       "qaReport",
+       "qaProcess.marginevents",
+       "qaProcess.timeline")

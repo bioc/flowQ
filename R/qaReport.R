@@ -15,9 +15,7 @@ myOpenHtmlPage <- function(name, title = "", path="../")
 }
 
 
-
-
-
+## create HTML report for (lists of) QA processes 
 writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
 {
     if(!is.list(set))
@@ -33,14 +31,11 @@ writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
     if(!all(sapply(set, is, "flowSet")))
         stop("'set' must be a flow set")
     
+    ## iterate over panels
     for(s in seq_along(set)){
-        ## copy infrastructure (FIXME: generalize)
-        system(paste("cp ~/Rpacks/flowQ/constructionSite/images/*.png",
-                     file.path(outdir, "images")))
-        system(paste("cp ~/Rpacks/flowQ/constructionSite/images/*.css",
-                     file.path(outdir, "images")))
-        system(paste("cp ~/Rpacks/flowQ/constructionSite/images/*.js",
-                     file.path(outdir, "images")))
+        ## copy infrastructure
+        sdir <- system.file("inst/htmlTemplates", package = "flowQ")
+        file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"))
         
         ## rearange set according to grouping
         grps <- NULL
@@ -312,18 +307,23 @@ writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
 
 
 
-## create QA output based on a flowSet and a list of QA functions 
-qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists)
+## Create QA output based on a flowSet and a list of QA functions.
+## This is a very basic convenience function, for more complex experiments
+## including panels use writeQAReport directly
+qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
+                     grouping=NULL)
 {
     processes <- list()
     for(i in seq_along(qaFunctions)){
         cat(paste("quality process ", i, ":\n", sep=""))
         if(missing(argLists))
             processes[[i]] <- do.call(qaFunctions[i],
-                                      list(set=set, outdir=outdir))
+                                      list(set=set, outdir=outdir,
+                                           grouping=grouping))
         else{
             argLists[[i]]$set <- set
             argLists[[i]]$outdir <- outdir
+             argLists[[i]]$grouping <- grouping
             processes[[i]] <- do.call(qaFunctions[i], argLists[[i]])
         }
     }

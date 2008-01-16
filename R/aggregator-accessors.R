@@ -1,0 +1,161 @@
+## ===========================================================================
+## binaryAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("binaryAggregator", "file", "missing"),
+          function(text, con){
+              if(text@passed)
+                  writeLines(paste("<img class=\"QABinAggr\"",
+                                   " src=\"images/bulbGreen.png\">"), con)
+              else
+                  writeLines(paste("<img class=\"QABinAggr\"",
+                                   " src=\"images/bulbRed.png\">"), con) 
+          })
+
+## display details about aggregator
+setMethod("show", signature("binaryAggregator"),
+          function(object){
+              cat("Binary quality score ", ifelse(object@passed, "", "not "),
+                  "passing the requirements\n", sep="") 
+          })
+
+
+
+## ===========================================================================
+## discreteAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("discreteAggregator", "file", "missing"),
+          function(text, con){
+              switch(as.character(text@x),
+                     "1"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbGreen.png\">"), con),
+                     "0"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbRed.png\">"), con),
+                     "2"=writeLines(paste("<img class=\"QABinAggr\"",
+                     " src=\"images/bulbYellow.png\">"), con),
+                     stop("Unknown state"))
+          })
+
+## display details about aggregator
+setMethod("show", signature("discreteAggregator"),
+          function(object){
+                cat("Discrete quality score ",
+                    ifelse(object@passed, "", "not "), "passing the ",
+                    "requirements with state ", object@x, "\n", sep="") 
+          })
+
+
+
+## ===========================================================================
+## factorAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("factorAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
+              lx <- levels(text@x)
+              fcol <- rep("lightgray", length(lx))
+              fcol[match(text@x, lx)] <- col
+              writeLines("<b>", con)
+              writeLines(paste("<span style=\"margin:0 3px; ",
+                               "color:", fcol, ";\">", lx,
+                               "</span>", sep=""), con)
+              writeLines("</b><br>", con)
+          })
+
+
+## display details about aggregator
+setMethod("show", signature("factorAggregator"),
+          function(object){
+              cat("Factorized quality score ", ifelse(object@passed, "",
+                                                      "not "),
+                  "passing the requirements of value=", object@x,
+                  "\n", sep="") 
+          })
+
+
+
+## ===========================================================================
+## stringAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("stringAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
+              writeLines(paste("<b><p style=\"margin:0 3px; ",
+                               "color:", col, ";\">", text@x,
+                               "</p></b>", sep=""), con)
+          })
+
+## display details about aggregator
+setMethod("show", signature("stringAggregator"),
+          function(object){
+              cat("Textual quality score ", ifelse(object@passed, "", "not "),
+                  "passing the requirements of value=", object@x,
+                  "\n", sep="") 
+          })
+
+
+## ===========================================================================
+## numericAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("numericAggregator", "file", "missing"),
+          function(text, con){
+              col <- ifelse(text@passed, "green", "red")
+              writeLines(paste("<b><span style=\"margin:0 3px; ",
+                               "color:", col, ";\">", signif(text@x,2),
+                               "</span></b><br>", sep=""), con)
+          })
+
+## display details about aggregator
+setMethod("show", signature("numericAggregator"),
+          function(object){
+              cat("Numeric quality score ", ifelse(object@passed, "", "not "),
+                  "passing the requirements of value=", object@x,
+                  "\n", sep="") 
+          })
+
+
+## ===========================================================================
+## rangeAggregator
+## ---------------------------------------------------------------------------
+
+## write method to create HTML output
+setMethod("writeLines", signature("rangeAggregator", "file", "missing"),
+          function(text, con){
+              x <- text
+              perc <- (x@x-x@min)/diff(c(x@min, x@max))*100
+              class <- ifelse(x@passed, "QARangeAggrPass", "QARangeAggrFail")
+              writeLines(paste("<table class=\"QARangeAggr\">\n",
+                               "<tr>\n<td class=\"", class, "\" width=\"",
+                               perc, "%\" >\n</td>\n<td class=\"QARangeAggr",
+                               "\" width=\"", 100-perc, "%\" >\n</td>\n",
+                               "</tr>\n</table>", sep=""), con)
+          })
+
+## display details about aggregator
+setMethod("show", signature("rangeAggregator"),
+          function(object){
+              cat("Range quality score ", ifelse(object@passed, "", "not "),
+                  "passing the requirements of value=", object@x,
+                  "\n", sep="") 
+          })
+
+
+
+## ===========================================================================
+## aggregatorList
+## ---------------------------------------------------------------------------
+
+## display details about list
+setMethod("show", signature("aggregatorList"),
+          function(object)
+              cat("List of", length(object), "aggregators\n")
+          )

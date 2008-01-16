@@ -27,10 +27,7 @@ No methods defined with class "outlierResult" in the signature.
 \note{ ~~further notes~~ }
 
 
-\seealso{
-
-}
 \examples{
-showClass("outlierResult")
+#showClass("outlierResult")
 }
 \keyword{classes}
