@@ -22,7 +22,7 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=3)
                dimnames=list(parms, frameIDs))
     cat("computing margin events...")
     for(p in parms){
-        exp <- parse(text=paste("`", p, "`==", ranges[p,], sep="",
+        exp <- parse(text=paste("`", p, "`==", ranges[,p], sep="",
                      collapse="|"))
         attributes(exp) <- NULL
         ef <- expressionFilter(exp, filterId=p)
@@ -93,6 +93,8 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=3)
 qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
 {
     ## create summary plot and its associated qaGraph object
+    if(length(channel)!=1)
+        stop("'channel' must be of length 1")
     cat("creating summary plots...")
     gid <- guid()
     tmp <- tempdir()
@@ -127,4 +129,65 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=0.1)
                frameProcesses=frameProcesses))
     
 }    
+
+
+allDens <- function(sets, channel){
+    extDens <- function(x, channel)
+        fsApply(x, function(x)
+            {
+                tmp <- density(x[,channel])
+                return(rbind(tmp$x, tmp$y))
+            }, use.exprs=TRUE)
+    if(is.list(sets))
+        dens <- sapply(sets, extDens, channel)
+    else
+        dens <- extDens(sets, channel)
+    return(t(dens))
+}
+
+
+## QA process to compare KL distances
+qaProcess.Similarity <- function(set, channel, outdir, groups=NULL, cutoff=0.1)
+{
+    ## create summary plot and its associated qaGraph object
+    if(length(channel)!=1)
+        stop("'channel' must be of length 1")
+    cat("creating summary plots...")
+    gid <- guid()
+    tmp <- tempdir()
+    sfile <- file.path(tmp, "summary.pdf")
+    dens <- t(allDens(set, channel))
+    col <- if(is.null(grps)) "black" else as.integer(factor(groups))
+    pdf(file=sfile)
+    matplot(dens[seq(1, nrow(dens), by=2), ], dens[seq(2, nrow(dens), by=2), ],
+            type="l", col=col)
+    dev.off()
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
+
+    ## create graphs and aggregators for each frame and wrap in object
+    frameIDs <- sampleNames(set)
+    frameProcesses <- list()
+    cat("\ncreating frame plots...")
+    for(i in 1:length(set)){
+        tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
+                                      sep=""))
+        pdf(file=tfile)
+        timeLinePlot(set[i], channel)
+        dev.off()
+        ba <- new("binaryAggregator", passed=summary[i]<cutoff)
+        fg <- qaGraph(fileName=tfile, imageDir=idir, width=220)
+        fid <- frameIDs[i]
+        frameProcesses[[fid]] <- qaProcessFrame(fid, ba, fg)
+        cat(".")
+    }
+
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name=paste("timeLine", channel),
+               type="time line", frameIDs=frameIDs, summaryGraph=sgraph,
+               frameProcesses=frameProcesses))
+    
+}    
+
 
