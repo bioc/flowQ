@@ -124,7 +124,7 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=1,
                      main=paste("score=", signif(summary[i], 4), sep=""),
                      cex.main=2)
         dev.off()
-        ba <- new("binaryAggregator", passed=summary[i]<cutoff)
+        ba <- new("binaryAggregator", passed=summary[i]<=cutoff)
         fg <- qaGraph(fileName=tfile, imageDir=idir, width=220)
         fid <- frameIDs[i]
         frameProcesses[[fid]] <-

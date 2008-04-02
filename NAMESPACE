@@ -39,4 +39,5 @@ export("validProcess",
        "factorAggregator",
        "stringAggregator",
        "numericAggregator",
-       "rangeAggregator")
+       "rangeAggregator",
+       "evaluateProcess")
