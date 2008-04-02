@@ -6,14 +6,20 @@
 \alias{show,qaProcess-method}
 
 \title{ Abstraction of the results of a QA process }
+
 \description{ QA processes create graphical output which can be bundled
   in a single HTML document. This class stores all information that is
   needed by \code{\link{writeQAReport}} to produce such HTML reports.}
+
 \section{Objects from the Class}{ Objects should be created using the
   constructor functions. See \code{\link{qaProcess.timeline}} and
-  \code{\link{qaProcess.marginevents}} for details.
-	
-}
+  \code{\link{qaProcess.marginevents}} for details. When writing new QA
+  process functions, the constructors \code{\link{qaProcessFrame}} and
+  \code{qaProcess} should be used. The latter expects the mandatory
+  arguments \code{id}, \code{type} and \code{frameProcesses} and also
+  accepts the optional arguments \code{name} and \code{summaryGraph}.
+  See the vignette of this package for details.}
+
 \section{Slots}{
 	 \describe{
     \item{\code{id}:}{Object of class \code{"character"}, the objects

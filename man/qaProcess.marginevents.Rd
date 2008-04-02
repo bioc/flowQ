@@ -20,12 +20,12 @@ qaProcess.marginevents(set, channels = NULL, outdir, cFactor = 3)
   saved. If multiple QA processes are to be combined, make sure to use
   the same directory every time. }
   \item{cFactor}{ The threshold at which the QA process is considered to
-    be failed. This is the fold change of margin event percentages
+    have failed. This is the fold change of margin event percentages
   compared to the median percentage of events for the respective channel.}
 }
 \details{
   QA processes of type 'marginevents' record the number of events that
-  are on the margins of the measurement range for each
+  fall on the margins of the measurement range for each
   channel. Unproportionally high numbers of such events can indicate
   problems with the instrument settings.
   

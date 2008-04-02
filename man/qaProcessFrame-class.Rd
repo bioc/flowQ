@@ -11,14 +11,21 @@
   Objects should be created using the constructor:
 
   \code{qaProcessFrame(frameID, summaryAggregator, summaryGraph,
-    frameAggregators, frameGraphs)} where \code{frameID} is the ID of the
-    flowFrame the process is linked to, \code{summaryAggregator} is an
-    object inheriting from class  \code{\linkS4class{qaAggregator}}
-    which summarizes the outcome, \code{summaryGraph} is an object of
-    class \code{\linkS4class{qaGraph}}, \code{frameAggregators} is an
-    object of class \code{\linkS4class{aggregatorList}} and
-    \code{frameGraphs} is an object of class \code{\linkS4class{qaGraphList}}
-}
+    frameAggregators, frameGraphs, details)} where \code{frameID} is the
+    ID of the flowFrame the process is linked to,
+    \code{summaryAggregator} is an object inheriting from class
+    \code{\linkS4class{qaAggregator}} which summarizes the outcome,
+    \code{summaryGraph} is an object of class
+    \code{\linkS4class{qaGraph}} which is the overview graph of the
+    process for the whole frame, \code{details} is a list containing any
+    additional information regarding the QA process,
+    \code{frameAggregators} is an object of class
+    \code{\linkS4class{aggregatorList}} and \code{frameGraphs} is an
+    object of class \code{\linkS4class{qaGraphList}}. The latter two are
+    the collections of aggregators and graphs for each subprocess. Only
+    \code{frameID} and \code{summaryAggregator} are mandatory
+    arguments.}
+
 \section{Slots}{
 	 \describe{
     \item{\code{id}:}{Object of class \code{"character"}, a unique ID of
@@ -33,14 +40,26 @@
     \code{"aggregatorList"}  a list of aggregators for the subprocesses}
     \item{\code{frameGraphs}:}{Object of class \code{"qaGraphList"} a
       list of graphical summaries for the subprocesses }
+    \item{\code{details}:}{A list for any additional information }
   }
 }
+
 \section{Methods}{
   \describe{
-    \item{initialize}{\code{signature(.Object = "qaProcessFrame")}: constructor }
-	 }
-       }
+    
+    \item{initialize}{\code{signature(.Object = "qaProcessFrame")}:
+      constructor }
+    
+  }
+}
        
+\details{ This class bundles graphs and aggregators for a single
+  \code{\link[flowCore]{flowFrame}}. This allows to create processes
+  with subcomponents, where each item in the \code{frameAggregators} and
+  \code{frameGraphs} lists corresponds to one subprocess, which can be
+  used, for instance, to create individual plots for each flow
+  channel. For QA processes without subcomponents, these slots would
+  simply not be populated.}
 
 \author{ Florian Hahne }
 

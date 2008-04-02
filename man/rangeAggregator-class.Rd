@@ -6,11 +6,16 @@
 \alias{writeLines,rangeAggregator,file,missing-method}
 
 \title{Class "rangeAggregator"  }
+
 \description{ Abstraction of a range type of aggregator where possible
   states are within certain ranges (e.g. percentages) }
-\section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("rangeAggregator", ...)}.
-}
+
+\section{Objects from the Class}{ Objects can be created by calls of the
+form \code{new("rangeAggregator", ...)} or using the constructor
+\code{rangeAggregator(x, min, max, passed)}, where \code{x}, \code{min}
+and \code{max} are numeric scalars, with \code{x} in the range of
+\code{[min, max]}, and \code{passed} is a logical scalar.  }
+
 \section{Slots}{
 	 \describe{
     \item{\code{min}:}{Object of class \code{"numeric"}, the range minimum }

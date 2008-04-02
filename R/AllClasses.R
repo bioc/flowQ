@@ -44,6 +44,9 @@ setClass("qaAggregator",
 setClass("binaryAggregator",
          contains="qaAggregator")
 
+binaryAggregator <- function(passed=TRUE)
+    new("binaryAggregator", passed=passed)
+
 
 
 ## ===========================================================================
@@ -56,6 +59,20 @@ setClass("discreteAggregator",
          representation(x="factor"),
          contains="qaAggregator",
          prototype=list(x=factor(1)))
+
+discreteAggregator <- function(x)
+{
+    if(!is.factor(x)){
+        if(! x %in% 0:2)
+            stop("'x' must be in 0,1 or 2", call.=FALSE)
+        x <- factor(x, levels=0:2, ordered=TRUE)
+    }else if(!all(levels(x) %in% as.character(0:2)))
+        stop("x need to be factor with levels 0,1 and 2", call.=FALSE)
+    if(x == 1)
+        new("discreteAggregator", x=x, passed=TRUE)
+    else
+        new("discreteAggregator", x=x, passed=FALSE)
+}
 
 
 
@@ -70,6 +87,14 @@ setClass("factorAggregator",
          representation(x="factor"),
          contains="qaAggregator")
 
+factorAggregator <- function(x, passed=TRUE)
+{
+    if(!missing(x) && !is.factor(x))
+        x <- factor(x)
+    new("factorAggregator", x=x, passed=passed)
+}
+
+
 
 
 ## ===========================================================================
@@ -83,6 +108,9 @@ setClass("stringAggregator",
          representation(x="character"),
          contains="qaAggregator")
 
+stringAggregator <- function(x, passed=TRUE) new("stringAggregator", x=x,
+                                passed=passed)
+
 
 
 ## ===========================================================================
@@ -94,6 +122,9 @@ setClass("stringAggregator",
 setClass("numericAggregator",
          representation(x="numeric"),
          contains="qaAggregator")
+
+numericAggregator <- function(x, passed=TRUE) new("numericAggregator", x=x,
+                                 passed=passed)
 
 
 
@@ -107,6 +138,12 @@ setClass("rangeAggregator",
          representation(min="numeric", max="numeric"),
          contains="numericAggregator")
          
+rangeAggregator <- function(x, min, max, passed=TRUE)
+{
+    if(x<min || x>max)
+        stop("'x' must be in the range of 'min' and 'max'")
+    new("rangeAggregator", min=min, max=max, x=x, passed=passed)
+}
 
 
 ## ===========================================================================
@@ -274,13 +311,14 @@ setClass("qaProcessFrame",
                         summaryAggregator="qaAggregator",
                         summaryGraph="qaGraph",
                         frameAggregators="aggregatorList",
-                        frameGraphs="qaGraphList"))
+                        frameGraphs="qaGraphList",
+                        details="list"))
 
 
 
 setMethod("initialize", "qaProcessFrame",
           function(.Object, frameID, summaryAggregator, summaryGraph,
-                   frameAggregators, frameGraphs){
+                   frameAggregators, frameGraphs, details){
               .Object@id <- guid()
               .Object@frameID <- frameID
               .Object@summaryAggregator <- summaryAggregator
@@ -291,9 +329,11 @@ setMethod("initialize", "qaProcessFrame",
                  stop("Both 'frameAggregators' and 'frameGraphs' must be ",
                        "specified")
               else if(!missing(frameAggregators)){
-                 .Object@frameAggregators <- frameAggregators
-                 .Object@frameGraphs <- frameGraphs
-             }
+                  .Object@frameAggregators <- frameAggregators
+                  .Object@frameGraphs <- frameGraphs
+              }
+              if(!missing(details))
+                  .Object@details <- details
               return(.Object)
           })
 
@@ -322,27 +362,36 @@ setClass("qaProcess",
 
 
 setMethod("initialize", "qaProcess",
-          function(.Object, id, name, type, frameIDs, summaryGraph,
+          function(.Object, id, name, type, summaryGraph,
                    frameProcesses) {
-
-              
+              names(frameProcesses) <- sapply(frameProcesses, slot, "frameID")
               fids <- names(frameProcesses)
-              if(is.null(fids) || (!fids %in% frameIDs))
-                  stop("frameIDs don't match")
+              if(any(duplicated(fids)))
+                  stop("IDs of the frame processes are not unique",
+                       call.=FALSE)
               if(missing(name))
                   name <- "anonymous QA Process"
+              if(missing(summaryGraph))
+                  summaryGraph <- qaGraph(empty=TRUE)
               .Object@id <- id
               .Object@name <- name
               .Object@type <- type
-              .Object@frameIDs <- frameIDs
+              .Object@frameIDs <- fids
               .Object@summaryGraph <- summaryGraph
               .Object@frameProcesses <- frameProcesses
               validProcess(.Object)
               return(.Object)
           })
 
-qaProcess <- function(...)
-    new("qaProcess", ...)
+qaProcess <- function(id, name, type, summaryGraph, frameProcesses)
+{
+    if(missing(name))
+        name <- "anonymous QA Process"
+    if(missing(summaryGraph))
+        summaryGraph <- qaGraph(empty=TRUE)
+    new("qaProcess", id=id, name=name, type=type,
+        summaryGraph=summaryGraph, frameProcesses=frameProcesses)
+}
 
 
 

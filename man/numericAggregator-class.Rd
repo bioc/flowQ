@@ -6,13 +6,15 @@
 \alias{writeLines,numericAggregator,file,missing-method}
 
 \title{Class "numericAggregator" }
+
 \description{ Abstraction of a numeric type of aggregator for which possible
   states are coded by a numeric value}
-\section{Objects from the Class}{
-Objects can be created by calls of the form
-\code{new("numericAggregator", ...)}.
 
-}
+\section{Objects from the Class}{ Objects can be created by calls of the
+form \code{new("numericAggregator", ...)} or using the constructor
+\code{numericAggregator(x, passed)}, where \code{x} is a numeric scalar,
+and \code{passed} is a logical scalar.  }
+
 \section{Slots}{
 	 \describe{
     \item{\code{x}:}{Object of class \code{"numeric"} coding the outcome

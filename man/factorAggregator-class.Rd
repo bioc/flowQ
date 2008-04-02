@@ -6,11 +6,16 @@
 \alias{writeLines,factorAggregator,file,missing-method}
 
 \title{Class "factorAggregator" }
+
 \description{ Abstraction of a factor type of aggregator with possible
   states coded by the factor levels }
-\section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("factorAggregator", ...)}.
-}
+
+\section{Objects from the Class}{ Objects can be created by calls of the
+form \code{new("factorAggregator", ...)} or using the constructor
+\code{factorAggregator(x, passed)}, where \code{x} is a factor, or an
+object which can be coerced to a factor, and \code{passed} is a logical
+scalar.  }
+
 \section{Slots}{
 	 \describe{
     \item{\code{x}:}{Object of class \code{"factor"} coding the outcome state }

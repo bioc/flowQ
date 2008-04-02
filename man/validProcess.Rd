@@ -3,7 +3,9 @@
 
 \title{ Validate a QAProcess object }
 \description{
-  Check for integrety and existence of files specified in a \code{\link{qaProcess}} object
+  Check for integrety and existence of files specified in a
+  \code{\link{qaProcess}} object.
+  
 }
 \usage{
 validProcess(object)

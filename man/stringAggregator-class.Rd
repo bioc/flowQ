@@ -6,11 +6,15 @@
 \alias{writeLines,stringAggregator,file,missing-method}
 
 \title{Class "stringAggregator"  }
+
 \description{ Abstraction of a string type of aggregator for which possible
   states are indicated through a textual description }
-\section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("stringAggregator", ...)} 
-}
+
+\section{Objects from the Class}{ Objects can be created by calls of the
+form \code{new("stringAggregator", ...)} or using the constructor
+\code{stringAggregator(x, passed)}, where \code{x} is a character
+scalar, and \code{passed} is a logical scalar.  }
+
 \section{Slots}{
 	 \describe{
     \item{\code{x}:}{Object of class \code{"character"} which is a

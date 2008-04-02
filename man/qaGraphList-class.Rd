@@ -30,9 +30,17 @@ Class \code{"\linkS4class{vector}"}, by class "list", distance 2.
   \describe{
     \item{initialize}{\code{signature(.Object = "qaGraphList")}: constructor }
     \item{show}{\code{signature(object = "qaGraphList")}: print object details }
-	 }
-       }
+  }
+}
 
+\details{This class directly extends class \code{"list"} and is intended
+  to exclusively hold objects of class \code{\linkS4class{qaGraph}},
+  where each list item represents the grapical output of a QA subprocess
+  for a single \code{\link[flowCore]{flowFrame}}. It mainly exists to
+  allow for method dispatch and should never be populated manualy;
+  instead, use the constructor \code{qaGraphList} which makes sure, that
+  all image files are converted into the appropriate types and sizes and
+  copied to the expected file location.}
     
 \author{ Florian Hahne }
 

@@ -1,0 +1,302 @@
+% NOTE -- ONLY EDIT THE .Rnw FILE!!!  The .tex file is
+% likely to be overwritten.
+%
+%\VignetteIndexEntry{Basic Functions for Flow Cytometry Data}
+%\VignetteDepends{flowViz}
+%\VignetteKeywords{}
+%\VignettePackage{flowViz}
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+\usepackage{times}
+\usepackage{comment}
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+\textwidth=6.2in
+\textheight=8.5in
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textsf{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+
+
+\title{Extending flowQ: how to implement QA processes}
+\author{F. Hahne B. Ellis}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent \Rpackage{flowQ} provides infrastructure to generate
+interactive quality reports based on a unified HTML output. The
+software is readily extendable via modules, where each module
+comprises a single QA process. This Vignette is a brief tutorial how
+to create your own QA process modules.
+\end{abstract}
+
+<<loadPackage, echo=false,results=hide>>=
+library(flowQ)
+@
+
+
+\section{Basic idea of \Rpackage{flowQ}'s QA reports}
+In \Rpackage{flowCore}, flow cytometry data is organized in
+\Rclass{flowFrames} and \Rclass{flowSets}. Usually, a \Rclass
+{flowSet} comprises one experiment or one staining panel of one
+particular experiemnt. The initial step of all data analysis is
+typically a quality assessment (QA) check. Depending on the design of
+the experiment, the measurement channels and the biological question,
+there are various levels on which QA makes sense and also various
+different parameters that have to be checked. 
+
+In \Rpackage{flowQ} we tried to implement a framework that allows to
+create consise QA reports for one or several \Rclass{flowSets} and
+that is readily extendable using self-defined modules. The general
+design of a \Rpackage{flowQ} QA process is:
+
+\begin{itemize}
+\item{aggregator:} a qualitative or quantitative value that indicates
+  the outcome of a QA process or of one of its subprocesses for one
+  single \Rclass{flowFrame} in the set. 
+\item{summary graph:} a plot summarizing the result of the QA
+  process for the whole \Rclass{flowSet}.
+\item{frame graphs} plots visualizing the outcome of a QA process or
+  of one of its subprocesses for a single \Rclass{flowFrame} (optional).
+\end{itemize}
+
+A single QA process may contain various subprocesses, for instance
+looking at each measurement channel in a \Rclass{flowFrame}
+separately, and each of these subprocesses may have its own aggregator
+and/or graphs. However, one unified aggregator indicating the overall
+outcome of the QA process is mandatory.
+
+Abstractions for each of these building blocks are avaible as classes
+and for each class there are constructors which will do the dirty work
+behind the scenes. All that needs to be provided by the user-defined
+QA functions are file paths to the respective plots and lists of
+aggregators indicating the outcome (based on cutoff values that have
+been computed before. For each of these classes, there are
+\Rfunction{writeLine} methods, which create the appropriate HTML
+output. The user doesn't have to care about this step, a fully
+formated report will be generated when calling the
+\Rfunction{writeQAReport} function.
+
+\section{Aggregators}
+There are several subclasses of aggregators, all inheriting from the
+virtual parent class \Rclass{qaAggregator}, which defines a single
+slot, \Rfunarg{passed}. This slot is the basic indicator whether the
+\Rclass{flowFrame} has passes the particular quality check. More
+fine-grained output can be archived by the following types of
+sub-classes (see their documentation for details):
+
+\begin{itemize}
+\item{\Rclass{binaryAggregator}:} the most basic aggregator,
+  indicating ``passed'' or ``not passed'' by color coding.
+    
+  \includegraphics[width=8mm]{binary.jpg}
+    
+\item{\Rclass{discreteAggregator}:} allows for three different states:
+  ``passed'', ``not passes'' and ``warn'', also coded by colors. Not
+  that ``warn'' will set the \Rfunarg{passed} slot to \code{FALSE}.
+    
+  \includegraphics[width=12mm]{discrete.jpg}
+  
+\item{\Rclass{factorAggregator}:} multiple outcome states. The factor
+  levels are plotted along with color coding for the overall outcome
+  (``passed'' or ``not passed'').
+   
+  \includegraphics[width=15mm]{factor.jpg}
+  
+\item{\Rclass{stringAggregator}:} arbitrary character string
+  describing the outcome. Font color indicates the overall outcome.
+  
+    \includegraphics[width=14mm]{string.jpg}
+  
+  
+\item{\Rclass{numericAggregator}:} a numerical value describing the
+  outcome. Currently, the value is plotted as a character string, but
+  this might change in the future. Font color indicates the overall
+  outcome.
+  
+    \includegraphics[width=8mm]{numeric.jpg}
+  
+  
+\item{\Rclass{rangeAggregator}:} a numerical value within a certain
+  range describing the outcome. A horizontal barplot is produced with
+  color indicating the overall outcome.
+    
+  \includegraphics[width=13mm]{range.jpg}
+
+\end{itemize}
+  
+Aggregator objects can be created using either \Rfunction{new} or the
+constructor functions. E.g., the following code creates instances of
+each of the six aggregator types:
+<<createAggrs>>=
+binaryAggregator()
+discreteAggregator(2)
+factorAggregator(factor("a", levels=letters[1:3]))
+stringAggregator("test", passed=FALSE)
+numericAggregator(20)
+rangeAggregator(10, 0, 100)
+@ 
+
+A special class \Rclass{aggregatorList} exists that holds multiple
+aggregators, not necessarily of the same type, and this is used for QA
+processes with several subprocesses. The constructor takes an
+arbitrary number of \Rclass{qaAggregator} objects, or a list of such
+objects. This class mainly exists for method dispatch.
+<<aggrList>>=
+aggregatorList(bin=binaryAggregator(FALSE), disc=discreteAggregator(1))
+@ 
+
+\section{Storing images as \Rclass{qaGraph}s}
+While aggregators indicate the general outcome of a QA process, or, at
+most, a single quantitative value, the amount of information they can
+provide is very limited. \Rpackage{flowQ}'s design allows to include
+additional diagnostic plots, both on the level of the whole
+\Rclass{flowSet} and for each \Rclass{flowFrame} individually. Smaller
+bitmap versions of the plots are used for the overview page, and each
+image is clickable, opening a bigger vectorized version of the plot
+that is better suited for detailed inspection. To take the burden of
+file conversion away from the user, the class \Rclass{qaGraph} was
+implemented, which stores single images. The class constructor takes
+two mandatory arguments: \Rfunarg{fileName} which is a valid path to
+an image file (either bitmap or vectorized), and \Rfunarg{imageDir},
+which is a file path to the output directory where the image files are
+to be stored. If you are planning to place the final QA report on a
+web server, you should make sure, that this path is accessable. The
+safet solution is to chose a directory below the root directory of the
+QA report, e.g., \code{qaReport/images} if the root directory is
+/code{qaReport}.
+
+You can control the final width of the bitmap version of the image
+through the optional \Rfunarg{width} argument, and empty
+\Rclass{qaGraph} objects can be created by setting
+\code{empty=TRUE}. During object instantiation, the file type is
+detected automatically and the image file will be converted, resized
+and copied if necessary.
+<<qaGraph>>=
+tmp <- tempdir()
+fn <- file.path(tmp, "test.jpg") 
+jpeg(file=fn)
+plot(1:3)
+dev.off()
+idir <- file.path(tmp, "images")
+g <- qaGraph(fn, imageDir=idir)
+g
+qaGraph(imageDir=idir, empty=TRUE)
+@ 
+
+For the special case of QA processes with multiple subprocesses (e.g.,
+individual plots for each channel), there is a class
+\Rclass{qaGraphList} and an associated constructor, which will take a
+character vector of multiple file names. This class mainly exists for
+method dispatch and to facilitate batch processing of multiple image
+files.
+
+\section{Information for a single frame: class \Rclass{qaProcessFrame}}
+All the information of a QA process for a single frame has to be bundled
+in objects of class \Rclass{qaProcessFrame}. Again, a constructor
+facilitates instantiating these objects; the mandatory arguments of
+the constructor are:
+\begin{itemize}
+\item {\Rfunarg{frameID}:} a unique identifier for the
+  \Rclass{flowFrame}. Most of the time, this will be the
+  \Rfunction{sampleName} of the frame in the \Rclass{flowSet}. The
+  frame will be identified by this symbol in all of the following
+  steps and you should make sure that you use unique values, otherwise
+  the downstream functions will not work.
+\item{\Rfunarg{summaryAggregator}:} an object inheriting from class
+  \Rclass{qaAggregator} indicating the overall outcome of the process
+  for this frame.
+\end{itemize}
+
+ Further optional arguments are:
+ 
+\begin{itemize}
+\item{\Rfunarg{summaryGraph}:} an object of class \Rclass{qaGraph}
+  providing a graphical summary of the  QA process for this frame. 
+\item{\Rfunarg{frameAggregators}:} an object of class
+  \Rclass{aggregatorList}. Each aggregator in the list indicates the
+  outcome of one single subprocess for this frame, e.g., for every
+  individual measurement channel. 
+\item{\Rfunarg{frameGraphs}:} an object of class
+  \Rclass{qaGraphList}. Each qaGraph in the list is a graphical
+  overview over the outcome of one single subprocess for this
+  frame. Note that the length of both \Rfunarg{frameAggregators} and
+  \Rfunarg{frameGraphs} have to be the same if you want to use
+  them. Assuming that you don't want to include images for one of the
+  subprocesses, you have to provide empty \Rclass{qaGraph} objects
+  (see above). It is not possible to omit aggregators for
+  subprocesses, because they are used to link to the repsective
+  images.
+\item{\Rfunarg{details}:} a list of additional information that you
+  want to keep attached to the \Rclass{qaProcessFrame}. For example,
+  this can be the values of a quality score that was computed in order
+  to decide whether the QA process has passed the requirements. Such
+  information can be useful to update aggregators later without
+  reproducing the images (e.g., when a cutoff value has been changed).
+\end{itemize}
+  
+
+\section{The whole QA process: class \Rclass{qaProcess}}
+Now that we have all the information for the single frames together,
+we can proceed and bundle things up in a unified object of class
+\Rclass{qaProcess}. Again, the constructor has a couple of mandatory
+arguments:
+
+\begin{itemize}
+\item{\Rfunarg{id}:} a unique identifier for this QA process. This
+  will be used to identify the process in all downstream functions,
+  which will not work unless it really is unique (assuming that you
+  want to combine multiple QA processes in one single report).
+\item{\Rfunarg{type}:} A character scalar describing the type of the
+  QA process. This might become useful for functions that operate on
+  objects of class \Rclass{qaProcess} in a type-specific way (e.g.,
+  updating agregators).
+\item{\Rfunarg{frameProcesses}:} a list of \Rclass{qaProcessFrame}
+  objects. You have to make sure that the identifier for each
+  \Rclass{qaProcessFrame} is unique and that the length of the list is
+  equal to the length of the \Rclass{flowSet}.
+\end{itemize}
+  
+ Further optional arguments are:
+ 
+\begin{itemize}
+\item{\Rfunarg{name}:} The name of the process that is used as caption
+  in the output.
+\item{\Rfunarg{summaryGraph}:} An object of class \Rclass{qaGraph}
+  summarizing the outcome of the QA process for the whole
+  frame. Although this is mandatory, we strongly recommend including
+  such a plot, as it provides a good initial overview.
+\end{itemize}
+
+The output of you own QA process function should always be an object
+of class \Rclass{qaProcess}, which can be used in the downstream
+functions to produce the quality assessment report. Most of the time,
+the function would have a structure similar to the following:
+
+\begin{enumerate}
+\item iterate over frames to create the \Rclass{qaProcessFrame}
+  object, possibly with an additional level of iteration for each
+  subprocess (e.g. each channel). Each iteration involves creation of
+  at least one \Rclass{qaGraph} and \Rclass{qaAggregator} object.
+\item create an \Rclass{qaProcessFrame} object summarizing the process
+  for the whole set.
+\item bundle things up in a \Rclass{qaProcess} object.
+\end{enumerate}
+
+\end{document}

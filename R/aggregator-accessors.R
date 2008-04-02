@@ -42,9 +42,12 @@ setMethod("writeLines", signature("discreteAggregator", "file", "missing"),
 ## display details about aggregator
 setMethod("show", signature("discreteAggregator"),
           function(object){
+              states <- c("failed", "passed", "warn")
                 cat("Discrete quality score ",
                     ifelse(object@passed, "", "not "), "passing the ",
-                    "requirements with state ", object@x, "\n", sep="") 
+                    "requirements with state ",
+                    states[as.integer(object@x)], "\n",
+                    sep="") 
           })
 
 
@@ -73,7 +76,7 @@ setMethod("show", signature("factorAggregator"),
           function(object){
               cat("Factorized quality score ", ifelse(object@passed, "",
                                                       "not "),
-                  "passing the requirements of value=", object@x,
+                  "passing the requirements of value=", as.character(object@x),
                   "\n", sep="") 
           })
 

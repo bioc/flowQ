@@ -54,7 +54,6 @@ validProcess <- function(object)
     mismatch <- ! names(object@frameProcesses) %in% object@frameIDs
     if(any(mismatch))
        stop(paste("IDs for frame", which(mismatch), "do not match\n"))
-    return(invisible(NULL))
 
     ## Are frameProcesses valid?
     if(!all((sapply(object@frameProcesses, function(x)
@@ -62,4 +61,5 @@ validProcess <- function(object)
             (sapply(object@frameProcesses, function(x)
                     length(x@frameGraphs)))))
         stop("Each qaGraph needs an associated aggregator")
+    return(TRUE)
 }

@@ -16,7 +16,8 @@ myOpenHtmlPage <- function(name, title = "", path="../")
 
 
 ## create HTML report for (lists of) QA processes 
-writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
+writeQAReport  <- function(set, processes, outdir="./qaReport",
+                           grouping=NULL, pagebreaks=TRUE)
 {
     if(!is.list(set))
         set <- list(set)
@@ -71,7 +72,14 @@ writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
                     "id=\"", pIDs, "_sumHeader\">\n",
                     "<div class=\"QASumButton\" id=\"", pIDs, "_button",
                     "\" onClick=\"toggleImage('", pIDs, "')\">\n",
-                    pNames, "\n</div>\n</th>", sep="", collapse="\n")
+                    pNames, "\n</div>\n</th>", sep="")
+        esel <- sapply(process, function(x)  length(x@summaryGraph@fileNames))==0
+        th[esel] <- paste("<th class=\"QAHeader\" colspan=\"", nrAggr[esel], "\" ",
+                        "id=\"", pIDs[esel], "_sumHeader\">\n",
+                        "<div class=\"QASumButton\" id=\"", pIDs[esel], "_button",
+                        "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
+                          collapse="\n")
+        th <- paste(th, collapse="\n")
         pd <- pData(set[[s]][[1]]@parameters)[,c("name", "desc", "minRange",
                                             "maxRange")]
         fh <- paste("<td class=\"QAParameter\">", pd[,1], "</td>\n",
@@ -103,7 +111,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport", grouping=NULL)
         classes <- paste("QAFrameHeader",
                          c("Even", "Odd")[(seq_along(frameIDs)%%2)+1], sep="")
         names(classes) <- frameIDs
-        fpp <- 11
+        fpp <- if(pagebreaks) 14 else 10e20
         lf <- length(frameIDs)
         nrPages <- (lf %/% fpp) +1
         counter <- 1
@@ -329,4 +337,45 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
         }
     }
     writeQAReport(set, processes, outdir)
+}
+
+
+
+## re-evaluate a process for new thresholds or cutoff values 
+evaluateProcess <- function(process, thresh, ...)
+{
+    switch(process@type,
+           "time line"=
+       {
+           efun <- function(x, c){
+               qaScore <- x@details$qaScore
+               x@summaryAggregator@passed <- qaScore < c
+               return(x)
+           }
+           process@frameProcesses <- lapply(process@frameProcesses, efun,
+                                            thresh)    
+       },
+           "margin events"=
+       {
+           efun <- function(x, c){
+               sums <- x@details$events
+               msums <- x@details$mevents
+               for(i in 1:length(x@frameAggregators)){
+                   x@frameAggregators[[i]]@passed <- sums[i] < (msums[i]*c)
+                   x@frameAggregators[[i]]@x <- sums[i]
+               }
+               nfail <- !sapply(x@frameAggregators, slot, "passed")
+               val <- if(sum(nfail)==1) factor(2) else factor(0)
+               if(sum(nfail)==0)
+                   val <- factor(1)
+               x@summaryAggregator <- discreteAggregator(val)
+               return(x)
+           }
+           process@frameProcesses <- lapply(process@frameProcesses, efun,
+                                            thresh)    
+       },           
+           stop("Don't know how to deal with process of type '",  process@type,
+                "'", call.=FALSE)
+           )
+    return(process)
 }

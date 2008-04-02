@@ -1,5 +1,6 @@
 import("flowCore")
 import("flowViz")
+importFrom("geneplotter", "multidensity")
 importClassesFrom("geneplotter", "file")
 
 exportMethods("outliers",
@@ -32,4 +33,10 @@ export("validProcess",
        "writeQAReport",
        "qaReport",
        "qaProcess.marginevents",
-       "qaProcess.timeline")
+       "qaProcess.timeline",
+       "binaryAggregator",
+       "discreteAggregator",
+       "factorAggregator",
+       "stringAggregator",
+       "numericAggregator",
+       "rangeAggregator")

@@ -1,14 +1,19 @@
 \name{discreteAggregator-class}
 \docType{class}
 \alias{discreteAggregator-class}
+\alias{discreteAggregator}
 \alias{show,discreteAggregator-method}
 \alias{writeLines,discreteAggregator,file,missing-method}
 
 \title{Class "discreteAggregator" }
-\description{ Abstraction of a binary type of aggregator with possible
-  states "passes" and "not passed" and "warning"}
-\section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("discreteAggregator", ...)}.
+
+\description{ Abstraction of a discrete type of aggregator with possible
+states "passed", "not passed" and "warning"}
+
+\section{Objects from the Class}{ Objects can be created by calls of the
+form \code{new("discreteAggregator", ...)} or using the constructor
+\code{discreteAggregator(x)}, where \code{x} is an integer value in
+\code{[0,1,2]} or a factor with levels \code{0}, \code{1} and \code{2}.
 }
 
 \section{Slots}{

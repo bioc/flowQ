@@ -9,7 +9,8 @@
   using \code{\link{writeQAReport}}.
 }
 \usage{
-qaProcess.timeline(set, channel, outdir, cutoff = 0.1)
+qaProcess.timeline(set, channel, outdir, cutoff=1,
+name=paste("timeLine", channel))
 }
 
 \arguments{
@@ -21,7 +22,8 @@ qaProcess.timeline(set, channel, outdir, cutoff = 0.1)
   the same directory every time. }
   \item{cutoff}{ The threshold at which the QA process is considered to
     be failed. An absolute value in the timeline deviation score as
-  computed by the \code{\link[flowViz]{timeLinePlot}} function}
+    computed by the \code{\link[flowViz]{timeLinePlot}} function}
+  \item{name}{The name of the process used for the headings in the HTML output} 
 }
 \details{
   QA processes of type 'timeline' detect unusal patterns in the data
@@ -35,7 +37,7 @@ qaProcess.timeline(set, channel, outdir, cutoff = 0.1)
 }
 
 \author{ Florian Hahne }
-\note{ This function is still experimental }
+
 
 
 \seealso{ \code{\link{writeQAReport}}, \code{\link{qaReport}},
@@ -45,8 +47,9 @@ qaProcess.timeline(set, channel, outdir, cutoff = 0.1)
 \examples{
 \dontrun{
 data(GvHD)
+GvHD <- transform(GvHD, "FL1-H"=asinh(`FL1-H`), "FL2-H"=asinh(`FL2-H`))
 dest <- tempdir()
-qp <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest)
+qp <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=1)
 qp
 }
 

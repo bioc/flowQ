@@ -16,6 +16,11 @@
 No methods defined with class "qaAggregator" in the signature.
 }
 
+\details{ In the context of this package, \code{qaAggregators} are
+  objects that hold the outcome of a QA process. Each subclass
+  implements its own \code{writeLine} method, which creates the appropriate
+  HTML code for a graphical representation of the object.}
+
 \author{ Florian Hahne }
 
 

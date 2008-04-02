@@ -7,9 +7,12 @@
 
 \title{Class "binaryAggregator" }
 \description{ Abstraction of a binary type of aggregator with possible
-  states "passes" and "not passed"}
+  states "passed" and "not passed"}
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("binaryAggregator", ...)}.
+Objects can be created by calls of the form
+\code{new("binaryAggregator", ...)},
+or using the constructor \code{binaryAggregator(passed)}, where
+  \code{passed} is a logical scalar.
 }
 \section{Slots}{
 	 \describe{

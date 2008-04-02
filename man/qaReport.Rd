@@ -45,9 +45,10 @@ qaReport(set, qaFunctions, outdir = "./qaReport", argLists, grouping = NULL)
 \examples{
 \dontrun{
 data(GvHD)
+GvHD <- transform(GvHD, "FL1-H"=asinh(`FL1-H`), "FL2-H"=asinh(`FL2-H`))
 dest <- tempdir()
 qaReport(GvHD, c("qaProcess.timeline", "qaProcess.marginevents"), dest,
- list(list(channel="FL1-H", cutoff=10), list(channels=c("FL1-H",
+ list(list(channel="FL1-H", cutoff=1), list(channels=c("FL1-H",
   "FL2-H"), cFactor=4)))
 browseURL(file.path(dest, "index.html"))
 }

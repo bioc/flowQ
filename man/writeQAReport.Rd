@@ -3,27 +3,43 @@
 
 
 \title{ Create HTML report for (lists of) qaProcess objects }
+
 \description{
+  
   This function combines all graphical output of multiple QA processes
   for one or several \code{\link[flowCore]{flowSet}}s in a single
   hyperlinked HTML document.
+  
 }
 \usage{
-writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL)
+
+writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL,
+pagebreaks = TRUE)
+
 }
 
 \arguments{
-  \item{set}{ A \code{\link[flowCore]{flowSet}} or a list of several \code{\link[flowCore]{flowSet}}s }
+  
+  \item{set}{ A \code{\link[flowCore]{flowSet}} or a list of several
+    \code{\link[flowCore]{flowSet}}s }
+  
   \item{processes}{ A list of A \code{\link{qaProcess}} objects or, in
-  the case of multiple \code{\link[flowCore]{flowSet}}s, a list of lists
-  of \code{\link{qaProcess}} objects.}
+    the case of multiple \code{\link[flowCore]{flowSet}}s, a list of
+    lists of \code{\link{qaProcess}} objects.}
+
   \item{outdir}{ The directory to which the HTML report is to be
-  saved. Make sure that each \code{\link{qaProcess}} object was created
-  in the same directory. }
+    saved. Make sure that each \code{\link{qaProcess}} object was
+    created in the same directory. }
+
   \item{grouping}{ A character scalar indicating a variable in the
-  \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
-  grouping factor in the output.}
+    \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
+    grouping factor in the output.}
+
+   \item{pagebreaks}{ A logical indicating whether the output should be
+   on one long page, or split on several pages.}
+
 }
+
 \details{
   
   Both the information about graphical output and the results for a QA
@@ -54,10 +70,11 @@ writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL)
 \examples{
 \dontrun{
 data(GvHD)
+GvHD <- transform(GvHD, "FL1-H"=asinh(`FL1-H`), "FL2-H"=asinh(`FL2-H`))
 dest <- tempdir()
-qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=10)
+qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=1)
 qp2 <- qaProcess.marginevents(GvHD, channels=c("FL1-H", "FL2-H"),
-  outdir=dest)
+  outdir=dest, cFactor=4)
 writeQAReport(GvHD, processes=list(qp1, qp2), outdir=dest,
   grouping="Patient")
 browseURL(file.path(dest, "index.html"))
