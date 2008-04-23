@@ -1,6 +1,5 @@
-## import("flowCore")
-## import("flowViz")
-importFrom("geneplotter", "multidensity")
+import("flowCore")
+importFrom("geneplotter", "multidensity", "closeHtmlPage")
 importClassesFrom("geneplotter", "file")
 
 exportMethods("outliers",
