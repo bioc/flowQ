@@ -97,16 +97,19 @@ qaProcess.marginevents <- function(set, channels=NULL, outdir, cFactor=3)
 
 ## QA process indicating strange patterns over time
 qaProcess.timeline <- function(set, channel, outdir, cutoff=1,
-                               name=paste("timeLine", channel))
+                               name=paste("timeLine", channel),
+                               sum.dimensions=c(7,7),
+                               det.dimensions=c(7,7))
 {
     ## create summary plot and its associated qaGraph object
     if(length(channel)!=1)
         stop("'channel' must be of length 1")
+    sum.dimensions <- rep(sum.dimensions, 2)
     cat("creating summary plots...")
     gid <- guid()
     tmp <- tempdir()
     sfile <- file.path(tmp, "summary.pdf")
-    pdf(file=sfile)
+    pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
     summary <- timeLinePlot(set, channel)
     dev.off()
     idir <- file.path(outdir, "images", gid)
@@ -116,10 +119,11 @@ qaProcess.timeline <- function(set, channel, outdir, cutoff=1,
     frameIDs <- sampleNames(set)
     frameProcesses <- list()
     cat("\ncreating frame plots...")
+    det.dimensions <- rep(det.dimensions, 2)
     for(i in 1:length(set)){
         tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
                                       sep=""))
-        pdf(file=tfile)
+        pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
         timeLinePlot(set[i], channel,
                      main=paste("score=", signif(summary[i], 4), sep=""),
                      cex.main=2)
