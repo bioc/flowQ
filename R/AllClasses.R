@@ -395,3 +395,16 @@ qaProcess <- function(id, name, type, summaryGraph, frameProcesses)
 
 
 
+## ===========================================================================
+## qaProcessSummary
+## ---------------------------------------------------------------------------
+## A numeric matrix of summary values over all qaProcesses, split
+## by fluorochromes and samples. This mainly exists to allow method
+## dispatch
+## ---------------------------------------------------------------------------
+setClass("qaProcessSummary",
+         representation(panels="list",
+                        summary="matrix",
+                        ranges="list",
+                        mapping="list")
+         )

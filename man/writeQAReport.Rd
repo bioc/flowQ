@@ -1,5 +1,6 @@
 \name{writeQAReport}
 \alias{writeQAReport}
+\alias{writeLines,data.frame,file,missing-method}
 
 
 \title{ Create HTML report for (lists of) qaProcess objects }

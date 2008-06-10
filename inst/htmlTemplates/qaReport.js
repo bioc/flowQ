@@ -68,3 +68,8 @@ function togglePages(from, to, nrPages, nrFrames){
 }
 
 
+function link2Panel(panel, frame) {
+  window.location.href = "index" + panel + ".html#frow1_" + frame;
+}
+
+

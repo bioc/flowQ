@@ -21,9 +21,19 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
 {
     if(!is.list(set))
         set <- list(set)
+    else{
+        if(! all(sapply(processes, is.list)) ||
+           ! length(set) == length(processes))
+            stop("Argument 'processes' must be a list of lists of ",
+                 "'qaProcess' objects for multiple panels")
+        sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
+        if(!sID)
+            warning("Some of the panels in 'set' don't have a global ",
+                    "sample identifier.\nUnable to create overview.")
+    }
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
-                "overwritten")
+                    "overwritten")
     if(!is(processes, "list") ||
        !all(sapply(processes, function(x) is(x, "qaProcess") ||
                    sapply(x, is, "qaProcess"))))
@@ -33,12 +43,13 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         stop("'set' must be a flow set")
 
     ## copy infrastructure
-        sdir <- system.file("htmlTemplates", package = "flowQ")
-        file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"))
+    sdir <- system.file("htmlTemplates", package = "flowQ")
+    file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"),
+              overwrite=TRUE)
     
     ## iterate over panels
     for(s in seq_along(set)){
-       
+        
         ## rearange set according to grouping
         grps <- NULL
         if(!is.null(grouping)){
@@ -49,15 +60,14 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
             set[[s]] <- set[[s]][order(pData(set[[s]])[, grouping])]
             grps <- pData(set[[s]])[, grouping]
         }
-        
-        
+
         ## open a file connection
-        ifile <- ifelse(s==1, "index", paste("index", s, sep=""))
+        ##ifile <- ifelse(s==1, "index", paste("index", s, sep=""))   
+        ifile <- ifelse(sID, paste("index", s, sep=""), "index")
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         
         ## setup of table and table header row
         process <- if(length(set)>1) processes[[s]] else processes
-            
         writeLines("<table class=\"QA\">", con)
         pIDs <- sapply(process, slot, "id")
         pNames <- sapply(process, slot, "name")
@@ -75,18 +85,13 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     pNames, "\n</div>\n</th>", sep="")
         esel <- sapply(process, function(x)  length(x@summaryGraph@fileNames))==0
         th[esel] <- paste("<th class=\"QAHeader\" colspan=\"", nrAggr[esel], "\" ",
-                        "id=\"", pIDs[esel], "_sumHeader\">\n",
-                        "<div class=\"QASumButton\" id=\"", pIDs[esel], "_button",
-                        "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
+                          "id=\"", pIDs[esel], "_sumHeader\">\n",
+                          "<div class=\"QASumButton\" id=\"", pIDs[esel], "_button",
+                          "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
                           collapse="\n")
         th <- paste(th, collapse="\n")
         pd <- pData(set[[s]][[1]]@parameters)[,c("name", "desc", "minRange",
-                                            "maxRange")]
-        fh <- paste("<td class=\"QAParameter\">", pd[,1], "</td>\n",
-                    "<td class=\"QAParameter\">", pd[,2], "</td>\n",
-                    "<td class=\"QAParameter\">", pd[,3], " - ",
-                    signif(pd[,4],2),
-                    "</td>\n</tr>", sep="", collapse="\n")
+                                                 "maxRange")]
         writeLines(paste("<tr class=\"QAHeader\">\n<th class=\"QAHeader\">\n",
                          "<div class=\"QASumButton\" id=\"parameters_button",
                          "\" onClick=\"toggleImage('parms')\">\n",
@@ -100,12 +105,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     collapse="\n")
         writeLines(paste("<tr class=\"QASummary\">\n<th class=\"QASummary\">",
                          "<span id=\"img_parms\" style=\"display:none;\">",
-                         "<table class=\"QAParameter\" align=\"center\">",
-                         "<tr>\n<th class=\"QAParameter\">channel</th>\n",
-                         "<th class=\"QAParameter\">fluorochrome</th>\n",
-                         "<th class=\"QAParameter\">range</th>\n</tr>\n",
-                         fh, "</table><span>\n</th>\n", td, "\n</tr>",
                          sep=""), con)
+        writeLines(pd, con)
+        writeLines(paste("<span>\n</th>\n", td, "\n</tr>", sep=""), con)
         
         frameIDs <- sampleNames(set[[s]])
         classes <- paste("QAFrameHeader",
@@ -120,15 +122,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         for(f in frameIDs){
             showRow <- ifelse(counter>fpp, "none", "table-row")
             pd <- pData(set[[s]])[f,]
-            ph <- paste("<span id=\"img_pd_", counter,
-                        "\" style=\"display:none;\"",
-                        "><table class=\"",
-                        classes[f], "Pheno\">",
-                        "<tr>", paste("<th class=\"QAPheno\">", names(pd),
-                                      "</th>", sep="", collapse="\n"), "</tr>",
-                        "<tr>", paste("<td class=\"QAPheno\">", pd, "</td>",
-                                      sep="", collapse="\n"), "</tr>\n</table>",
-                        "</span>", sep="", collapse="\n")
+            phi <- paste("<span id=\"img_pd_", counter,
+                         "\" style=\"display:none;\"",
+                         ">", sep="", collapse="\n")
             ## new table row and column header for aggregators
             if(is.null(grouping)){## no grouping is specified
                 writeLines(paste("<tr class=\"", classes[f], "\" id=\"frow1_",
@@ -140,7 +136,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                  "Image('pd_", counter, "')\">\n<div class=\"",
                                  "QAFrameHeaderNr\">", counter, "</div><span ",
                                  "class=\"QAFrameHeaderID\">", f, "</span>",
-                                 "\n", ph, "</th>", sep=""), con)
+                                 "\n", phi, sep=""), con)
+                writeLines(pd, con)
             }else{##grouping
                 caption <-  paste("<div class=\"QAFrameHeaderNr\">",
                                   counter, "</div><span class=\"QAFrameHeader",
@@ -158,7 +155,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                      "class=\"QARowButton\" id=\"", f,
                                      "_button\" onClick=\"toggleImage(",
                                      "'pd_", counter, "')\">", caption,
-                                     "\n</div>\n", ph, "\n</th>", sep=""), con)
+                                     "\n</div>\n", phi, sep=""), con)
+                    writeLines(pd, con)                      
                 }else{  
                     writeLines(paste("<tr class=\"", classes[f],
                                      "\" id=\"frow1_",
@@ -169,10 +167,11 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                      "Button\" id=\"", f, "_button\" ",
                                      "onClick=\"toggle",
                                      "Image('pd_", counter, "')\">", caption,
-                                     "\n</div>\n", ph, "</th>", sep=""), con)
+                                     "\n</div>\n", phi, sep=""), con)
+                    writeLines(pd, con)
                 }
             }
-            
+            writeLines(paste("</span></th>"), con)
             
             ## aggregators first, each process is one column
             for(p in seq_along(process)){
@@ -274,7 +273,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                         fVecGraph <- gsub("\\..*$", ".pdf", fGraph)
                         writeLines(paste("<a href=\"",
                                          fVecGraph, "\" target=\"",
-                                   "QAdetails\">\n<img class=\"QADetGraph\" ",
+                                         "QAdetails\">\n<img class=\"QADetGraph\" ",
                                          "src=\"", fGraph, "\" id=\"img_", id,
                                          "\">\n</a>", sep=""), con)
                     }
@@ -289,7 +288,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         
         ## the page navigation
         writeLines(paste("<div class=\"QAPagesTile\"><table width=\"100%\"",
-                         " style=\"padding-right:35px;\"><tr><td align=\"left\">", sep=""), con)
+                         " style=\"padding-right:35px;\"><tr><td align=\"left\">",
+                         sep=""), con)
         if(lf>fpp){
             from <- c(seq(1, lf, fpp))
             nt <- length(from)
@@ -302,16 +302,33 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         np <- length(set)
         if(np>1){
             writeLines("</td><td align=\"right\">", con)
-            writeLines(paste("<span class=\"QAPanels\" id=\"panels_1,",
-                             "\"n><a href=\"index.html\">Panel 1</a>",
-                             "</span>", sep=""), con) 
-            writeLines(paste("<span class=\"QAPanels\" id=\"panels_", 2:np,
-                             "\"n><a href=\"index", 2:np, ".html\">Panel ",
-                             2:np, "</a></span>", sep=""), con)
+            panels <- paste("<span class=\"QAPanels\" id=\"panels_", 1:np,
+                            "\"n><a class=\"QAPanels\" href=\"index",
+                            1:np, ".html\">Panel ",
+                            1:np, "</a></span>", sep="")
+            panels[s] <- gsub(paste("Panel", s),
+                              paste("Panel ", s, " <i><small>(",
+                                    names(set)[s],
+                                    ")</i></small>", sep=""),
+                              gsub("QAPanels","QAPanelsAct", panels[s]))
+            panels <- c(paste("<span class=\"QAPanels\" id=\"panels_0",
+                            "\"n><a class=\"QAPanels\" href=\"index",
+                              ".html\">Summary</a></span>", sep=""),
+                        panels)
+            writeLines(panels, con) 
         }
         writeLines("</td></tr></table></div>", con)  
         closeHtmlPage(con)
     }##end s
+
+    ## We create an overview page if we have multiple panels
+    if(sID){
+        ifile <- "index"
+        con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
+        on.exit(closeHtmlPage(con))
+        summary <- failedProcesses(processes, set)
+        writeLines(summary, con)
+    }
 }
 
 
@@ -341,3 +358,80 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
 
 
 
+
+
+## count numbers of failed qaProcesses in a list of lists of such objects.
+## Each item in the outer list is a list of qaProcess objects for a single
+## panel. The output is an object for which HTML output can be generated
+## via a writeLines method.
+## The phenoData of the list of flowSets that gets passed as the second
+## argument has to contain a column sampleIDs which provides the mapping
+## of samples over panels.
+failedProcesses <- function(processes, set)
+{
+    ## some sanity checking first
+    sampleIDs <- lapply(set, function(x) pData(x)$SampleID)
+    if(!all(listLen(lapply(sampleIDs, unique))==listLen(sampleIDs)))
+        stop("'SampleIDs' must be unique in each panel")
+    sids <- unlist(sampleIDs)
+    comSids <- unique(sids)
+    fids <- unlist(lapply(set, function(x) rownames(pData(x))))
+    #if(any(duplicated(fids)))
+    #    stop("The 'FrameIDs' in the whole experiment are not unique")
+    allChannels <- c(unique(unlist(lapply(set, colnames))), "global")
+    res <- ranges <- mapping <- vector(length(set), mode="list")
+    ## iterate over panels
+    for(i in seq_along(processes)){
+        fmat <- matrix(0, ncol=length(allChannels), nrow=length(comSids),
+                           dimnames=list(comSids, allChannels))
+        clist <- slist <- NULL
+        nrSum <- 0
+        ## iterate over qaProcess objects for one panel
+        for(j in seq_along(processes[[i]])){
+            nrSamp <- 0
+            mlist <- NULL
+            ## iterate over samples in the qaProcess object
+            for(pro in processes[[i]][[j]]@frameProcesses){
+                ## match frameID to sampleID
+                samp <- sids[match(pro@frameID, fids)]
+                mlist <- rbind(mlist, c(samp, pro@frameID, nrSamp+1))
+                ## check for the multiple channels and iterate over those 
+                if(length(pro@frameAggregators)){
+                    channels <- names(pro@frameAggregators)
+                    clist <- c(clist, channels)
+                    
+                    for(chan in seq_along(pro@frameAggregators)){
+                        fmat[samp, channels[chan]] <-
+                            fmat[samp, channels[chan]] + 
+                                as.numeric(!pro@frameAggregators[[chan]]@passed)
+                    }
+                ## count the "global" qaProcesses    
+                }else{
+                    fmat[samp, "global"] <- fmat[samp, "global"] +
+                        as.numeric(!pro@summaryAggregator@passed)
+                    nrSum <- nrSum+1
+                }
+                slist <- c(slist, samp)
+                nrSamp <- nrSamp+1
+            }
+        }
+        colnames(mlist) <- c("sample", "frame", "number")
+        res[[i]] <- fmat
+        mapping[[i]] <- mlist
+        ## We want to sum up over qaProcesses for one panel
+        rtemp <- numeric(length(allChannels))
+        names(rtemp) <- allChannels
+        tc <- table(clist)/nrSamp
+        rtemp[names(tc)] <- tc
+        rtemp["global"] <- nrSum/nrSamp
+        ranges[[i]] <- rtemp
+    }
+    ## we also want an overall summary
+    sum <- res[[1]]
+    if(length(res)>1)
+        for(i in 2:length(res))
+            sum <- sum+res[[i]]
+    names(res) <- names(ranges) <- names(mapping) <- names(set)
+    return(new("qaProcessSummary", panels=res, summary=sum, ranges=ranges,
+               mapping=mapping))
+}

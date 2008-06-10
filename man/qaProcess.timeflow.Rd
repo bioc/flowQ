@@ -1,31 +1,21 @@
-\name{qaProcess.timeline}
-\alias{qaProcess.timeline}
+\name{qaProcess.timeflow}
+\alias{qaProcess.timeflow}
 
-\title{  Create QA process of type 'timeline' }
-
+\title{  Create QA process of type 'timeflow' }
 \description{
-  
    This function takes a \code{\link[flowCore]{flowSet}} as input and
-  creates all necessary output for a 'timeline' type QA process. Objects
-  created by this function can be laid out as HTML using
-  \code{\link{writeQAReport}}.
-  
+  creates all necessary output for a 'timeflow' type QA
+  process. Objects created by this function can be laid out as HTML
+  using \code{\link{writeQAReport}}.
 }
-
 \usage{
-
-qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
-  name="time line", sum.dimensions=NULL, det.dimensions=c(7,7))
-
+qaProcess.timeflow(set, outdir, cutoff=2, name="time flow",
+sum.dimensions=c(7,7), det.dimensions=c(7,7))
 }
-
 
 \arguments{
   
   \item{set}{ A \code{\link[flowCore]{flowSet}} }
-  
-  \item{channels}{ A character vector of channel names for which the
-    qaReport is to be produced }
   
   \item{outdir}{ The directory to which the graphical output is to be
     saved. If multiple QA processes are to be combined, make sure to use
@@ -44,15 +34,17 @@ qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
  }
  \details{
    
-  QA processes of type 'timeline' detect unusal patterns in the
-  acquisition of fluorescense and light scatter measurements over time.
+  QA processes of type 'timeflow' detect disturbances in the flow of
+  cells over time.
   
   For more details on how to layout \code{\link{qaProcess}} objects to
   HTML, see \code{\link{writeQAReport}} and \code{\link{qaReport}}.
   
 }
 \value{
+  
   An object of class \code{\link{qaProcess}}.
+  
 }
 
 \author{ Florian Hahne }
@@ -63,17 +55,17 @@ qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
 
   \code{\link{writeQAReport}}, \code{\link{qaReport}},
   \code{\link{qaProcess}}, \code{\link{qaProcess.marginevents}},
-  \code{\link{qaProcess.timeflow}}, \code{\link{qaProcess.cellnumber}}
+  \code{\link{qaProcess.timeline}}, \code{\link{qaProcess.cellnumber}}
 
 }
 
 
 \examples{
+
 \dontrun{
 data(GvHD)
-GvHD <- transform(GvHD, "FL1-H"=asinh(`FL1-H`), "FL2-H"=asinh(`FL2-H`))
 dest <- tempdir()
-qp <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=1)
+qp <- qaProcess.timeflow(GvHD, outdir=dest, cutoff=1)
 qp
 }
 

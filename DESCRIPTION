@@ -1,8 +1,8 @@
 Package: flowQ
 Type: Package
 Title: Qualitiy control for flow cytometry
-Version: 1.1.0
-Date: 2008-4-23
+Version: 1.1.2
+Date: 2008-6-09
 Author: R. Gentleman, F. Hahne, J. Kettman, N. Le Meur
 Maintainer: N. Le Meur <nlemeur@fhcrc.org>
 Description: Provides quality control and quality assessment tools for flow cytometry data. 

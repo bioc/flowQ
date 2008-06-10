@@ -5,12 +5,14 @@
 ## write method to create HTML output
 setMethod("writeLines", signature("binaryAggregator", "file", "missing"),
           function(text, con){
-              if(text@passed)
-                  writeLines(paste("<img class=\"QABinAggr\"",
-                                   " src=\"images/bulbGreen.png\">"), con)
-              else
-                  writeLines(paste("<img class=\"QABinAggr\"",
-                                   " src=\"images/bulbRed.png\">"), con) 
+              if(!is.na(text@passed)){
+                  if(text@passed)
+                      writeLines(paste("<img class=\"QABinAggr\"",
+                                       " src=\"images/bulbGreen.png\">"), con)
+                  else
+                      writeLines(paste("<img class=\"QABinAggr\"",
+                                       " src=\"images/bulbRed.png\">"), con)
+              }
           })
 
 ## display details about aggregator
@@ -64,8 +66,8 @@ setMethod("writeLines", signature("factorAggregator", "file", "missing"),
               fcol <- rep("lightgray", length(lx))
               fcol[match(text@x, lx)] <- col
               writeLines("<b>", con)
-              writeLines(paste("<span style=\"margin:0 3px; ",
-                               "color:", fcol, ";\">", lx,
+              writeLines(paste("<span class=\"QAFactAggr\" ",
+                               "style=\"color:", fcol, ";\">", lx,
                                "</span>", sep=""), con)
               writeLines("</b><br>", con)
           })
@@ -90,9 +92,9 @@ setMethod("show", signature("factorAggregator"),
 setMethod("writeLines", signature("stringAggregator", "file", "missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
-              writeLines(paste("<b><p style=\"margin:0 3px; ",
-                               "color:", col, ";\">", text@x,
-                               "</p></b>", sep=""), con)
+              writeLines(paste("<b><span class=\"QAStringAggr\" ",
+                               "style=\"color:", col, ";\">", text@x,
+                               "</span></b>", sep=""), con)
           })
 
 ## display details about aggregator
@@ -112,8 +114,8 @@ setMethod("show", signature("stringAggregator"),
 setMethod("writeLines", signature("numericAggregator", "file", "missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
-              writeLines(paste("<b><span style=\"margin:0 3px; ",
-                               "color:", col, ";\">", signif(text@x,2),
+              writeLines(paste("<b><span class=\"QANumAggr\" ",
+                               "style=\"color:", col, ";\">", signif(text@x,2),
                                "</span></b><br>", sep=""), con)
           })
 
@@ -162,3 +164,4 @@ setMethod("show", signature("aggregatorList"),
           function(object)
               cat("List of", length(object), "aggregators\n")
           )
+

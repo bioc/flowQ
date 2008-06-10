@@ -20,7 +20,8 @@ exportClasses("outlierResult",
               "qaGraph",
               "qaGraphList",
               "qaProcessFrame",
-              "qaProcess")
+              "qaProcess",
+              "qaProcessSummary")
 
 
 export("validProcess",
@@ -33,6 +34,8 @@ export("validProcess",
        "qaReport",
        "qaProcess.marginevents",
        "qaProcess.timeline",
+       "qaProcess.timeflow",
+       "qaProcess.cellnumber",
        "binaryAggregator",
        "discreteAggregator",
        "factorAggregator",
