@@ -6,7 +6,7 @@ setMethod("writeLines", signature("data.frame", "file", "missing"),
           function(text, con){
               modes <- sapply(text, mode)
               for(i in which(modes == "numeric"))
-                  text[,i] <-  round(text[,i],3)
+                  text[,i] <-  round(as.numeric(as.character(text[,i])),3)
               th <- paste("<th class=\"QAParameter\">",
                           colnames(text), "</th>", sep="")
               th[ncol(text)] <- gsub("QAParameter", "QAParameterRight", th[ncol(text)])
@@ -49,18 +49,20 @@ setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
           panels <- length(text@panels)
           ## we want a summary of all failed qaChecks across panels
           sumRanges <- text@ranges[[1]]
-          for(r in 2:panels)
-              sumRanges <- sumRanges + text@ranges[[r]]
+          if(panels>1)
+              for(r in 2:panels)
+                  sumRanges <- sumRanges + text@ranges[[r]]
           ## The bounding table: columns are panels, rows are samples
           writeLines("<table class=\"qaPanelBound\"><tr><td>", con)
           writeLines(paste("\n\n<table class=\"qaPanelSummary\" ",
                            "align=\"center\">"), con)
           writeLines(paste("<tr class=\"qaPanelSummaryEven\">\n<th ",
                            "class=\"qaPanelSummaryRight\">\n</th>"),con)
-          writeLines(paste("<th class=\"qaPanelSummaryRight\">\n<span ",
-                           "class=\"qaPanelSummary",
-                           "\">summary<span>\n</th>\n",
-                           paste("<th class=\"qaPanelSummaryTop\">",
+          if(panels>1)
+              writeLines(paste("<th class=\"qaPanelSummaryRight\">\n<span ",
+                               "class=\"qaPanelSummary",
+                               "\">summary<span>\n</th>\n", sep=""), con)
+          writeLines(paste(paste("<th class=\"qaPanelSummaryTop\">",
                                  "<a href=\"index", 1:panels, ".html\">",
                                  "panel ", 1:panels, "\n<br><span class=\"",
                                  "qaPanelSummarySub\">",
@@ -72,14 +74,16 @@ setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
               thisSamp <- samples[s]
               class <- ifelse((s %% 2)==0, "Even", "Odd") 
               ## first the summary over all pannels
+             
               writeLines(paste("\n<tr class=\"qaPanelSummary", class,
-                               "\">\n<th ",
-                               "class=\"qaPanelSummaryRight\">",    
-                               thisSamp,
-                               "</th>\n<td class=\"qaPanelSummarySum\">",
-                               sep=""), con)
-              writeLines(htmlBarplot(text@summary[s,], sumRanges, class=class), con)
-              writeLines("</td>", con)
+                               "\">\n<th ", "class=\"qaPanelSummaryRight\">",    
+                               thisSamp, "</th>\n", sep=""), con)
+              if(panels>1){
+                writeLines(paste("<td class=\"qaPanelSummarySum\">",
+                                 sep=""), con)
+                writeLines(htmlBarplot(text@summary[s,], sumRanges, class=class), con)
+                writeLines("</td>", con)
+              }
               ## now iterate over each pannel
               for(p in seq_len(panels)){
                   writeLines("<td class=\"qaPanelSummary\">", con)

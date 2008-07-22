@@ -52,6 +52,17 @@ evaluateProcess <- function(process, thresh, ...)
            process@frameProcesses <- lapply(process@frameProcesses, efun,
                                             thresh)    
        },
+           "cell number"=
+       {
+           efun <- function(x, c){
+               qaScore <- x@details$qaScore
+               x@summaryAggregator@passed <- qaScore<c
+               return(x)
+           }
+           process@frameProcesses <- lapply(process@frameProcesses, efun,
+                                            thresh)    
+       },
+           
            stop("Don't know how to deal with process of type '",  process@type,
                 "'", call.=FALSE)
            )

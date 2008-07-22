@@ -15,7 +15,8 @@
 \usage{
 
 qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
-  name="time line", sum.dimensions=NULL, det.dimensions=c(7,7))
+  name="time line", sum.dimensions=NULL, det.dimensions=c(7,7),
+  \dots)
 
 }
 
@@ -38,8 +39,10 @@ qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
   \item{name}{The name of the process used for the headings in the HTML
     output}
   
-   \item{sum.dimensions, det.dimensions}{The pdf dimensions used for the
-     summary and the detailed plots. }
+  \item{sum.dimensions, det.dimensions}{The pdf dimensions used for the
+    summary and the detailed plots. }
+
+  \item{\dots}{Further arguments.}
 
  }
  \details{

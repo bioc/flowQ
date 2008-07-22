@@ -19,18 +19,19 @@ myOpenHtmlPage <- function(name, title = "", path="../")
 writeQAReport  <- function(set, processes, outdir="./qaReport",
                            grouping=NULL, pagebreaks=TRUE)
 {
-    if(!is.list(set))
+    single <- FALSE
+    if(!is.list(set)){
         set <- list(set)
-    else{
-        if(! all(sapply(processes, is.list)) ||
-           ! length(set) == length(processes))
-            stop("Argument 'processes' must be a list of lists of ",
-                 "'qaProcess' objects for multiple panels")
-        sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
-        if(!sID)
-            warning("Some of the panels in 'set' don't have a global ",
-                    "sample identifier.\nUnable to create overview.")
+        single <- TRUE
     }
+    else if(! all(sapply(processes, is.list)) ||
+       ! length(set) == length(processes))
+        stop("Argument 'processes' must be a list of lists of ",
+             "'qaProcess' objects for multiple panels")
+    sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
+    if(!sID)
+        warning("Some of the panels in 'set' don't have a global ",
+                "sample identifier.\nUnable to create overview.")
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
                     "overwritten")
@@ -323,6 +324,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
 
     ## We create an overview page if we have multiple panels
     if(sID){
+        if(single)
+          processes <- list(processes)
         ifile <- "index"
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         on.exit(closeHtmlPage(con))
@@ -337,7 +340,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
 ## This is a very basic convenience function, for more complex experiments
 ## including panels use writeQAReport directly
 qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
-                     grouping=NULL)
+                     grouping=NULL, ...)
 {
     processes <- list()
     for(i in seq_along(qaFunctions)){
@@ -352,8 +355,9 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
              argLists[[i]]$grouping <- grouping
             processes[[i]] <- do.call(qaFunctions[i], argLists[[i]])
         }
+        save(processes, file=file.path(outdir, "processes.rda"))
     }
-    writeQAReport(set, processes, outdir)
+    writeQAReport(set, processes, outdir=outdir, grouping=grouping, ...)
 }
 
 

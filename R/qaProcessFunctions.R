@@ -13,7 +13,7 @@ guid <- function()
 ## by the standard deviation of the average number of margin events for a
 ## particular channel.
 qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
-                                   cFactor=1)
+                                   cFactor=1, ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -145,7 +145,7 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
 ## 'timeLinePlot'
 qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
                                name="time line",
-                               sum.dimensions=NULL, det.dimensions=c(7,7))
+                               sum.dimensions=NULL, det.dimensions=c(7,7), ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -247,7 +247,8 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
 
 ## Detect distrubances in the flow of cells over time
 qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
-                               sum.dimensions=c(7,7), det.dimensions=c(7,7))
+                               sum.dimensions=c(7,7), det.dimensions=c(7,7),
+                               ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -311,7 +312,8 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 
 ## Detect unusually low cell counts
 qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
-                                 name="cell number", sum.dimensions=c(7,7))
+                                 name="cell number", sum.dimensions=c(7,7),
+                                 ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))

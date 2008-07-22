@@ -10,22 +10,32 @@
 
 }
 \usage{
-qaReport(set, qaFunctions, outdir = "./qaReport", argLists, grouping = NULL)
+qaReport(set, qaFunctions, outdir = "./qaReport", argLists, grouping =
+NULL, \dots)
 }
 
 \arguments{
   \item{set}{ A \code{\link[flowCore]{flowSet}} }
+  
   \item{qaFunctions}{ A character vector of the names of QA process
-  functions to be used }
+    functions to be used }
+  
   \item{outdir}{ The directory to which the HTML report is to be
-  saved. }
+    saved. }
+  
   \item{argLists}{ lists of argument lists for each of the QA process
-  functions specified via \code{qaFunctions} }
+    functions specified via \code{qaFunctions} }
+  
   \item{grouping}{ A character scalar indicating a variable in the
-  \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
-  grouping factor in the output. }
+    \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
+    grouping factor in the output. }
+
+  \item{\dots}{Further arguments that are passed on to
+    \code{\link{writeQAReport}}.}
+  
 }
 \details{
+  
   This is a simple convenience function to produce HTML QA reports
   for a single \code{\link[flowCore]{flowSet}} given a list of QA
   process functions. For more fine-grained control use function 
