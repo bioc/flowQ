@@ -56,6 +56,8 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
     require("lattice")
     gid <- guid()
     tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     sfile <- file.path(tmp, "summary.pdf")
     pdf(file=sfile)
     col.regions=colorRampPalette(c("white",  "darkblue"))(256)
@@ -174,6 +176,8 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     cat("creating summary plots...")
     gid <- guid()
     tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     sfiles <- NULL
     summary <- vector(lp, mode="list")
     for(j in seq_len(lp)){
@@ -270,6 +274,8 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     cat("creating summary plots...")
     gid <- guid()
     tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
     sfile <- file.path(tmp, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
@@ -340,6 +346,8 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
     cat("creating summary plots...")
     gid <- guid()
     tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     cellNumbers <- as.numeric(fsApply(set, nrow))
     sfile <- file.path(tmp, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])

@@ -205,7 +205,7 @@ setMethod("initialize", "qaGraph",
                   ## get file information
                   if(!file.exists(imageDir))
                       dir.create(imageDir, recursive=TRUE)
-                  imageInfo <- strsplit(system(paste("identify", fileName),
+                  imageInfo <- strsplit(shell(paste("identify", shQuote(fileName)),
                                                intern=TRUE), " ")[[1]][1:3]
                   names(imageInfo) <- c("file", "type", "dimensions")
                   bname <- basename(gsub("\\..*$", "", fileName))
@@ -217,18 +217,18 @@ setMethod("initialize", "qaGraph",
                           newDims <-  dims*scaleFac
                   }
                   ft <- c("vectorized", "bitmap")
-                  cf <- file.path(imageDir, basename(fileName))
+                  cf <- file.path(getwd(), imageDir, basename(fileName))
                   
                   ## convert image to vectorized or bitmap version
                   if(tolower(imageInfo["type"])=="pdf"){
                       ## original image is vectorized
                       convType <- "jpg"
-                      newFileName <- file.path(imageDir, paste(bname, convType,
-                                                               sep="."))
+                      newFileName <- file.path(getwd(), imageDir, 
+                        paste(bname, convType, sep="."))
                       if(!file.exists(newFileName))
-                          system(paste("convert -resize", paste(newDims,
-                                                                collapse="x"),
-                                       fileName, newFileName))
+                          shell(paste("convert -resize", paste(newDims, 
+                            collapse="x"), shQuote(fileName), 
+                            shQuote(newFileName)))
                       type <- c("pdf", "jpg")
                       files <- c(cf, newFileName)
                       if(!file.exists(cf))
@@ -241,9 +241,9 @@ setMethod("initialize", "qaGraph",
                       if(!file.exists(newFileName))
                           system(paste("convert", fileName, newFileName))
                       if(!file.exists(cf))
-                          system(paste("convert -resize", paste(newDims,
+                          shell(paste("convert -resize", paste(newDims,
                                                                 collapse="x"),
-                                       fileName, cf))
+                                       shQuote(fileName), shQuote(cf)))
                       type <- c("pdf",tolower(imageInfo["type"]))
                       files <- c(newFileName, cf)
                   }
