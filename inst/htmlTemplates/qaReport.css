@@ -548,10 +548,10 @@ td.qaBarFailedOdd
       
 td.qaBarEmptyOdd
 {
-  background-color:#a8ccee; 
+  background-color:transparent; 
   width:20px; 
   height:20px;
-  border-top:2px solid #a8ccee;
+  border-top:2px solid transparent;
 }
 
 td.qaBarPassedEven
@@ -572,10 +572,10 @@ td.qaBarFailedEven
       
 td.qaBarEmptyEven
 {
-  background-color:#a8ccee; 
+  background-color:transparent; 
   width:20px; 
   height:20px;
-  border-top:2px solid #c9d8e5;
+  border-top:2px solid transparent;
 }
       
 th.qaBar

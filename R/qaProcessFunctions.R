@@ -20,9 +20,9 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
        stop("'set' needs to be of class 'flowSet'")
     frameIDs <- sampleNames(set)
     ls <- length(set)
-    if(is.null(channels))
+    if(is.null(channels)){
         parms <- setdiff(colnames(set[[1]]), c("time", "Time"))
-    else{
+    }else{
         if(!all(channels %in% colnames(set[[1]])))
             stop("Invalid channel(s)")
         parms <- channels
@@ -42,10 +42,8 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
     perc <- matrix(ncol=ls, nrow=lp, dimnames=list(parms, frameIDs))
     cat("computing margin events...")
     for(p in parms){
-        exp <- parse(text=paste("`", p, "`==", ranges[,p], sep="",
-                     collapse="|"))
-        attributes(exp) <- NULL
-        ef <- expressionFilter(exp, filterId=p)
+        ef <- char2ExpressionFilter(paste("`", p, "`==", ranges[,p], sep="",
+                     collapse="|"), filterId=p)
         ff <- filter(set, ef)
         perc[p,] <- sapply(ff, function(x) summary(x)$p)
         cat(".")

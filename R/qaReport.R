@@ -19,19 +19,22 @@ myOpenHtmlPage <- function(name, title = "", path="../")
 writeQAReport  <- function(set, processes, outdir="./qaReport",
                            grouping=NULL, pagebreaks=TRUE)
 {
+    ## We only need panel tabs if 'set' is a list of 'flowSets'
     single <- FALSE
     if(!is.list(set)){
         set <- list(set)
         single <- TRUE
-    }
-    else if(! all(sapply(processes, is.list)) ||
+    }else if(! all(sapply(processes, is.list)) ||
        ! length(set) == length(processes))
         stop("Argument 'processes' must be a list of lists of ",
              "'qaProcess' objects for multiple panels")
+
+    ## For the overview page, we need to match samples across panels
     sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
     if(!sID)
         warning("Some of the panels in 'set' don't have a global ",
                 "sample identifier.\nUnable to create overview.")
+    ## A lot of sanity checking up front
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
                     "overwritten")
@@ -62,9 +65,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
             grps <- pData(set[[s]])[, grouping]
         }
 
-        ## open a file connection
-        ##ifile <- ifelse(s==1, "index", paste("index", s, sep=""))   
-        ifile <- ifelse(sID, paste("index", s, sep=""), "index")
+        ## open a file connection  
+        ifile <- if(!sID && s==1) "index" else if(!sID)
+            paste("index", s-1, sep="") else  paste("index", s, sep="")
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         
         ## setup of table and table header row
@@ -84,10 +87,13 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     "<div class=\"QASumButton\" id=\"", pIDs, "_button",
                     "\" onClick=\"toggleImage('", pIDs, "')\">\n",
                     pNames, "\n</div>\n</th>", sep="")
-        esel <- sapply(process, function(x)  length(x@summaryGraph@fileNames))==0
-        th[esel] <- paste("<th class=\"QAHeader\" colspan=\"", nrAggr[esel], "\" ",
+        esel <- sapply(process, function(x)
+                       length(x@summaryGraph@fileNames))==0
+        th[esel] <- paste("<th class=\"QAHeader\" colspan=\"",
+                          nrAggr[esel], "\" ",
                           "id=\"", pIDs[esel], "_sumHeader\">\n",
-                          "<div class=\"QASumButton\" id=\"", pIDs[esel], "_button",
+                          "<div class=\"QASumButton\" id=\"", pIDs[esel],
+                          "_button",
                           "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
                           collapse="\n")
         th <- paste(th, collapse="\n")
@@ -289,8 +295,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         
         ## the page navigation
         writeLines(paste("<div class=\"QAPagesTile\"><table width=\"100%\"",
-                         " style=\"padding-right:35px;\"><tr><td align=\"left\">",
-                         sep=""), con)
+                         " style=\"padding-right:35px;\"><tr><td align=",
+                         "\"left\">", sep=""), con)
         if(lf>fpp){
             from <- c(seq(1, lf, fpp))
             nt <- length(from)
@@ -301,21 +307,24 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                              "</span>", sep=""), con)
         }
         np <- length(set)
+        iFiles <- if(!sID && np>1) c("", 1:(np-1)) else as.character(1:np)
         if(np>1){
             writeLines("</td><td align=\"right\">", con)
             panels <- paste("<span class=\"QAPanels\" id=\"panels_", 1:np,
                             "\"n><a class=\"QAPanels\" href=\"index",
-                            1:np, ".html\">Panel ",
+                            iFiles, ".html\">Panel ",
                             1:np, "</a></span>", sep="")
-            panels[s] <- gsub(paste("Panel", s),
-                              paste("Panel ", s, " <i><small>(",
-                                    names(set)[s],
-                                    ")</i></small>", sep=""),
-                              gsub("QAPanels","QAPanelsAct", panels[s]))
-            panels <- c(paste("<span class=\"QAPanels\" id=\"panels_0",
-                            "\"n><a class=\"QAPanels\" href=\"index",
-                              ".html\">Summary</a></span>", sep=""),
-                        panels)
+            if(!is.null(names(set)))
+                panels[s] <- gsub(paste("Panel", s),
+                                  paste("Panel ", s, " <i><small>(",
+                                        names(set)[s],
+                                        ")</i></small>", sep=""),
+                                  gsub("QAPanels","QAPanelsAct", panels[s]))
+            if(sID)
+                panels <- c(paste("<span class=\"QAPanels\" id=\"panels_0",
+                                  "\"n><a class=\"QAPanels\" href=\"index",
+                                  ".html\">Summary</a></span>", sep=""),
+                            panels)
             writeLines(panels, con) 
         }
         writeLines("</td></tr></table></div>", con)  
