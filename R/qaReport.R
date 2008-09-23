@@ -434,8 +434,10 @@ failedProcesses <- function(processes, set)
         ## We want to sum up over qaProcesses for one panel
         rtemp <- numeric(length(allChannels))
         names(rtemp) <- allChannels
-        tc <- table(clist)/nrSamp
-        rtemp[names(tc)] <- tc
+        if(!is.null(clist)){
+            tc <- table(clist)/nrSamp
+            rtemp[names(tc)] <- tc
+        }
         rtemp["global"] <- nrSum/nrSamp
         ranges[[i]] <- rtemp
     }
