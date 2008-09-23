@@ -206,8 +206,10 @@ setMethod("initialize", "qaGraph",
                   ## get file information
                   if(!file.exists(imageDir))
                       dir.create(imageDir, recursive=TRUE)
-                  imageInfo <- strsplit(sysFun(paste("identify", shQuote(fileName)),
-                                               intern=TRUE), " ")[[1]][1:3]
+                  iInf <- gsub(paste(fileName, " ", sep=""), "",
+                               sysFun(paste("identify", shQuote(fileName)),
+                                      intern=TRUE))
+                  imageInfo <- c(fileName, strsplit(iInf, " ")[[1]][1:2])
                   names(imageInfo) <- c("file", "type", "dimensions")
                   bname <- basename(gsub("\\..*$", "", fileName))
                   dims <- as.numeric(strsplit(imageInfo["dimensions"],"x")[[1]])

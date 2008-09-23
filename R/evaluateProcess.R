@@ -28,7 +28,7 @@ evaluateProcess <- function(process, thresh, ...)
                s <- x@details$s
                for(i in 1:length(x@frameAggregators)){
                    x@frameAggregators[[i]]@passed <-
-                       sums[i] < m[i]+s[i]*c & sums[i] > m[i]-s[i]*c
+                       sums[i] <= m[i]+s[i]*c & sums[i] >= m[i]-s[i]*c
                    x@frameAggregators[[i]]@x <- sums[i]
                }
                nfail <- !sapply(x@frameAggregators, slot, "passed")

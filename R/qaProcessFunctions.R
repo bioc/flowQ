@@ -103,7 +103,7 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
             s <- sd(perc[j,grps[[thisGrp]]])
             if(is.na(s))
                 s <- sd(perc[j,])
-            passed <- perc[j,i] < m+s*cFactor & perc[j,i] > m-s*cFactor
+            passed <- perc[j,i] <= m+s*cFactor & perc[j,i] >= m-s*cFactor
             mv <- c(mv, m)
             sv <- c(sv,s)
             agTmp[[j]] <- new("rangeAggregator", passed=passed,
