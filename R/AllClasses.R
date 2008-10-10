@@ -206,9 +206,10 @@ setMethod("initialize", "qaGraph",
                   ## get file information
                   if(!file.exists(imageDir))
                       dir.create(imageDir, recursive=TRUE)
-                  iInf <- gsub(paste(fileName, " ", sep=""), "",
-                               sysFun(paste("identify", shQuote(fileName)),
+			fn <- basename(fileName)
+			inf <- basename(sysFun(paste("identify", shQuote(fileName)),
                                       intern=TRUE))
+                  iInf <- gsub(paste(".*", fn, " ", sep=""), "", inf)
                   imageInfo <- c(fileName, strsplit(iInf, " ")[[1]][1:2])
                   names(imageInfo) <- c("file", "type", "dimensions")
                   bname <- basename(gsub("\\..*$", "", fileName))
@@ -220,7 +221,7 @@ setMethod("initialize", "qaGraph",
                           newDims <-  dims*scaleFac
                   }
                   ft <- c("vectorized", "bitmap")
-                  cf <- file.path(getwd(), imageDir, basename(fileName))
+                  cf <- file.path(imageDir, fn)
                   
                   ## convert image to vectorized or bitmap version
                   if(tolower(imageInfo["type"])=="pdf"){
@@ -242,7 +243,7 @@ setMethod("initialize", "qaGraph",
                       newFileName <- file.path(imageDir, paste(bname, convType,
                                                                sep="."))
                       if(!file.exists(newFileName))
-                          system(paste("convert", fileName, newFileName))
+                          sysFun(paste("convert", fileName, newFileName))
                       if(!file.exists(cf))
                           sysFun(paste("convert -resize", paste(newDims,
                                                                 collapse="x"),
