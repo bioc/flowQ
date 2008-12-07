@@ -10,7 +10,7 @@
 }
 \usage{
 qaProcess.timeflow(set, outdir, cutoff=2, name="time flow",
-sum.dimensions=c(7,7), det.dimensions=c(7,7), \dots)
+sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
 }
 
 \arguments{
@@ -30,8 +30,11 @@ sum.dimensions=c(7,7), det.dimensions=c(7,7), \dots)
   
    \item{sum.dimensions, det.dimensions}{The pdf dimensions used for the
      summary and the detailed plots. }
-
-    \item{\dots}{Further arguments.}
+   
+   \item{pdf}{Create vectorized versions of images for this quality
+     process.}
+   
+   \item{\dots}{Further arguments.}
 
  }
  \details{

@@ -10,7 +10,7 @@
 }
 \usage{
 qaProcess.marginevents(set, channels = NULL, grouping=NULL, outdir,
-cFactor = 1, \dots)
+cFactor = 1, pdf=TRUE, \dots)
 }
 
 \arguments{
@@ -33,6 +33,9 @@ cFactor = 1, \dots)
     have failed. This is the fold change of margin event percentages
   compared to the median percentage of events for the respective
   channel.}
+
+ \item{pdf}{Create vectorized versions of images for this quality
+   process.}
 
   \item{\dots}{Further arguments.}
 

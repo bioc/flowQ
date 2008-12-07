@@ -15,7 +15,7 @@
 \usage{
 
 qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=0.5,
-   name="cell number", sum.dimensions=c(7,7), \dots)
+   name="cell number", sum.dimensions=c(7,7), pdf=TRUE, \dots)
 
 }
 
@@ -41,6 +41,9 @@ qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=0.5,
   
    \item{sum.dimensions}{The pdf dimensions used for the
      summary. }
+   
+   \item{pdf}{Create vectorized versions of images for this quality
+     process.}
    
    \item{\dots}{Further arguments.}
    

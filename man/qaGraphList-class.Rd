@@ -10,11 +10,11 @@
 \section{Objects from the Class}{ Objects should be created using the
   constructor:
 
-  \code{qaGraphList(imageFiles, imageDir, width)},  where
+  \code{qaGraphList(imageFiles, imageDir, width, pdf=TRUE)}, where
   \code{imageFiles} are paths to image files, imageDir is the
-  destination  path for the
-  images and \code{width} is the final width to which the bitmap images
-  are converted.
+  destination path for the images and \code{width} is the final width to
+  which the bitmap images are converted. \code{pdf} can be used to
+  toggle the generation of vectorized versions of the images.
 
 }
 \section{Slots}{

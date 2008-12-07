@@ -15,7 +15,7 @@
 \usage{
 
 writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL,
-pagebreaks = TRUE)
+pagebreaks = TRUE, pdf=TRUE)
 
 }
 
@@ -37,7 +37,12 @@ pagebreaks = TRUE)
     grouping factor in the output.}
 
    \item{pagebreaks}{ A logical indicating whether the output should be
-   on one long page, or split on several pages.}
+     on one long page, or split on several pages.}
+   
+   \item{pdf}{ A logical indicating whether vectorized versions of the
+     images should be included. Setting this to \code{TRUE} implies that
+     the individual QA processes have also been created with setting
+     \code{pdf=TRUE}. }
 
 }
 
@@ -60,7 +65,11 @@ pagebreaks = TRUE)
   
 }
 \value{
-  The function is called for it's side effects
+  
+  The function is mostly called for it's side effects, that is, the
+  generation of a HTML quality report in \code{outdir}. A URL to an
+  entry point for browsing of the report is returned.
+  
 }
 
 
@@ -76,9 +85,9 @@ dest <- tempdir()
 qp1 <- qaProcess.timeline(GvHD, channel="FL1-H", outdir=dest, cutoff=1)
 qp2 <- qaProcess.marginevents(GvHD, channels=c("FL1-H", "FL2-H"),
   outdir=dest, cFactor=4)
-writeQAReport(GvHD, processes=list(qp1, qp2), outdir=dest,
+url <- writeQAReport(GvHD, processes=list(qp1, qp2), outdir=dest,
   grouping="Patient")
-browseURL(file.path(dest, "index.html"))
+browseURL(url)
 }
 }
 

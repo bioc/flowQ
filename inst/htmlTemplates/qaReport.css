@@ -80,13 +80,21 @@ img.QASummary
   background-color:transparent;
   margin:20px 0px;
   padding:3px;
-  display:none;
-  
+  display:none; 
 }
+
 img.QASummary:hover
 {
   background-color:#76ade0;
   cursor:pointer;
+}
+
+img.QASummaryNolink
+{
+  background-color:transparent;
+  margin:20px 0px;
+  padding:3px;
+  display:none; 
 }
 
 table.QAParameter
@@ -306,6 +314,14 @@ img.QASumGraph
   
 }
 
+img.QASumGraphNolink
+{ 
+  margin:5px;
+  padding:3px;
+  display:none;
+  
+}
+
 img.QASumGraph:hover
 {
   background-color:#76ade0;
@@ -313,6 +329,13 @@ img.QASumGraph:hover
 }
 
 img.QADetGraph
+{
+  margin:5px;
+  padding:3px;
+  display:none;
+}
+
+img.QADetGraphNolink
 {
   margin:5px;
   padding:3px;

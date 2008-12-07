@@ -14,10 +14,22 @@ myOpenHtmlPage <- function(name, title = "", path="../")
     return(con)
 }
 
+## include links to pdf versions of images if pdf=TRUE
+pdfLink <- function(vimg, bimg, class, id, pdf=TRUE)
+{
+    if(pdf)
+        paste("<a href='", vimg,  "' target='QAdetails'>\n<img class='", class,
+              "' src='", bimg, "' id='img_", id, "'>\n</a>\n", sep="")
+    else
+        paste("<img class='", class, "Nolink' src='", bimg, "' id='img_", id, "'>\n",
+              sep="")
+}
+
 
 ## create HTML report for (lists of) QA processes 
 writeQAReport  <- function(set, processes, outdir="./qaReport",
-                           grouping=NULL, pagebreaks=TRUE)
+                           grouping=NULL, pagebreaks=TRUE,
+                           pdf=TRUE)
 {
     ## We only need panel tabs if 'set' is a list of 'flowSets'
     single <- FALSE
@@ -54,14 +66,16 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
     ## iterate over panels
     for(s in seq_along(set)){
         
-        ## rearange set according to grouping
+        ## rearange set according to grouping if necessary
         grps <- NULL
         if(!is.null(grouping)){
             if(!is.character(grouping) ||
                !grouping %in% varLabels(phenoData(set[[s]])))
                 stop("'grouping' must be a factor variable in the flowSet ",
                      "phenoData")
-            set[[s]] <- set[[s]][order(pData(set[[s]])[, grouping])]
+            sord <- order(pData(set[[s]])[, grouping])
+            if(!all(sord==seq_len(length(set[[s]]))))
+                set[[s]] <- set[[s]][sord]
             grps <- pData(set[[s]])[, grouping]
         }
 
@@ -105,11 +119,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                          "flow set details\n</div>\n</th>",  
                          "</th>\n", th, "\n</tr>", sep=""), con)
         td <- paste("<td class=\"QASummary\" colspan=\"", nrAggr, "\"",
-                    " id=\"", pIDs, "_sumBack\">\n<a href=\"",
-                    sumVecLinks, "\" target=\"QAdetails\">\n",
-                    "<img class=\"QASummary\" src=\"", sumLinks, "\"",
-                    " id=\"img_", pIDs, "\">\n</a>\n</td>", sep="",
-                    collapse="\n")
+                    " id=\"", pIDs, "_sumBack\">\n",
+                    pdfLink(sumVecLinks, sumLinks, "QASummary", pIDs, pdf=pdf),
+                    "</td>", sep="", collapse="\n")
         writeLines(paste("<tr class=\"QASummary\">\n<th class=\"QASummary\">",
                          "<span id=\"img_parms\" style=\"display:none;\">",
                          sep=""), con)
@@ -263,10 +275,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     sGraph <- file.path(relBase[p],
                                         names(thisProcess@summaryGraph))
                     sVecGraph <- gsub("\\..*$", ".pdf", sGraph)
-                    writeLines(paste("<a href=\"", sVecGraph, "\" target=\"",
-                                     "QAdetails\">\n<img class=\"QASumGraph\" ",
-                                     "src=\"", sGraph, "\" id=\"img_", sid,
-                                     "\">\n</a>", sep=""), con)
+                    writeLines(pdfLink(sVecGraph, sGraph, "QAdetails", sid,
+                                       pdf=pdf), con)
                 }
                 writeLines("</td>", con)
                 for(d in seq_along(thisProcess@frameAggregators)){
@@ -278,11 +288,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                         fGraph <- file.path(relBase[p],
                                             names(thisProcess@frameGraphs[[d]]))
                         fVecGraph <- gsub("\\..*$", ".pdf", fGraph)
-                        writeLines(paste("<a href=\"",
-                                         fVecGraph, "\" target=\"",
-                                         "QAdetails\">\n<img class=\"QADetGraph\" ",
-                                         "src=\"", fGraph, "\" id=\"img_", id,
-                                         "\">\n</a>", sep=""), con)
+                        writeLines(pdfLink(fVecGraph, fGraph, "QADetGraph", id,
+                                           pdf=pdf), con)
                     }
                     writeLines("</td>", con)
                 }## end for d
@@ -341,6 +348,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         summary <- failedProcesses(processes, set)
         writeLines(summary, con)
     }
+    return(file.path(outdir, "index.html"))
 }
 
 

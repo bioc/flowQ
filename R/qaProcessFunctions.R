@@ -13,7 +13,7 @@ guid <- function()
 ## by the standard deviation of the average number of margin events for a
 ## particular channel.
 qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
-                                   cFactor=1, ...)
+                                   cFactor=1, pdf=TRUE, ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -64,7 +64,7 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
                     col.regions=col.regions))
     dev.off()
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## deal with groups if there are any
     frameProcesses <- list()
@@ -118,7 +118,7 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
         if(sum(nfail)==0)
             val <- factor(1)
         ba <- new("discreteAggregator", x=val)
-        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150)
+        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150, pdf=pdf)
         fid <- frameIDs[i]
         frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
                                                 summaryAggregator=ba,
@@ -145,7 +145,8 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
 ## 'timeLinePlot'
 qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
                                name="time line",
-                               sum.dimensions=NULL, det.dimensions=c(7,7), ...)
+                               sum.dimensions=NULL, det.dimensions=c(7,7),
+                               pdf=TRUE, ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -195,7 +196,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp))
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp), pdf=pdf)
 
     ## create graphs and aggregators for each frame and channel
     frameIDs <- sampleNames(set)
@@ -227,7 +228,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
             val <- factor(1)
         ba <- new("discreteAggregator", x=val)
         fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
-                               width=min(220, lp*120))
+                               width=min(220, lp*120), pdf=pdf)
         fid <- frameIDs[i]
         dr <- lapply(seq_len(lp), function(x) attr(summary[[x]], "raw")[[i]])
         frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
@@ -250,7 +251,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
 ## Detect distrubances in the flow of cells over time
 qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
                                sum.dimensions=c(7,7), det.dimensions=c(7,7),
-                               ...)
+                               pdf=TRUE, ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -281,7 +282,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
                             varCut=cutoff, type="frequency")
     dev.off()
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## create graphs and aggregators for each frame and wrap in object
     frameIDs <- sampleNames(set)
@@ -298,7 +299,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
                      varCut=cutoff)
         dev.off()
         ba <- new("binaryAggregator", passed=summary[i]<=0)
-        fg <- qaGraph(fileName=tfile, imageDir=idir, width=220)
+        fg <- qaGraph(fileName=tfile, imageDir=idir, width=220, pdf=pdf)
         fid <- frameIDs[i]
         frameProcesses[[fid]] <-
             qaProcessFrame(fid, ba, fg, details=list(qaScore=sum))
@@ -317,7 +318,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 ## Detect unusually low cell counts
 qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
                                  name="cell number", sum.dimensions=c(7,7),
-                                 ...)
+                                 pdf=TRUE, ...)
 {
     ## some sanity checking
     if(!is(set, "flowSet"))
@@ -356,7 +357,7 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
     abline(h=mean(cellNumbers), lty=3, lwd=2)
     dev.off()
     idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## create aggregators for each frame and wrap in object
     frameIDs <- sampleNames(set)

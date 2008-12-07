@@ -16,7 +16,7 @@
 
 qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
   name="time line", sum.dimensions=NULL, det.dimensions=c(7,7),
-  \dots)
+  pdf=TRUE, \dots)
 
 }
 
@@ -41,7 +41,10 @@ qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
   
   \item{sum.dimensions, det.dimensions}{The pdf dimensions used for the
     summary and the detailed plots. }
-
+  
+  \item{pdf}{Create vectorized versions of images for this quality
+    process.}
+  
   \item{\dots}{Further arguments.}
 
  }

@@ -50,6 +50,14 @@ to create your own QA process modules.
 library(flowQ)
 @
 
+\section{Installation}
+The \Rpackage{flowCore} package can be installed using Bioconductor's
+\Rfunction{biocLite} function, making sure that all R dependencies are
+met. In addition, the \Rpackage{ImageMagick} library has to be
+installed on your system and its binaries have to be available in the
+system path. \Rpackage{ImageMagick} can be downloaded from
+\url{http://www.imagemagick.org}. On Debian linux systems, the command
+\Robject{sudo apt-get install imagemagick} usually works.
 
 \section{Basic idea of \Rpackage{flowQ}'s QA reports}
 In \Rpackage{flowCore}, flow cytometry data is organized in

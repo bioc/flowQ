@@ -191,9 +191,26 @@ setClass("qaGraph",
                         dimensions="matrix",
                         types="character",
                         id="character"))
-         
+
+## ImageMagick is very particular about how to specify a path. This function
+## tries to accomodate all possible inputs (realtive and absolute)
+## FIXME: Need to make sure this also works for windows.
+constructPath <- function(path){
+    curDir <- getwd()
+    curDirSplt <- strsplit(curDir, "[/\\]")[[1]]
+    pathSplt <-  strsplit(path, "[/\\]")[[1]]
+    common <- suppressWarnings(min(which(curDirSplt != pathSplt)))
+    if(common==1)
+        file.path(curDir, path)
+    else
+        file.path(paste(curDirSplt[1:(common-1)], collapse=.Platform$file.sep,
+                        sep=""), paste(pathSplt[common:length(pathSplt)],
+                                       collapse=.Platform$file.sep, sep=""))
+}
+
+
 setMethod("initialize", "qaGraph",
-          function(.Object, fileName, imageDir, width=NULL, empty=FALSE){
+          function(.Object, fileName, imageDir, width=NULL, empty=FALSE, pdf=TRUE){
               sysFun <- if(.Platform$OS.type=="windows") shell else system
               if(!empty){
                   ## check arguments
@@ -227,28 +244,28 @@ setMethod("initialize", "qaGraph",
                   if(tolower(imageInfo["type"])=="pdf"){
                       ## original image is vectorized
                       convType <- "jpg"
-                      newFileName <- file.path(getwd(), imageDir, 
-                        paste(bname, convType, sep="."))
+                      newPath <- constructPath(imageDir)                      
+                      newFileName <- file.path(newPath, paste(bname, convType, sep="."))
                       if(!file.exists(newFileName))
                           sysFun(paste("convert -resize", paste(newDims, 
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
-                      type <- c("pdf", "jpg")
+                      type <- c(ifelse(pdf, "pdf", NA), "jpg")
                       files <- c(cf, newFileName)
-                      if(!file.exists(cf))
+                      if(!file.exists(cf) && pdf)
                           file.copy(fileName, cf)
                   }else{
                       ## original image is bitmap
                       convType <- "pdf"
                       newFileName <- file.path(imageDir, paste(bname, convType,
                                                                sep="."))
-                      if(!file.exists(newFileName))
+                      if(!file.exists(newFileName) && pdf)
                           sysFun(paste("convert", fileName, newFileName))
                       if(!file.exists(cf))
                           sysFun(paste("convert -resize", paste(newDims,
                                                                 collapse="x"),
                                        shQuote(fileName), shQuote(cf)))
-                      type <- c("pdf",tolower(imageInfo["type"]))
+                      type <- c(ifelse(pdf, "pdf", NA), tolower(imageInfo["type"]))
                       files <- c(newFileName, cf)
                   }
                   ## fill qaGraph object
@@ -280,13 +297,13 @@ setClass("qaGraphList",
          contains="list")
 
 setMethod("initialize", "qaGraphList",
-          function(.Object, imageFiles, imageDir, width=NULL) {
+          function(.Object, imageFiles, imageDir, width=NULL, pdf=TRUE) {
               if(!all(file.exists(imageFiles)))
                   stop("'imageFiles' must be character vector of ",
                        "paths to image files")
               
               input <- lapply(imageFiles, qaGraph, imageDir=imageDir,
-                              width=width)
+                              width=width, pdf=pdf)
               .Object@.Data=input
               return(.Object)
           })
