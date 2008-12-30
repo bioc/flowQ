@@ -275,7 +275,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     sGraph <- file.path(relBase[p],
                                         names(thisProcess@summaryGraph))
                     sVecGraph <- gsub("\\..*$", ".pdf", sGraph)
-                    writeLines(pdfLink(sVecGraph, sGraph, "QAdetails", sid,
+                    writeLines(pdfLink(sVecGraph, sGraph, "QASumGraph", sid,
                                        pdf=pdf), con)
                 }
                 writeLines("</td>", con)
