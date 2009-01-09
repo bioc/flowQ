@@ -137,8 +137,6 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
 }    
 
 
-
-
 ## QA process indicating strange patterns in signal intensity over time.
 ## This is done for all channels at once now, with drilldown to the separate
 ## channel results. The cutoff is the variance cutoff used directly in function
@@ -313,8 +311,6 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 }    
 
 
-
-
 ## Detect unusually low cell counts
 qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
                                  name="cell number", sum.dimensions=c(7,7),
@@ -382,6 +378,335 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
 }    
 
 
+multiSampleStats <- function(flowList,channels,func)
+{ 
+	alqLen<-length(flowList)
+	if(is.null(channels))
+		stop("Please specify the parameters to be compared")
+	if(!all(channels %in% colnames(flowList[[1]])))
+		stop("Invalid channel(s)")
+	res<-data.frame()
+	for( i in seq_len(alqLen))
+	{ 
+	    alqNo<-rep(i,length(flowList[[i]]))
+	    temp1<-fsApply(flowList[[i]][,channels[1]],each_col,func)
+	    temp2<-fsApply(flowList[[i]][,channels[2]],each_col,func)
+	    newres<-data.frame(alqNo,temp1, temp2, patientID=rownames(temp1),check.names=FALSE)
+	    res<-rbind(res,newres)
+	}
+	rownames(res)<-NULL
+	patientID=sampleNames(flowList[[1]])
+	formula<-paste("`",channels[1],"`"," ", "~"," ","`",channels[2],"`","|","patientID",sep="")
+	
+	graph<-xyplot(eval(parse(text=formula)),data=res, 
+		    auto.key=list(space="right"),
+		    par.settings = simpleTheme(col=1:alqLen),
+		    groups=alqNo, type="p")
+	
+	return(list(graph=graph,stats=res))
+}
+
+
+qaProcess.summaryOutLiers <- function(flowList, channels=c("FSC-A","SSC-A"),
+                             outdir="QAReport",cutoff=4,func=median,
+                             det.dimensions=c(300,300),pdf=FALSE,...)
+	{
+	if(!is(flowList, "list"))
+		stop("'flowList' needs to be of class 'List'")
+	
+	if(!is(flowList[[1]], "flowSet"))
+		stop("'flowList' needs to be a List of flowSets")
+	
+	if(!all(channels %in% colnames(flowList[[1]])))
+		stop("Invalid channel(s)")
+	
+	if(!is.character(outdir) || length(outdir)!=1)
+		stop("'outdir' must be a valid file path")
+	
+	if(!is.numeric(cutoff) || length(cutoff)!=1)
+		stop("'cutoff' must be numeric scalar")
+	
+	cat("creating summary plots...")
+	summary<-multiSampleStats(flowList,channels=channels,func)
+	cn <- levels(summary$stat[,4])
+	colScheme<-list()
+	thecol=""
+	panelFlag=rep(FALSE,length(cn))
+	outLierFlag<-rep(FALSE,nrow(summary$stat))
+	nonOutLierCount=rep(0,length(cn))   
+	summary$stat<-cbind(summary$stat,outLierFlag)
+	
+	for( i in seq_len(length(cn)))
+	{
+		subset <- summary$stats[summary$stats$patientID==cn[i], 2:3] 
+		res<-sign2(subset)
+		panelFlag[i]=all(res$x.dist<=cutoff)
+		nonOutLierCount[i]<-sum(res$x.dist>cutoff)
+		indx<-which(summary$stat$patientID==cn[i])
+		val<-res$x.dist>cutoff
+		summary$stat$outLierFlag[indx]<-val
+		cat(".")
+	}
+	gid <- guid()
+	tmp <- tempdir()
+	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+	
+	formula<-paste("`",channels[1],"`"," ", "~"," ","`",channels[2],"`","|",colnames(summary$stat)[4],sep="")
+	grph<-xyplot( eval(parse(text=formula)),data<-summary$stat,groups=summary$stat[,5],col=c("black","red"))
+	
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
+	print(grph)
+	dev.off()
+
+	idir <- file.path(outdir, "images", gid)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350,pdf=pdf)
+	
+        frameProcesses <- list()
+	cat("\nCreating frame plots...")
+	ls <- length(cn)
+	for(i in seq_len(ls))
+	{  
+		fid <- cn[i]
+		tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+		jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+		print(update(grph, index.cond = list(i))) 
+		dev.off()
+		fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
+		agTmp <- new("numericAggregator", passed=panelFlag[i],x=nonOutLierCount[i])
+		frameProcesses[[fid]] <- qaProcessFrame(fid, agTmp, fGraph)
+		cat(".")
+	} 
+	output<-qaProcess(id=gid, 
+			name=paste(channels[1]," / ",channels[2]," ",substitute(func),sep=""),
+			type=paste(channels[1]," / ",channels[2], " Comparision" ,sep=""),
+			summaryGraph=sgraph, 
+			frameProcesses=frameProcesses)
+	return(output)
+}	
+
+
+qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
+		outdir="QAReport",cutoff=0.11,det.dimensions=c(300,300),
+                func=euc,pdf=FALSE,...)
+{   
+	if(!is(flowList, "list"))
+		stop("'flowList' needs to be of class 'List'")
+	
+	if(!is(flowList[[1]], "flowSet"))
+		stop("'flowList' needs to be a List of flowSets")
+	
+	if(!all(channel %in% colnames(flowList[[1]])))
+		stop("Invalid channel")
+	
+	if(length(channel)!=1)
+	{
+		stop("Only one channel is to be specified")
+	}
+	
+	if(!is.character(outdir) || length(outdir)!=1)
+		stop("'outdir' must be a valid file path")
+	
+	if(!is.numeric(cutoff) || length(cutoff)!=1)
+		stop("'cutoff' must be numeric scalar")
+	
+	cat("creating summary plots...")
+	gid <- guid()
+	tmp <- tempdir()
+	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+	alqLen<-length(flowList)
+	patientID=sampleNames(flowList[[1]])
+	panelFlag=FALSE
+	tempgrph<-list()
+	tempDist<-list()
+	formula<-paste("~","`",channel[1],"`","|","Patient",sep="")
+	
+	ymax<-0
+	xmax<-0
+	xmin<-100000
+	
+	for( i in patientID)
+	{   res<-data.frame()
+	    tempStat<-matrix(ncol=256,nrow=alqLen)
+	    for(j in seq_len(alqLen))			
+	    {   
+		value=exprs(flowList[[j]]@frames[[i]][,channel])
+		newres<-data.frame(Patient=rep(i,nrow(value)),
+                                   Aliquot=rep(j,nrow(value)),
+				   data=value,check.names=FALSE)
+		res<-rbind(res,newres)
+                valRange<-range(value)
+                if(xmax<valRange[2])
+		    xmax<-valRange[2]
+		if(xmin> valRange[1])
+		    xmin<-valRange[1]
+                
+                tempStat[j,]<- density(value,n=256,from=valRange[1],to=valRange[2])$y
+		yrng<-range(tempStat[j,])[2]
+		if(yrng>ymax)
+		    ymax<-yrng
+	    }
+		tempDist[[i]]<-sum(euc(tempStat))
+		tempgrph[[i]]<-densityplot(eval(parse(text=formula)),data=res,groups=Aliquot,plot.points=FALSE)
+		cat(".")
+	}
+	
+	xrange<-c(0.9*xmin,1.1*xmax)
+	
+        grph<-densityplot(~x|patientID, 
+			  data = list(patientID = factor(names(tempgrph),
+			  levels = names(tempgrph)),x = seq_along(tempgrph)), 
+			  xlim =xrange,ylim=c(0,1.1*ymax),
+			  xlab=as.character(channel[1]),
+			  key=simpleKey(text=as.character(1:alqLen),space="right"),
+			  panel = function(x, y, plot.list) {
+			      do.call(panel.densityplot, trellis.panelArgs(tempgrph[[x]], 1))
+			      }
+			  )	
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
+	print(grph)
+	dev.off()
+	
+	idir <- file.path(outdir, "images", gid)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350,pdf=pdf)
+	frameProcesses <- list()
+	cat("\nCreating frame plots...")
+	
+	ls <- length(patientID)
+	for(i in seq_len(ls))
+	{  
+	    fid <- patientID[i]
+	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+	    jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+	    print(update(grph, index.cond = list(i)))   
+	    dev.off()
+	    fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
+	    panelFlag<-tempDist[fid]<=cutoff
+	    agTmp <- new("binaryAggregator", passed=panelFlag)
+	    frameProcesses[[fid]] <- qaProcessFrame(fid, agTmp,fGraph)
+	    cat(".")
+	} 
+	output<-qaProcess(id=gid, 
+			name=paste(channel[1],"  Densityplot",sep=""),
+			type=paste(channel[1],"  Densityplot" ,sep=""),
+			summaryGraph=sgraph, 
+			frameProcesses=frameProcesses)	
+	return(output)
+}
+
+qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport",
+				   cutoff=0.5,det.dimensions=c(300,300),
+                                   func=euc,pdf=FALSE, ...)
+{
+	if(!is(flowList, "list"))
+		stop("'flowList' needs to be of class 'List'")
+
+	if(!is(flowList[[1]], "flowSet"))
+		stop("'flowList' needs to be a List of flowSets")
+
+	if(!all(channel %in% colnames(flowList[[1]])))
+		stop("Invalid channel")
+
+	if(length(channel)!=1)
+	{
+		stop("Only one channel is to be specified")
+	}
+	
+	if(!is.character(outdir) || length(outdir)!=1)
+		stop("'outdir' must be a valid file path")
+
+	if(!is.numeric(cutoff) || length(cutoff)!=1)
+		stop("'cutoff' must be numeric scalar")
+
+	cat("creating summary plots...")
+	colScheme<-list()
+	gid <- guid()
+	tmp <- tempdir()
+	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+
+	alqLen<-length(flowList)
+	patientID=sampleNames(flowList[[1]])
+	panelFlag=FALSE
+	nonOutLierCount=0
+	tempgrph<-list()
+	tempDist<-list()
+	formula<-paste("~","`",channel[1],"`","|","Patient",sep="")
+	pointCount<-120
+	p<-ppoints(pointCount)
+	q<-matrix(ncol=pointCount,nrow=alqLen)
+	tempStat<-list()
+	
+        xmax<-0
+        xmin<-100000
+        for( i in patientID)
+	{   res<-data.frame()
+	    for(j in seq_len(alqLen))
+	    {
+		value=exprs(flowList[[j]]@frames[[i]][,channel])
+		newres<-data.frame(Patient=rep(i,nrow(value)),
+				  Aliquot=rep(j,nrow(value)),
+				  data=value,check.names=FALSE)
+		res<-rbind(res,newres)
+                frameID<-paste(i,j,sep="_")
+		q[j,]<-quantile(value,probs=p,names=FALSE) 
+
+	    }
+            tempRange<-range(res[channel])
+            if(xmax<tempRange[2])
+		xmax<-tempRange[2]
+	    if(xmin> tempRange[1])
+		xmin<-tempRange[1]                
+        
+	    tempgrph[[i]]<-ecdfplot(eval(parse(text=formula)),data=res,groups=Aliquot,plot.points=FALSE)
+    	    tempStat[[i]]<-sum(euc(q))
+	    cat(".")
+	}
+	xrange<-c(0.9*xmin,1.1*xmax)
+	maxres<-range(tempStat)[2]
+	nres<-lapply(tempStat,function(x){x/maxres})  
+	flag<-rep(TRUE,length(patientID))
+	flag[which(nres>cutoff)]<-FALSE
+
+        grph<-ecdfplot(~x|patientID, data = list(patientID = factor(names(tempgrph), levels = names(tempgrph)), 
+                   x = seq_along(tempgrph)),
+                   xlim = xrange,ylim=c(0,1),
+                   xlab=as.character(channel[1]),
+                   key=simpleKey(text=as.character(1:alqLen),space="right"),
+                   panel = function(x, y, plot.list) {
+           do.call(panel.ecdfplot, trellis.panelArgs(tempgrph[[x]], 1))
+        })
+
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
+	print(grph)
+	dev.off()	
+	idir <- file.path(outdir, "images", gid)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
+
+
+	frameProcesses <- list()
+	cat("\nCreating frame plots...")
+	ls <- length(patientID)
+	for(i in seq_len(ls))
+	{  
+		fid <- patientID[i]
+		tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+		jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+		print(update(grph, index.cond = list(i)))   #obtain individual panels from the multiplanel plots
+		dev.off()
+		fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
+	        agTmp <- new("binaryAggregator", passed=flag[i])
+		frameProcesses[[fid]] <- qaProcessFrame(fid, agTmp,fGraph)
+		cat(".")
+	} 
+	output<-qaProcess(id=gid, 
+			name=paste(channel[1],"  ECDF",sep=""),
+			type=paste(channel[1]," ECDF" ,sep=""),
+			summaryGraph=sgraph, 
+			frameProcesses=frameProcesses)
+	return(output)
+}
 
 
 

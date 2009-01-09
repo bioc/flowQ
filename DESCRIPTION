@@ -5,7 +5,7 @@ Version: 1.3.2
 Author: R. Gentleman, F. Hahne, J. Kettman, N. Le Meur
 Maintainer: N. Le Meur <nlemeur@fhcrc.org>
 Description: Provides quality control and quality assessment tools for flow cytometry data. 
-Depends: R (>= 2.4.0), outliers, lattice, flowViz, methods
+Depends: R (>= 2.4.0), outliers, lattice, flowViz, methods, mvoutlier,bioDist
 Imports: geneplotter, flowCore, flowViz
 License: Artistic-2.0
 biocViews:  Infrastructure, Flowcytometry, CellBasedAssays
