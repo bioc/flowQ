@@ -709,6 +709,117 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
 }
 
 
+qaProcess.KLDistance<- function(flowList,channel=c("FSC-A"),outdir="QAReport",
+				   cutoff=0.5,det.dimensions=c(300,300),pdf=FALSE, ...)
+{
+	if(!is(flowList, "list"))
+		stop("'flowList' needs to be of class 'List'")
+
+	if(!is(flowList[[1]], "flowSet"))
+		stop("'flowList' needs to be a List of flowSets")
+
+	if(!all(channel %in% colnames(flowList[[1]])))
+		stop("Invalid channel")
+
+	if(length(channel)!=1)
+	{
+		stop("Only one channel is to be specified")
+	}
+	
+	if(!is.character(outdir) || length(outdir)!=1)
+		stop("'outdir' must be a valid file path")
+
+	if(!is.numeric(cutoff) || length(cutoff)!=1)
+		stop("'cutoff' must be numeric scalar")
+
+	cat("creating summary plots...")
+	colScheme<-list()
+	gid <- guid()
+	tmp <- tempdir()
+	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+
+	alqLen<-length(flowList)
+	patientID=sampleNames(flowList[[1]])
+	panelFlag=FALSE
+	nonOutLierCount=0
+	tempgrph<-list()
+	tempDist<-list()
+	formula<-paste("~","`",channel[1],"`","|","Patient",sep="")
+	pointCount<-120
+	p<-ppoints(pointCount)
+	q<-matrix(ncol=pointCount,nrow=alqLen)
+	tempStat<-list()
+	
+       
+        tempList<-list()
+        outRes<-data.frame()
+        for( i in patientID)
+	{  
+	    for(j in seq_len(alqLen))
+	    {
+		value=exprs(flowList[[j]]@frames[[i]][,channel])
+		tempList[[j]]<-value
+	    }
+       
+	      tempDist<-KLdist.matrix(tempList)
+	      tempStat[[i]]<-sum(tempDist)
+	      tempDist<-as.matrix(tempDist)
+	      diag(tempDist)<-NA
+         
+	      z<-as.vector(tempDist)
+	      res<-data.frame()
+	      k<-seq_len(alqLen)
+	      for (m in seq_len(alqLen))
+	      {
+		  newRes<-data.frame(x=rep(m,alqLen),y=k)
+                  res<-rbind(res,newRes)               
+	      }
+	      res<-cbind(res,z)
+	      tempgrph[[i]]<-levelplot(z~x*y,data=res,xlab="Aliquot",ylab="Aliquot")     
+	
+    	     cat(".")
+           
+              Patient=rep(i,nrow(res))
+              tm<-cbind(res,Patient)
+              outRes<-rbind(tm,outRes)
+	}
+	
+        grph<-levelplot(z~x*y|Patient,data=outRes,xlab="Aliquot",ylab="Aliquot")
+	maxres<-range(tempStat)[2]
+	nres<-lapply(tempStat,function(x){x/maxres})  
+	flag<-rep(TRUE,length(patientID))
+	flag[which(nres>cutoff)]<-FALSE
+
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
+	print(grph)
+	dev.off()	
+	idir <- file.path(outdir, "images", gid)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
+
+
+	frameProcesses <- list()
+	cat("\nCreating frame plots...")
+	ls <- length(patientID)
+	for(i in seq_len(ls))
+	{  
+		fid <- patientID[i]
+		tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+                jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+		print(tempgrph[[i]])
+                dev.off()
+		fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
+	        agTmp <- new("binaryAggregator", passed=flag[i])
+		frameProcesses[[fid]] <- qaProcessFrame(fid, agTmp,fGraph)
+		cat(".")
+	} 
+	output<-qaProcess(id=gid, 
+			name=paste(channel[1],"  KLDist",sep=""),
+			type=paste(channel[1]," KLDist" ,sep=""),
+			summaryGraph=sgraph, 
+			frameProcesses=frameProcesses)
+	return(output)
+}
 
 ## allDens <- function(sets, channel){
 ##     extDens <- function(x, channel)
