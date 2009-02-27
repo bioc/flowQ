@@ -223,7 +223,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
         nfail <- !sapply(agTmp, slot, "passed")
         val <- if(sum(nfail)==1) factor(2) else factor(0)
         if(sum(nfail)==0)
-             val <- factor(1)
+            val <- factor(1)
         ba <- new("discreteAggregator", x=val)
         fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
                                width=min(220, lp*120), pdf=pdf)
@@ -233,7 +233,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
                                                 summaryAggregator=ba,
                                                 frameAggregators=agTmp,
                                                 frameGraphs=fGraphs,
-						      details=list(raw=dr))
+                                                details=list(raw=dr))
     }
             
     ## create qaProcess object
@@ -487,14 +487,17 @@ qaProcess.summaryOutLiers <- function(flowList, channels=c("FSC-A","SSC-A"),
 
 
 qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
-		outdir="QAReport",alpha=0.05,det.dimensions=c(400,400),
-                pdf=FALSE,...)
+		outdir="QAReport",cutoff=0.11,det.dimensions=c(300,300),
+                func=euc,pdf=FALSE,...)
 {   
 	if(!is(flowList, "list"))
 		stop("'flowList' needs to be of class 'List'")
 	
 	if(!is(flowList[[1]], "flowSet"))
 		stop("'flowList' needs to be a List of flowSets")
+	
+	if(!all(channel %in% colnames(flowList[[1]])))
+		stop("Invalid channel")
 	
 	if(length(channel)!=1)
 	{
@@ -504,18 +507,16 @@ qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
 	if(!is.character(outdir) || length(outdir)!=1)
 		stop("'outdir' must be a valid file path")
 	
-	if(!is.numeric(alpha) || length(alpha)!=1)
-		stop("'alpha' must be numeric scalar")
+	if(!is.numeric(cutoff) || length(cutoff)!=1)
+		stop("'cutoff' must be numeric scalar")
 	
 	cat("creating summary plots...")
 	gid <- guid()
 	tmp <- tempdir()
 	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-
 	alqLen<-length(flowList)
-	myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
-
 	patientID=sampleNames(flowList[[1]])
+	panelFlag=FALSE
 	tempgrph<-list()
 	tempDist<-list()
 	formula<-paste("~","`",channel[1],"`","|","Patient",sep="")
@@ -524,47 +525,30 @@ qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
 	xmax<-0
 	xmin<-100000
 	
-	for( i in patientID){
-	    res<-data.frame()
+	for( i in patientID)
+	{   res<-data.frame()
 	    tempStat<-matrix(ncol=256,nrow=alqLen)
-	    for(j in seq_len(alqLen)){
-   
-		par <- locateParameter(flowList,channel,j,i)
-		if(length(par)!=0){
-		    value=exprs(flowList[[j]]@frames[[i]][,par])
-                    colnames(value) <- channel
-		    newres<-data.frame(Patient=rep(i,nrow(value)),
-				      Aliquot=rep(j,nrow(value)),
-				      data=value,check.names=FALSE)
-		    res<-rbind(res,newres)
-		    valRange<-range(value)
-		    if(xmax<valRange[2])
-			xmax<-valRange[2]
-		    if(xmin> valRange[1])
-			xmin<-valRange[1]
-		    
-		    tempStat[j,]<- density(value,n=256,from=valRange[1],to=valRange[2])$y
-		    
-                    yrng<-range(tempStat[j,])[2]
-
-		    if(yrng>ymax)
-			    ymax<-yrng
-		}else{
-			tempStat[j,]=NA
-		}
+	    for(j in seq_len(alqLen))			
+	    {   
+		value=exprs(flowList[[j]]@frames[[i]][,channel])
+		newres<-data.frame(Patient=rep(i,nrow(value)),
+                                   Aliquot=rep(j,nrow(value)),
+				   data=value,check.names=FALSE)
+		res<-rbind(res,newres)
+                valRange<-range(value)
+                if(xmax<valRange[2])
+		    xmax<-valRange[2]
+		if(xmin> valRange[1])
+		    xmin<-valRange[1]
+                
+                tempStat[j,]<- density(value,n=256,from=valRange[1],to=valRange[2])$y
+		yrng<-range(tempStat[j,])[2]
+		if(yrng>ymax)
+		    ymax<-yrng
 	    }
-            dst<-KLD.matrix(tempStat[!is.na(tempStat[,1]),],
-                            method="density",
-                            supp=extendrange(tempStat[!is.na(tempStat[,1]),],
-                                             r=range(tempStat[!is.na(tempStat[,1])],na.rm=T),
-                                             f=0.01)
-                           )
-	    tempDist[[i]]<-sum(dst,na.rm=T)/length(which(!is.na(dst)==T))
-            #tempDist[[i]]<-sum(euc(tempStat),na.rm=T)
-	    tempgrph[[i]]<-densityplot(eval(parse(text=formula)),
-                                 data=res,groups=Aliquot,plot.points=FALSE,
-                                 col=myCol[unique(res[,"Aliquot"])])
-	    cat(".")
+		tempDist[[i]]<-sum(euc(tempStat))
+		tempgrph[[i]]<-densityplot(eval(parse(text=formula)),data=res,groups=Aliquot,plot.points=FALSE)
+		cat(".")
 	}
 	
 	xrange<-c(0.9*xmin,1.1*xmax)
@@ -572,38 +556,34 @@ qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
         grph<-densityplot(~x|patientID, 
 			  data = list(patientID = factor(names(tempgrph),
 			  levels = names(tempgrph)),x = seq_along(tempgrph)), 
-			  xlim =xrange,ylim=c(0,ymax),
+			  xlim =xrange,ylim=c(0,1.1*ymax),
 			  xlab=as.character(channel[1]),
-                          key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol),
+			  key=simpleKey(text=as.character(1:alqLen),space="right"),
 			  panel = function(x, y, plot.list) {
 			      do.call(panel.densityplot, trellis.panelArgs(tempgrph[[x]], 1))
 			      }
 			  )	
-	sfile <- file.path(tmp,"summary.png")    
-	png(file=sfile)   
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
 	print(grph)
 	dev.off()
 	
 	idir <- file.path(outdir, "images", gid)
-	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=400,pdf=pdf)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350,pdf=pdf)
 	frameProcesses <- list()
 	cat("\nCreating frame plots...")
 	
-     
-
 	ls <- length(patientID)
-        threshFlag<-rep(TRUE,ls)
-        threshFlag[calout.detect(unlist(tempDist),alpha=alpha,method="GESD")$ind]<-FALSE       
- 	
 	for(i in seq_len(ls))
 	{  
 	    fid <- patientID[i]
-	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".png", sep=""))
-	    png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+	    jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
 	    print(update(grph, index.cond = list(i)))   
 	    dev.off()
 	    fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
-	    agTmp <- new("numericAggregator", x=tempDist[[fid]], passed=threshFlag[i])
+	    panelFlag<-tempDist[fid]<=cutoff
+	    agTmp <- new("binaryAggregator", passed=panelFlag)
 	    frameProcesses[[fid]] <- qaProcessFrame(fid, agTmp,fGraph)
 	    cat(".")
 	} 
@@ -615,517 +595,8 @@ qaProcess.densityOutLiers <- function(flowList,channel=c("FSC-A"),
 	return(output)
 }
 
-
-locateParameter<-function(flowList,parm,flowSetIndx,flowFrameIndx){
-    if(length(parm)!=1){
-	stop("Only one parameter is to be specified")
-    }
-    temp <- pData(parameters(flowList[[flowSetIndx]][[flowFrameIndx]]))
-    mIndx <- is.na(temp["desc"])
-    temp["desc"][mIndx] <- temp["name"][mIndx]
-    nameIndx <- temp["desc"]==parm
-    return(temp["name"][nameIndx])   
-}
-
-locateDuplicatedParameters<-function(flowList){
-
-	alqLen<- length(flowList)
-	names <-data.frame()
-    	for( i in seq_len(alqLen)){
-
-		temp <- pData(parameters(flowList[[i]][[1]]))	
-		mIndx <- is.na(temp["desc"])
-		temp["desc"][mIndx] <- temp["name"][mIndx]
-		names<-rbind(names,temp[1:alqLen-1,"desc",drop=FALSE])
-    	}
-    	dupes<- names[duplicated(names[,1]),1] 
-    	dIndx <- !duplicated(dupes)
-    	dupes<-dupes[dIndx]
-	return(dupes)
-
-}
-
-qaProcess.myDensity <- function(
-	flowList,
-	alpha=0.05,
-	outdir="QAReport",
-	det.dimensions=c(400,400),
-        func=euc,
-	pdf=FALSE, ...
-){
-
-    cat("creating summary plots...")
-    gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-    sfiles <- NULL
-  
-    alqLen<- length(flowList)
-    patientID=sampleNames(flowList[[1]])
-    myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
-
-    dupes<-locateDuplicatedParameters(flowList)
-    lp<-length(dupes)
-    ls <- length(patientID)
-    tempgrph<-list()
-    tempDist<-list()
-    sfiles <- NULL
-
-    for (cellType in dupes ){
-
-	formula<-paste("~","`",cellType,"`","|","Patient",sep="")
-	tempgrph[[cellType]]<-list()
-	tempDist[[cellType]]<-list()
-	ymax<-0
-	xmax<-0
-	xmin<-100000
-	for( i in patientID){
-
-	    res<-data.frame()
-	    tempStat<-matrix(ncol=256,nrow=alqLen)
-
-	    for(j in seq_len(alqLen)){
-   
-		par <- locateParameter(flowList,cellType,j,i)
-		if(length(par)!=0){
-		    value=exprs(flowList[[j]]@frames[[i]][,par])
-                    colnames(value) <- cellType
-		    newres<-data.frame(Patient=rep(i,nrow(value)),
-				      Aliquot=rep(j,nrow(value)),
-				      data=value,check.names=FALSE)
-		    res<-rbind(res,newres)
-		    valRange<-range(value)
-		    if(xmax<valRange[2])
-			xmax<-valRange[2]
-		    if(xmin> valRange[1])
-			xmin<-valRange[1]
-		    
-		    tempStat[j,]<- density(value,n=256,from=valRange[1],to=valRange[2])$y
-		    if(length(which(is.nan( tempStat[j,]))==T)!=0){
-			browser()
-                    }
-
-		    
-                    yrng<-range(tempStat[j,])[2]
-
-		    if(yrng>ymax)
-			    ymax<-yrng
-		}else{
-			tempStat[j,]=NA
-                }
-	    }
-  
-	    dst<-KLD.matrix(tempStat[!is.na(tempStat[,1]),],
-                            method="density",
-                            supp=extendrange(tempStat[!is.na(tempStat[,1]),],
-                                             r=range(tempStat[!is.na(tempStat[,1])],na.rm=T),
-                                             f=0.01)
- 			   )
-	    tempDist[[cellType]][[i]]<-sum(dst,na.rm=T)/length(which(!is.na(dst)==T))
-            #tempDist[[cellType]][[i]]<-sum(euc(tempStat),na.rm=T)/length(euc(tempStat))
-	    
-	    tempgrph[[cellType]][[i]]<-
-                         densityplot(eval(parse(text=formula)),
-				data=res,groups=Aliquot,plot.points=FALSE,
-				col=myCol[unique(res[,"Aliquot"])],
-				key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol)
-                                 )
-	    cat(".")
-	}
-    
-        xrange<-c(0.9*xmin,1.1*xmax)
-	sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
-        png(file=sfile, width=det.dimensions[1],height=det.dimensions[2])
-        print(densityplot(~x|patientID, 
-			  data = list(patientID = factor(names(tempgrph[[cellType]]),
-			  levels = names(tempgrph[[cellType]])),x = seq_along(tempgrph[[cellType]])), 
-			  xlim =xrange,ylim=c(0,1.05*ymax),
-			  xlab=as.character(cellType),
-			  key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol),
-			  panel = function(x, y, plot.list) {
-			      do.call(panel.densityplot, trellis.panelArgs(tempgrph[[cellType]][[x]], 1))
-			      }
-			  ))
-        dev.off()	
-        sfiles <- c(sfiles, sfile)
-        cat(".")
-	
-    }
- 
-    sfile <- paste(tmp, "summary.png", sep="/")
-    system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
-                 lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(det.dimensions[1],det.dimensions[2]*lp), pdf=pdf)
-
-    frameProcesses <- list()
-    cat("\ncreating frame plots...")
-
-    threshFlag<-list()
-    for(i in seq_len(lp)){   #over dupes
-       threshFlag[[i]]<-rep(TRUE,ls)
-       threshFlag[[i]][calout.detect(unlist(tempDist[[dupes[i]]]),alpha=alpha,method="GESD")$ind]<-FALSE       
- 	
-    }
-
-    for(i in seq_len(ls)){ #over patient
-	fnames <- NULL
-        agTmp <- aggregatorList()
-	for(j in seq_len(lp)){   #over dupes
-	
-	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
-                                          gsub("\\..*$", "", j), ".png",
-                                          sep=""))
-	    png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
-	    print(tempgrph[[dupes[j]]][[patientID[i]]])
-	    dev.off()
-	    fnames <- c(fnames, tfile)
-	    agTmp[[j]] <- new("numericAggregator", passed=threshFlag[[j]][i],
-                              x=tempDist[[dupes[j]]][[patientID[i]]]/max(unlist(tempDist[[dupes[j]]])))
-            cat(".")
-	}
-    
-	names(agTmp) <- dupes
-	nfail <- !sapply(agTmp, slot, "passed")
-            val <- if(sum(nfail)==1) factor(2) else factor(0)
-     	    if(sum(nfail)==0)
-             val <- factor(1)
-
-	ba <- new("discreteAggregator", x=val)
-	fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
-				  width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
-	fid <- patientID[i]
-	frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
-						    summaryAggregator=ba,
-						    frameAggregators=agTmp,
-						    frameGraphs=fGraphs)
-    }
-    ## create qaProcess object
-    cat("\n")
-    return(qaProcess(id=gid, name="Density plot",
-                     type="Density", summaryGraph=sgraph,
-                     frameProcesses=frameProcesses))
-
-}
-
-qaProcess.myECDF <- function(flowList,
-	alpha = 0.05,
-	outdir="QAReport",
-	det.dimensions=c(400,400),
-	func=euc,
-	pdf=FALSE
-){
-    cat("creating summary plots...")
-    gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-    sfiles <- NULL
-  
-    alqLen<- length(flowList)
-    patientID=sampleNames(flowList[[1]])
-    myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
-
-    dupes<-locateDuplicatedParameters(flowList)
-    lp<-length(dupes)
-    ls <- length(patientID)
-
-    panelFlag=FALSE
-    tempgrph<-list()
-    tempDist<-list()
-    sfiles <- NULL
-    pointCount<-120
-    p<-ppoints(pointCount)
-    q<-matrix(ncol=pointCount,nrow=alqLen)
-
-    for (cellType in dupes ){
-
-	formula<-paste("~","`",cellType,"`","|","Patient",sep="")
-	tempgrph[[cellType]]<-list()
-	tempDist[[cellType]]<-list()
-	xmax<-0
-	xmin<-100000
-	for( i in patientID){
-
-	    res<-data.frame()
-	    tempStat<-matrix(ncol=pointCount,nrow=alqLen)
-
-	    for(j in seq_len(alqLen)){
-   
-		par <- locateParameter(flowList,cellType,j,i)
-		if(length(par)!=0){
-		    value=exprs(flowList[[j]]@frames[[i]][,par])
-                    colnames(value) <- cellType
-		    newres<-data.frame(Patient=rep(i,nrow(value)),
-				      Aliquot=rep(j,nrow(value)),
-				      data=value,check.names=FALSE)
-		    res<-rbind(res,newres)
-		    valRange<-range(value)
-		    if(xmax<valRange[2])
-			xmax<-valRange[2]
-		    if(xmin> valRange[1])
-			xmin<-valRange[1]
-
-		     tempStat[j,]<-quantile(value,probs=p,names=FALSE) 
-		    
-		}
-	    }
-  
-	    tempgrph[[cellType]][[i]]<-
-                         ecdfplot(eval(parse(text=formula)),
-				data=res,groups=Aliquot,
-                                plot.points=FALSE,
-				col=myCol[unique(res[,"Aliquot"])],
-				key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol)
-                                 )
-
- 	   # tempDist[[cellType]][[i]]<-sum(euc(tempStat),na.rm=T)/length(euc(tempStat))
-            dst<-KLD.matrix(tempStat[!is.na(tempStat[,1]),],
-                            method="density",
-                            supp=extendrange(tempStat[!is.na(tempStat[,1]),],
-                                             r=range(tempStat[!is.na(tempStat[,1])],na.rm=T),
-                                             f=0.01)
-                           )
-	    tempDist[[cellType]][[i]]<-sum(dst,na.rm=T)/length(which(!is.na(dst)==T))
-	
-	    cat(".")
-	}
-
-        xrange<-c(0.9*xmin,1.1*xmax)
-	sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
-        png(file=sfile, width=det.dimensions[1],height=det.dimensions[2])
-        print(ecdfplot(~x|patientID, 
-			  data = list(patientID = factor(names(tempgrph[[cellType]]),
-			  levels = names(tempgrph[[cellType]])),x = seq_along(tempgrph[[cellType]])), 
-			  xlim =xrange,ylim=c(0,1),
-			  xlab=as.character(cellType),
-			  key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol),
-			  panel = function(x, y, plot.list) {
-			      do.call(panel.ecdfplot, trellis.panelArgs(tempgrph[[cellType]][[x]], 1))
-			      }
-			  ))
-        dev.off()	
-        sfiles <- c(sfiles, sfile)
-        cat(".")
-	
-    }
-
-    sfile <- paste(tmp, "summary.png", sep="/")
-    system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
-                 lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(det.dimensions[1],det.dimensions[2]*lp), pdf=pdf)
-
-    frameProcesses <- list()
-    cat("\ncreating frame plots...")
-
-    threshFlag<-list()
-    for (i in seq_len(lp)){
-
-	  threshFlag[[i]]<-rep(TRUE,ls)
-	  threshFlag[[i]][calout.detect(unlist(tempDist[[dupes[i]]]),alpha=alpha,method="GESD")$ind]<-FALSE
-    }
-
-    for(i in seq_len(ls)){ #over patient
-
-            fnames <- NULL
-            agTmp <- aggregatorList()
-            
-	    for(j in seq_len(lp)){   #over dupes
-        
-                tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
-                                            gsub("\\..*$", "", j), ".png",
-                                            sep=""))
-                png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
-                print(tempgrph[[dupes[j]]][[patientID[i]]])
-                dev.off()
-                fnames <- c(fnames, tfile)
-                agTmp[[j]] <- new("numericAggregator", 
-                                   passed=threshFlag[[j]][i],
-                                   x= tempDist[[dupes[j]]][[patientID[i]]] /max(unlist(tempDist[[dupes[j]]])))
-                cat(".")
-            }
-        
-            names(agTmp) <- dupes
-  	    nfail <- !sapply(agTmp, slot, "passed")
-            val <- if(sum(nfail)==1) factor(2) else factor(0)
-     	    if(sum(nfail)==0)
-             val <- factor(1)
-          
-            ba <- new("discreteAggregator", x=val)
-            fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
-                            width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
-            fid <- patientID[i]
-            frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
-                                                        summaryAggregator=ba,
-                                                        frameAggregators=agTmp,
-                                                        frameGraphs=fGraphs)
-    }
-    cat("\n")
-    return(qaProcess(id=gid, name="ECDF Plot",
-                     type="ECDF", summaryGraph=sgraph,
-                     frameProcesses=frameProcesses))
-
-
-}
-
-qaProcess.myKLDistance <- function(
-	flowList,
-	alpha=0.05,
-	outdir="QAReport",
-	det.dimensions=c(400,400),
-        func=euc,
-	pdf=FALSE, ...
-){
-
-    cat("creating summary plots...")
-    gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-    sfiles <- NULL
-  
-    alqLen<- length(flowList)
-    patientID=sampleNames(flowList[[1]])
-    myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
-
-    dupes<-locateDuplicatedParameters(flowList)
-    lp<-length(dupes)
-    ls <- length(patientID)
-    tempgrph<-list()
-    tempDist<-list()
-    sfiles <- NULL
-    colorFun<-colorRampPalette(c("yellow","red"))
-	
-    for (cellType in dupes ){
-     
-	formula<-paste("~","`",cellType,"`","|","Patient",sep="")
-	tempgrph[[cellType]]<-list()
-	tempDist[[cellType]]<-list()
-	ymax<-0
-	xmax<-0
-	xmin<-100000
-        outRes<-data.frame()
-	for( i in patientID){
-
-                res<-data.frame()
-                tempList<- list()
-                for(j in seq_len(alqLen)){
-                        par <- locateParameter(flowList,cellType,j,i)
-                        if(length(par)!=0){
-                            value=exprs(flowList[[j]]@frames[[i]][,par])
-                            colnames(value) <- cellType
-                            tempList[[j]]<-value
-                        }
-			else {
-				tempList[[j]]<-NA
-			}
-                }
-	
-	dst <- KLdist.matrix(tempList) 
-	#dst<-KLD.matrix(tempStat[!is.na(tempStat[,1]),],method="density",supp=range(tempStat[!is.na(tempStat[,1]),]))
-	  #  tempDist[[cellType]][[i]]<-sum(dst,na.rm=T)/length(dst)
-        tempDist[[cellType]][[i]]<-sum(dst,na.rm=T)/length(which(!is.na(dst)==T))
-
-	z<- as.vector(dst)
-	res<-data.frame()
-	k<-seq_len(alqLen)
-	for (m in seq_len(alqLen))
-	{
-	    newRes<-data.frame(x=rep(m,alqLen),y=k)
-            res<-rbind(res,newRes)               
-	}
-	res <- as.vector(res)
-	pm<-as.matrix(dst)
-	diag(pm)<-NA
-        z<-as.matrix(as.vector(pm),ncol=1)
-	res<-cbind(res,z)
-          
-	tempgrph[[cellType]][[i]]<-levelplot(z~x*y,data=res,xlab="Aliquot",ylab="Aliquot",
-                                           main=cellType,col.regions=colorFun,colorkey=list(col=colorFun))     
-	Patient=rep(i,nrow(res))
-        tm<-cbind(res,Patient)
-        outRes<-rbind(tm,outRes)
-         
-# 	tempgrph[[cellType]][[i]]<-
-#                          densityplot(eval(parse(text=formula)),
-# 				data=res,groups=Aliquot,plot.points=FALSE,
-# 				col=myCol[unique(res[,"Aliquot"])],
-# 				key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol)
-#                                  )
-	    cat(".")
-	}
-
-       #grph<-levelplot(z~x*y|Patient,data=outRes,xlab="Aliquot",ylab="Aliquot")
-	 
-        sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
-        png(file=sfile, width=det.dimensions[1],height=det.dimensions[2])
-
-        print(grph<-levelplot(z~x*y|Patient,data=outRes,xlab="Aliquot",ylab="Aliquot",
-                               main=cellType,col.regions=colorFun,colorkey=list(col=colorFun)))
-
-        dev.off()	
-        sfiles <- c(sfiles, sfile)
-        cat(".")
-	
-    }
- 
-    sfile <- paste(tmp, "summary.png", sep="/")
-    system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
-                 lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(det.dimensions[1],det.dimensions[2]*lp), pdf=pdf)
-
-    frameProcesses <- list()
-    cat("\ncreating frame plots...")
-
-    threshFlag<-list()
-    for(i in seq_len(lp)){   #over dupes
-       threshFlag[[i]]<-rep(TRUE,ls)
-       threshFlag[[i]][calout.detect(unlist(tempDist[[dupes[i]]]),alpha=alpha,method="GESD")$ind]<-FALSE       
- 	
-    }
-
-    for(i in seq_len(ls)){ #over patient
-	fnames <- NULL
-        agTmp <- aggregatorList()
-	for(j in seq_len(lp)){   #over dupes
-	
-	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
-                                          gsub("\\..*$", "", j), ".png",
-                                          sep=""))
-	    png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
-	    print(tempgrph[[dupes[j]]][[patientID[i]]])
-	    dev.off()
-	    fnames <- c(fnames, tfile)
-	    agTmp[[j]] <- new("numericAggregator", passed=threshFlag[[j]][i],
-                              x=tempDist[[dupes[j]]][[patientID[i]]]/max(unlist(tempDist[[dupes[j]]])))
-            cat(".")
-	}
-    
-	names(agTmp) <- dupes
-	nfail <- !sapply(agTmp, slot, "passed")
-            val <- if(sum(nfail)==1) factor(2) else factor(0)
-     	    if(sum(nfail)==0)
-             val <- factor(1)
-
-	ba <- new("discreteAggregator", x=val)
-	fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
-				  width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
-	fid <- patientID[i]
-	frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
-						    summaryAggregator=ba,
-						    frameAggregators=agTmp,
-						    frameGraphs=fGraphs)
-    }
-    ## create qaProcess object
-    cat("\n")
-    return(qaProcess(id=gid, name="KL distance plot",
-                     type="KLD", summaryGraph=sgraph,
-                     frameProcesses=frameProcesses))
-
-}
-
 qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport",
-				   cutoff=0.5,det.dimensions=c(400,400),
+				   cutoff=0.5,det.dimensions=c(300,300),
                                    func=euc,pdf=FALSE, ...)
 {
 	if(!is(flowList, "list"))
@@ -1134,8 +605,8 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
 	if(!is(flowList[[1]], "flowSet"))
 		stop("'flowList' needs to be a List of flowSets")
 
-# 	if(!all(channel %in% colnames(flowList[[1]])))
-# 		stop("Invalid channel")
+	if(!all(channel %in% colnames(flowList[[1]])))
+		stop("Invalid channel")
 
 	if(length(channel)!=1)
 	{
@@ -1155,8 +626,6 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
 	tmp <- gsub("\\", "/", tmp, fixed=TRUE)
 
 	alqLen<-length(flowList)
-        myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
-
 	patientID=sampleNames(flowList[[1]])
 	panelFlag=FALSE
 	nonOutLierCount=0
@@ -1171,36 +640,27 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
         xmax<-0
         xmin<-100000
         for( i in patientID)
-    	{   
-	    res<-data.frame()
+	{   res<-data.frame()
 	    for(j in seq_len(alqLen))
-	    {  
-		par <- locateParameter(flowList,channel,j,i)
-		if(length(par)!=0){
-		    value=exprs(flowList[[j]]@frames[[i]][,par])
-		    colnames(value) <- channel
-		    newres<-data.frame(Patient=rep(i,nrow(value)),
-				      Aliquot=rep(j,nrow(value)),
-				      data=value,check.names=FALSE)
-		    res<-rbind(res,newres)
-		    frameID<-paste(i,j,sep="_")
-		    q[j,]<-quantile(value,probs=p,names=FALSE) 
-		}
-	    }
+	    {
+		value=exprs(flowList[[j]]@frames[[i]][,channel])
+		newres<-data.frame(Patient=rep(i,nrow(value)),
+				  Aliquot=rep(j,nrow(value)),
+				  data=value,check.names=FALSE)
+		res<-rbind(res,newres)
+                frameID<-paste(i,j,sep="_")
+		q[j,]<-quantile(value,probs=p,names=FALSE) 
 
-		tempRange<-range(res[channel])
-		if(xmax<tempRange[2])
-		    xmax<-tempRange[2]
-		if(xmin> tempRange[1])
-		    xmin<-tempRange[1]                
-		
-		tempgrph[[i]]<-ecdfplot(eval(parse(text=formula)),
-                                        data=res,groups=Aliquot,
-                                        plot.points=FALSE,
-                                        col=myCol[unique(res[,"Aliquot"])]
-                                       )
-		tempStat[[i]]<-sum(euc(q))
-		cat(".")
+	    }
+            tempRange<-range(res[channel])
+            if(xmax<tempRange[2])
+		xmax<-tempRange[2]
+	    if(xmin> tempRange[1])
+		xmin<-tempRange[1]                
+        
+	    tempgrph[[i]]<-ecdfplot(eval(parse(text=formula)),data=res,groups=Aliquot,plot.points=FALSE)
+    	    tempStat[[i]]<-sum(euc(q))
+	    cat(".")
 	}
 	xrange<-c(0.9*xmin,1.1*xmax)
 	maxres<-range(tempStat)[2]
@@ -1210,19 +670,19 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
 
         grph<-ecdfplot(~x|patientID, data = list(patientID = factor(names(tempgrph), levels = names(tempgrph)), 
                    x = seq_along(tempgrph)),
-                   xlim = xrange,ylim=c(0,1.05),
+                   xlim = xrange,ylim=c(0,1),
                    xlab=as.character(channel[1]),
-                   key=simpleKey(text=as.character(1:alqLen),space="right",points=F,col=myCol),
+                   key=simpleKey(text=as.character(1:alqLen),space="right"),
                    panel = function(x, y, plot.list) {
-		      do.call(panel.ecdfplot, trellis.panelArgs(tempgrph[[x]], 1))
-		   })
+           do.call(panel.ecdfplot, trellis.panelArgs(tempgrph[[x]], 1))
+        })
 
-	sfile <- file.path(tmp, "summary.png")    
-	png(file=sfile)   
+	sfile <- file.path(tmp, "summary.jpg")    
+	jpeg(file=sfile)   
 	print(grph)
 	dev.off()	
 	idir <- file.path(outdir, "images", gid)
-	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=400, pdf=pdf)
+	sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
 
 	frameProcesses <- list()
@@ -1231,8 +691,8 @@ qaProcess.ecdfOutLiers <- function(flowList,channel=c("FSC-A"),outdir="QAReport"
 	for(i in seq_len(ls))
 	{  
 		fid <- patientID[i]
-		tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".png", sep=""))
-		png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+		tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".jpg", sep=""))
+		jpeg(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
 		print(update(grph, index.cond = list(i)))   #obtain individual panels from the multiplanel plots
 		dev.off()
 		fGraph <- qaGraph(fileName=tfile, imageDir=idir, pdf=pdf)
