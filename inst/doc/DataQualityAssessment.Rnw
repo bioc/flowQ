@@ -510,10 +510,9 @@ techniques could help the user identify deviant samples. The visualization tools
 provided by the flowQ package could potentially help identify samples differences
 that are probably not biologically motivated and hence could be further 
 investigated before spending time and resources for gating and detailed analysis.
+  
 
-
-
-\clearpage
-\bibliographystyle{plainnat} 
-\bibliography{cytoref}
+%\clearpage
+%\bibliographystyle{plainnat} 
+%\bibliography{cytoref}
 \end{document}
