@@ -652,7 +652,7 @@ qaProcess.2DStatsPlot <- function(
 		stop("\n Parameters",paste(colnames(res)[2:3],"should occur only in pairs in
                  in more than one Aliquot in the dataset \n"))
             }
-            tempIndx <- which(pcout(x=as.matrix(res[,2:3]),outbound=outBound)$wfinal01==0)
+	    tempIndx <- which(pcout(x=as.matrix(res[,2:3]),outbound=outBound)$wfinal01==0)
             if(length(tempIndx)==0){
                 indx<-NA
 	    }else{
@@ -690,6 +690,8 @@ qaProcess.2DStatsPlot <- function(
         print(xyplot(eval(parse(text=formula)),data=outRes, 
                                         auto.key=list(space="right"),
                                         groups=outLier,
+  					ylim=extendrange(outRes[,dyes[cellType,1]],f=1.8),
+                            		xlim= extendrange(outRes[,dyes[cellType,2]],f=1.8),
                                         col=c("green","red"),
                                         key=simpleKey(text=as.character(c("OutLier","Non-outlier")),space="right",points=F,col=c("red","green")),
                                         plot.points=FALSE
