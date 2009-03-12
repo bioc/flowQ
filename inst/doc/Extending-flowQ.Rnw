@@ -367,7 +367,7 @@ The parameters need to be first needs to be transformed for better visualization
 of the data. For the dataset, all flow parameters except forware and side scatter 
 were transformed using the \Rfunction{asinh} transformation.
 
-<<transformData, echo=true,results=hide,eval=FALSE>>=
+<<transformData, echo=true,results=hide>>=
 tData<-list()
 for(i in seq_len(length(qData))){
     wfNew <- workFlow(qData[[i]], name="panel")
@@ -403,7 +403,7 @@ are grouped side by side. The function also has a cutoff parameter
 allowing the user to flag patient panels that have a large number of events on
 the boundary and potentially require filtering.
 
-<<transformBoundaryData, echo=true,results=hide,eval=FALSE>>=
+<<transformBoundaryData, echo=true,results=hide>=
 resBoundary <- qaProcess.BoundaryPlot(tData,dyes=NULL,outdir="myDir",cutoff=3,pdf=FALSE)
 boundUrl<-writeQAReport(tData[[1]], list(resBoundary), outdir="myDir",pdf=FALSE)
 browseURL(boundUrl)
@@ -413,7 +413,7 @@ A boundary filter can be used to remove events at the boundaries
 for each channel.The transformed data after excluding the boundary events 
 is stored as a \Rclass{list} of \Rclass{flowSet}s 
 
-<<BoundaryEvents, echo=true,results=hide,eval=FALSE>>=
+<<BoundaryEvents, echo=true,results=hide>>=
 
 createBoundaryFilterList<-function(flowSet){
     len <- length(colnames(flowSet))
@@ -465,12 +465,13 @@ identifed using the \Rfunction{locateDuplicatedParameters}. For each floursence
 parameter obtained from a patietn,the daata from eight aliquots are normalized 
 so that the peaks in flow parameters align up between aliquots.
 
-<<Data Normalization, echo=true,results=hide,eval=FALSE>>=
+<<Data Normalization, echo=true,results=hide>>=
   library(flowStats)
   patientID=sampleNames(boundData[[1]])
   ls <- length(patientID)
   dupes <- locateDuplicatedParameters(boundData)
-  nData<-normalizeSets(flowList=boundData,dupes=dupes[-c(1,2)]) ## ignoring FSC-A, SSC-A
+  #nData<-normalizeSets(flowList=boundData,dupes=dupes[-c(1,2)]) ## ignoring FSC-A, SSC-A
+  nData<-normalizeSets(flowList=boundData,dupes=dupes[3])
 @
 
 \subsection{ECDF plots}
@@ -521,10 +522,16 @@ and 1. Univariate outlier detection was performed on the normalized
 distance values to identify patient panels where density plots are different from 
 the rest of the group.
 
-<<Density plots, echo=true,results=hide,eval=FALSE>>=
-resDensity <- qaProcess.DensityPlot(nData,dyes=NULL,outdir="myDir",alpha=0.2)
+<<Density plots, echo=true,results=hide>>=
+#resDensity <- qaProcess.DensityPlot(nData,dyes=NULL,outdir="myDir",alpha=0.2)
+resDensity <- qaProcess.DensityPlot(nData,dyes=c("FSC-A","CD8"),outdir="myDir",alpha=0.2,pdf=TRUE)
+imagePath<-resDensity@summaryGraph@fileNames[1]
 densityUrl<-writeQAReport(nData[[1]], list(resDensity), outdir="myDir")
 browseURL(densityUrl)
+@
+
+<<produceDensityimage,echo=false,results=tex>>=
+ cat('\\includegraphics[width=1.0\\textwidth]{', imagePath, '}\n', sep="")
 @
 
 \subsection{2D Summary statistics}
