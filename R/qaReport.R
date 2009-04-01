@@ -43,7 +43,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
 
     ## For the overview page, we need to match samples across panels
     sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
-    if(!sID)
+    if(length(set)>1 && !sID)
         warning("Some of the panels in 'set' don't have a global ",
                 "sample identifier.\nUnable to create overview.")
     ## A lot of sanity checking up front
