@@ -30,7 +30,7 @@ pdfLink <- function(vimg, bimg, class, id, pdf=TRUE)
 writeQAReport  <- function(set, processes, outdir="./qaReport",
                            grouping=NULL, pagebreaks=TRUE,
                            pdf=TRUE)
-{
+{ 
     ## We only need panel tabs if 'set' is a list of 'flowSets'
     single <- FALSE
     if(!is.list(set)){
@@ -417,7 +417,7 @@ failedProcesses <- function(processes, set)
                 samp <- sids[match(pro@frameID, fids)]
                 mlist <- rbind(mlist, c(samp, pro@frameID, nrSamp+1))
                 ## check for the multiple channels and iterate over those 
-                if(length(pro@frameAggregators)){
+                if(length(pro@frameAggregators) && !processes[[i]][[j]]@type %in% c("Density","ECDF","KLD","SummaryStatistic","BoundaryEvents")){
                     channels <- names(pro@frameAggregators)
                     clist <- c(clist, channels)
                     
