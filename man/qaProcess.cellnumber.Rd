@@ -15,7 +15,7 @@
 \usage{
 
 qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
-                     absolute.value=NULL, name="cell number",
+                     absolute.value=NULL, two.sided = FALSE, name="cell number",
                      sum.dimensions=c(7,7), pdf=TRUE, \dots)
 
 }

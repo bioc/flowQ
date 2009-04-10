@@ -733,7 +733,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 
 
 ## Detect unusually low cell counts
-qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
+qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
                                  absolute.value=NULL, two.sided=FALSE,
                                  name="cell number", sum.dimensions=c(7,7),
                                  pdf=TRUE, ...)

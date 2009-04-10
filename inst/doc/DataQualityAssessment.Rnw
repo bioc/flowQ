@@ -104,7 +104,7 @@ base.
   channel-specific plots if necessary. Accordingly, for each sample,
   the overall QA result is sumamrized by a single aggregator, and
   optional channel-specific results can be summarized by additional
-  channel aggregators. }
+  channel aggregators.}{flowQStructure}
 
 Figure~\ref{flowQStructure} shows a schematic of a \Rpackage{flowQ} QA
 report.
