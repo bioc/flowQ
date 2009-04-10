@@ -18,11 +18,12 @@ myOpenHtmlPage <- function(name, title = "", path="../")
 pdfLink <- function(vimg, bimg, class, id, pdf=TRUE)
 {
     if(pdf)
-        paste("<a href='", vimg,  "' target='QAdetails'>\n<img class='", class,
-              "' src='", bimg, "' id='img_", id, "'>\n</a>\n", sep="")
+        paste("<a href='", vimg,  "' target='QAdetails'>\n<img",
+              ifelse(missing(class), "", sprintf(" class='%s'", class)),
+              " src='", bimg, "' id='img_", id, "'>\n</a>\n", sep="")
     else
-        paste("<img class='", class, "Nolink' src='", bimg, "' id='img_", id, "'>\n",
-              sep="")
+        paste("<img",ifelse(missing(class), "", sprintf(" class='%s nolink'", class)),
+              " src='", bimg, "' id='img_", id, "'>\n", sep="")
 }
 
 
@@ -50,6 +51,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
                     "overwritten")
+    if(!file.exists(file.path(outdir, "images")))
+        dir.create(file.path(outdir, "images"), rec=TRUE)
     if(!is(processes, "list") ||
        !all(sapply(processes, function(x) is(x, "qaProcess") ||
                    sapply(x, is, "qaProcess"))))
@@ -86,7 +89,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         
         ## setup of table and table header row
         process <- if(length(set)>1) processes[[s]] else processes
-        writeLines("<table class=\"QA\">", con)
+        writeLines("\n<table class=\"QA\">", con)
         pIDs <- sapply(process, slot, "id")
         pNames <- sapply(process, slot, "name")
         pTypes <- sapply(process, slot, "type")
@@ -96,41 +99,41 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         sumVecLinks <- gsub("\\..*$", ".pdf", sumLinks)
         nrAggr <- sapply(process, function(x)
                          length(x@frameProcesses[[1]]@frameAggregators))+1
-        th <- paste("<th class=\"QAHeader\" colspan=\"", nrAggr, "\" ",
+        th <- paste("\n<th colspan=\"", nrAggr, "\" ",
                     "id=\"", pIDs, "_sumHeader\">\n",
-                    "<div class=\"QASumButton\" id=\"", pIDs, "_button",
+                    "<div id=\"", pIDs, "_button",
                     "\" onClick=\"toggleImage('", pIDs, "')\">\n",
                     pNames, "\n</div>\n</th>", sep="")
         esel <- sapply(process, function(x)
                        length(x@summaryGraph@fileNames))==0
-        th[esel] <- paste("<th class=\"QAHeader\" colspan=\"",
+        th[esel] <- paste("\n<th colspan=\"",
                           nrAggr[esel], "\" ",
                           "id=\"", pIDs[esel], "_sumHeader\">\n",
-                          "<div class=\"QASumButton\" id=\"", pIDs[esel],
+                          "<div id=\"", pIDs[esel],
                           "_button",
                           "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
                           collapse="\n")
         th <- paste(th, collapse="\n")
         pd <- pData(set[[s]][[1]]@parameters)[,c("name", "desc", "minRange",
                                                  "maxRange")]
-        writeLines(paste("<tr class=\"QAHeader\">\n<th class=\"QAHeader\">\n",
-                         "<div class=\"QASumButton\" id=\"parameters_button",
+        writeLines(paste("\n<tr class=\"QAHeader\">\n\n<th>\n",
+                         "<div id=\"parameters_button",
                          "\" onClick=\"toggleImage('parms')\">\n",
-                         "flow set details\n</div>\n</th>",  
-                         "</th>\n", th, "\n</tr>", sep=""), con)
-        td <- paste("<td class=\"QASummary\" colspan=\"", nrAggr, "\"",
+                         "flow set details\n</div>\n",  
+                         "</th>\n", th, "\n\n</tr>", sep=""), con)
+        td <- paste("\n<td colspan=\"", nrAggr, "\"",
                     " id=\"", pIDs, "_sumBack\">\n",
-                    pdfLink(sumVecLinks, sumLinks, "QASummary", pIDs, pdf=pdf),
+                    pdfLink(vimg=sumVecLinks, bimg=sumLinks, id=pIDs, pdf=pdf),
                     "</td>", sep="", collapse="\n")
-        writeLines(paste("<tr class=\"QASummary\">\n<th class=\"QASummary\">",
-                         "<span id=\"img_parms\" style=\"display:none;\">",
+        writeLines(paste("\n<tr class=\"QASummary\">\n\n<th>",
+                         "\n<span id=\"img_parms\" style=\"display:none;\">",
                          sep=""), con)
         writeLines(pd, con)
-        writeLines(paste("<span>\n</th>\n", td, "\n</tr>", sep=""), con)
+        writeLines(paste("</span>\n</th>\n", td, "\n\n</tr>\n", sep=""), con)
         
         frameIDs <- sampleNames(set[[s]])
         classes <- paste("QAFrameHeader",
-                         c("Even", "Odd")[(seq_along(frameIDs)%%2)+1], sep="")
+                         c(" even", " odd")[(seq_along(frameIDs)%%2)+1], sep="")
         names(classes) <- frameIDs
         fpp <- if(pagebreaks) 14 else 10e20
         lf <- length(frameIDs)
@@ -146,14 +149,13 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                          ">", sep="", collapse="\n")
             ## new table row and column header for aggregators
             if(is.null(grouping)){## no grouping is specified
-                writeLines(paste("<tr class=\"", classes[f], "\" id=\"frow1_",
+                writeLines(paste("\n<tr class=\"", classes[f], "\" id=\"frow1_",
                                  counter, "\" style=\"display:",
-                                 showRow, ";\">\n<th ",
-                                 "class=\"QAFrameHeader\" id=\"",
+                                 showRow, ";\">\n\n<th id=\"",
                                  f, "_sumHeader\">\n<div class=\"QARowButton\"",
                                  " id=\"", f, "_button\" onClick=\"toggle",
                                  "Image('pd_", counter, "')\">\n<div class=\"",
-                                 "QAFrameHeaderNr\">", counter, "</div><span ",
+                                 "QAFrameHeaderNr\">", counter, "</div>\n<span ",
                                  "class=\"QAFrameHeaderID\">", f, "</span>",
                                  "\n", phi, sep=""), con)
                 writeLines(pd, con)
@@ -164,10 +166,10 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                   "<span class=\"QAFrameHeaderGrp\">",
                                   grps[counter], "</span>", sep="")
                 if(counter==1 || grps[counter]!=lastGrp){
-                    writeLines(paste("<tr class=\"", classes[f],
+                    writeLines(paste("\n<tr class=\"", classes[f],
                                      "\" id=\"frow1_",
                                      counter, "\" style=\"display:", showRow,
-                                     ";\">\n<th class=\"QAFrameHeader\" id=\"",
+                                     ";\">\n\n<th id=\"",
                                      f, "_sumHeader\">\n<div class=\"QAGrp",
                                      "Header\">", grps[counter],
                                      "</div>\n<div ",
@@ -177,11 +179,10 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                      "\n</div>\n", phi, sep=""), con)
                     writeLines(pd, con)                      
                 }else{  
-                    writeLines(paste("<tr class=\"", classes[f],
+                    writeLines(paste("\n<tr class=\"", classes[f],
                                      "\" id=\"frow1_",
                                      counter, "\" style=\"display:",
-                                     showRow, ";\">\n<th ",
-                                     "class=\"QAFrameHeader\" id=\"",
+                                     showRow, ";\">\n\n<th id=\"",
                                      f, "_sumHeader\">\n<div class=\"QARow",
                                      "Button\" id=\"", f, "_button\" ",
                                      "onClick=\"toggle",
@@ -190,7 +191,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     writeLines(pd, con)
                 }
             }
-            writeLines(paste("</span></th>"), con)
+            writeLines(paste("</span>\n</div>\n</th>\n"), con)
             
             ## aggregators first, each process is one column
             for(p in seq_along(process)){
@@ -198,7 +199,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                 thisProcess <- process[[p]]@frameProcesses[[f]]
                 pid <- thisProcess@id
                 sid <- thisProcess@summaryGraph@id
-                writeLines(paste("<td class=\"QASumAggr\" id=\"", pid,
+                writeLines(paste("\n<td class=\"QASumAggr\" id=\"", pid,
                                  "_sumHeader\" align=\"center\">", sep=""), con)
                 nrDetAgr <- length(thisProcess@frameAggregators)
                 offset <- ""
@@ -239,11 +240,10 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                 ## add detailed aggregators and links to images if necessary
                 for(d in seq_along(thisProcess@frameAggregators)){
                     fname <- names(thisProcess@frameAggregators)[d]
-                    fname  <- ifelse(is.null(fname), "", paste(fname,
-                                                               "\n<br>\n"))
+                    fname  <- ifelse(is.null(fname), "", fname)
                     did <- thisProcess@frameGraphs[[d]]@id
                     id <- paste(p, d, counter, sep="_")
-                    writeLines(paste("<td class=\"QADetAggr\" id=\"row_", id,
+                    writeLines(paste("\n<td class=\"QADetAggr\" id=\"row_", id,
                                      "_1\" align=\"center\">", sep=""), con)
                     if(length(did)>0)
                         writeLines(paste("<div class=\"",
@@ -259,46 +259,46 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
             writeLines("</tr>", con)
             
             ## new table row and column header for images
-            writeLines(paste("<tr class=\"", classes[f], "\" id=\"frow2_",
+            writeLines(paste("\n<tr class=\"", classes[f], "\" id=\"frow2_",
                              counter, "\" style=\"display:", showRow,
-                             ";\">\n<th ",
-                             "class=\"QAFrameHeader\">\n</th>", sep=""), con)
+                             ";\">\n\n<td ",
+                             "class=\"QASumGraph\">\n</td>", sep=""), con)
             ## now the images, each process is one column
             for(p in seq_along(process)){
                 thisProcess <- process[[p]]@frameProcesses[[f]]
                 pid <- thisProcess@id
                 sid <- thisProcess@summaryGraph@id
-                writeLines(paste("<td class=\"QASumGraph\" id=\"",
+                writeLines(paste("\n<td class=\"QASumGraph\" id=\"",
                                  pid, "_sumBack\" align=\"center\">",
                                  sep=""), con)
                 if(length(sid)>0){
                     sGraph <- file.path(relBase[p],
                                         names(thisProcess@summaryGraph))
                     sVecGraph <- gsub("\\..*$", ".pdf", sGraph)
-                    writeLines(pdfLink(sVecGraph, sGraph, "QASumGraph", sid,
-                                       pdf=pdf), con)
+                    writeLines(pdfLink(vimg=sVecGraph, bimg=sGraph, class="QASumGraph",
+                                       id=sid, pdf=pdf), con)
                 }
                 writeLines("</td>", con)
                 for(d in seq_along(thisProcess@frameAggregators)){
                     did <- thisProcess@frameGraphs[[d]]@id
                     id <- paste(p, d, counter, sep="_")
-                    writeLines(paste("<td class=\"QADetGraph\" id=\"row_", id,
+                    writeLines(paste("\n<td class=\"QADetGraph\" id=\"row_", id,
                                      "_2\" align=\"center\">", sep=""), con)
                     if(length(did)>0){
                         fGraph <- file.path(relBase[p],
                                             names(thisProcess@frameGraphs[[d]]))
                         fVecGraph <- gsub("\\..*$", ".pdf", fGraph)
-                        writeLines(pdfLink(fVecGraph, fGraph, "QADetGraph", id,
-                                           pdf=pdf), con)
+                        writeLines(pdfLink(vimg=fVecGraph, bimg=fGraph, class="QADetGraph",
+                                           id=id, pdf=pdf), con)
                     }
                     writeLines("</td>", con)
                 }## end for d
             }## end for p
             lastGrp <- grps[counter]
             counter <- counter+1
-            writeLines("</tr>", con)
+            writeLines("\n</tr>\n", con)
         }## end for f
-        writeLines("</table>", con)
+        writeLines("\n</table>", con)
         
         ## the page navigation
         writeLines(paste("<div class=\"QAPagesTile\"><table width=\"100%\"",
@@ -316,7 +316,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         np <- length(set)
         iFiles <- if(!sID && np>1) c("", 1:(np-1)) else as.character(1:np)
         if(np>1){
-            writeLines("</td><td align=\"right\">", con)
+            writeLines("\n</td><td align=\"right\">", con)
             panels <- paste("<span class=\"QAPanels\" id=\"panels_", 1:np,
                             "\"n><a class=\"QAPanels\" href=\"index",
                             iFiles, ".html\">Panel ",

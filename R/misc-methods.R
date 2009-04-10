@@ -7,24 +7,24 @@ setMethod("writeLines", signature("data.frame", "file", "missing"),
               modes <- sapply(text, mode)
               for(i in which(modes == "numeric"))
                   text[,i] <-  round(as.numeric(as.character(text[,i])),3)
-              th <- paste("<th class=\"QAParameter\">",
+              th <- paste("<th>",
                           colnames(text), "</th>", sep="")
-              th[ncol(text)] <- gsub("QAParameter", "QAParameterRight", th[ncol(text)])
-              th <- paste("<tr class=\"QAParameter\">\n",
-                          paste(th, sep="", collapse="\n"), "\n</tr>", sep="",
+              th[ncol(text)] <- gsub("<th", "<th class=\"right\"", th[ncol(text)])
+              th <- paste("<tr>\n",
+                          paste(th, sep="", collapse="\n"), "\n</tr>\n", sep="",
                           collapse="\n")
               td <- apply(text, 1, function(x) 
-                          paste("<td class=\"QAParameter\">", x, "</td>", sep=""))
+                          paste("<td>", x, "</td>", sep=""))
               td[ncol(text),] <-
-                  gsub("QAParameter", "QAParameterRight", td[ncol(text),])
+                  gsub("<td", "<td class=\"right\"", td[ncol(text),])
               td <- paste(apply(td,2,function(x)
-                                paste("<tr class=\"QAParameter\">\n",
-                                      paste(x, collapse="\n", sep=""), "</tr>", sep="",
+                                paste("<tr>\n",
+                                      paste(x, collapse="\n", sep=""), "\n</tr>", sep="",
                                       collapse="/n")), collapse="\n", sep="")
-              paste("<tr class=\"QAParameter\">\n", td, "</tr>", sep="",
-                          collapse="/n")
+              paste("<tr>\n", td, "</tr>\n", sep="",
+                    collapse="/n")
               writeLines(paste("<table class=\"QAParameter\" align=\"center\">\n",
-                               th, td, "\n</table>\n", sep=""), con)
+                               th, td, "\n</table>", sep=""), con)
           })
 
 
@@ -53,55 +53,47 @@ setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
               for(r in 2:panels)
                   sumRanges <- sumRanges + text@ranges[[r]]
           ## The bounding table: columns are panels, rows are samples
-          writeLines("<table class=\"qaPanelBound\"><tr><td>", con)
-          writeLines(paste("\n\n<table class=\"qaPanelSummary\" ",
-                           "align=\"center\">"), con)
-          writeLines(paste("<tr class=\"qaPanelSummaryEven\">\n<th ",
-                           "class=\"qaPanelSummaryRight\">\n</th>"),con)
+          writeLines("<table class=\"qaPanelBound\">\n<tr>\n<td>\n", con)
+          writeLines(paste("<table class=\"qaPanelSummary\">\n<tr",
+                           "class=\"even\">\n<th class=\"left\">\n</th>"), con)
           if(panels>1)
-              writeLines(paste("<th class=\"qaPanelSummaryRight\">\n<span ",
-                               "class=\"qaPanelSummary",
-                               "\">summary<span>\n</th>\n", sep=""), con)
-          writeLines(paste(paste("<th class=\"qaPanelSummaryTop\">",
-                                 "<a href=\"index", 1:panels, ".html\">",
-                                 "panel ", 1:panels, "\n<br><span class=\"",
-                                 "qaPanelSummarySub\">",
-                                 shortNames(names(text@panels), n=12),
-                                 "</span></a>\n</th>",
-                                 sep="", collapse="\n"), "</tr>", sep=""), con)
+              writeLines("<th class=\"left\"><span>Summary</span></th>", con)
+          writeLines(paste(paste("<th class=\"right\"><a href=\"index", 1:panels, ".html\">",
+                                 "panel ", 1:panels, "\n<br><span>",
+                                 shortNames(names(text@panels), n=12), "</span></a>",
+                                 "\n</th>", sep="", collapse="\n"), "\n</tr>", sep=""), con)
           ## iterate over rows (samples)
-          for(s in seq_along(samples)){
+          for(s in seq_along(samples))
+          {
               thisSamp <- samples[s]
-              class <- ifelse((s %% 2)==0, "Even", "Odd") 
+              class <- ifelse((s %% 2)==0, "even", "odd") 
               ## first the summary over all pannels
-             
-              writeLines(paste("\n<tr class=\"qaPanelSummary", class,
-                               "\">\n<th ", "class=\"qaPanelSummaryRight\">",    
-                               thisSamp, "</th>\n", sep=""), con)
-              if(panels>1){
-                writeLines(paste("<td class=\"qaPanelSummarySum\">",
-                                 sep=""), con)
-                writeLines(htmlBarplot(text@summary[s,], sumRanges, class=class), con)
-                writeLines("</td>", con)
+              writeLines(paste("\n<tr class=\"", class, "\">\n<th class=\"left\">",
+                               thisSamp, "</th>", sep=""), con)
+              if(panels>1)
+              {
+                  writeLines("\n<td class=\"sum\">", con)
+                  writeLines(htmlBarplot(text@summary[s,], sumRanges), con)
+                  writeLines("</td>", con)
               }
               ## now iterate over each pannel
               for(p in seq_len(panels)){
-                  writeLines("<td class=\"qaPanelSummary\">", con)
+                  writeLines("\n<td class=\"bars\">", con)
                   writeLines(htmlBarplot(text@panels[[p]][s,], text@ranges[[p]],
                                          p, match(thisSamp,
                                                   text@mapping[[p]][,"sample"]),
-                                         FALSE, class=class), con)
+                                         FALSE), con)
                   writeLines("</td>", con)
               }
               writeLines("</tr>", con)
           }
-          writeLines("</table></table></td></tr>", con)
+          writeLines("</table>\n</td>\n</tr>\n</table>", con)
       })
 
 
 ## create a HTML code "barplot" for a single sample
 htmlBarplot <- function(data, ranges, panel=NULL, frame=NULL,
-                        rownames=TRUE, ignoreChannel="time", class)
+                        rownames=TRUE, ignoreChannel="time")
 {
     sel <- match(tolower(ignoreChannel), tolower(names(data)))
     if(!is.na(sel)){
@@ -111,33 +103,26 @@ htmlBarplot <- function(data, ranges, panel=NULL, frame=NULL,
     ld <- length(data)
     maxRange <- max(ranges)
     width <- ifelse(rownames, maxRange*20 + max(nchar(names(data)))*10, 0)
-    out <- paste("<table class=\"", ifelse(rownames, "qaBar", "qaSumBar"),
-                 "\" align=\"center\" cellspacing=\"0\"",
-                 " cellpadding=\"0\" ",
+    out <- paste("\n<table class=\"qaBar\"",
                  ifelse(is.null(panel), "", paste("onclick=\"link2Panel(", panel,
-                 ", ", frame, ")\"", sep="")), "width=\"", width, "\">", sep="")
+                                                  ", ", frame, ")\"", sep="")), ">", sep="")
     rows <- character(ld)
     for(i in seq_len(ld))
     {
         failed <- ifelse(is.na(data[i]), 0, data[i])
         passed <- ranges[i] - failed
         empty <- maxRange - ranges[i]
-       
-        rows[i] <- paste(ifelse(rownames,
-                                paste("<tr class=\"qaBar", class, 
-                                      "\">\n<th class=\"qaBar\"><b>",
-                                      names(data)[i], "</b></th>\n", collapse="", sep=""),
-                                ""),
-                         paste(rep(paste("<td class=\"qaBarPassed", class,
-                                   "\"></td>\n", sep=""), passed), sep="",
-                               collapse=""),
-                         paste(rep(paste("<td class=\"qaBarFailed", class,
-                                   "\"></td>\n", sep=""), failed), sep="",
-                               collapse=""),
-                         paste(rep(paste("<td class=\"qaBarEmpty", class,
-                                   "\"></td>\n", sep=""), empty), sep="",
-                               collapse=""),
-                         "</tr>", sep="", collapse="")
+        lclass <- if(rownames) "" else "link "
+        bclass <- if(ranges[i]==0) rep("", maxRange) else
+        if(maxRange==1 && ranges[i]==1) "single " else
+        c("left ", rep("", maxRange-2), "right ")
+        td <-  c(rep(sprintf("<td class=\"%%s%spassed\"></td>\n", lclass), passed),
+                 rep(sprintf("<td class=\"%%s%sfailed\"></td>\n", lclass), failed),
+                 rep("<td class=\"%sempty\"></td>\n", empty))
+        rn <- ifelse(rownames, paste("<th>", names(data)[i], "</th>", collapse="",
+                                    sep=""), "")
+        rows[i] <- sprintf("<tr>\n%s%s</tr>", rn,
+                           paste(mapply(sprintf, td, bclass), sep="", collapse=""))
     }
     out <- c(out, rows, "</table>")
     return(out)

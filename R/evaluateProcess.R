@@ -23,6 +23,7 @@ evaluateProcess <- function(process, thresh, ...)
            "margin events"=
        {
            efun <- function(x, c){
+               
                sums <- x@details$events
                m <- x@details$m
                s <- x@details$s
@@ -54,13 +55,28 @@ evaluateProcess <- function(process, thresh, ...)
        },
            "cell number"=
        {
-           efun <- function(x, c){
-               qaScore <- x@details$qaScore
-               x@summaryAggregator@passed <- qaScore<c
+           efun <- function(x, c, two.sided, absolute.value){
+               x@details$absolute.value <- if(!missing(absolute.value)) absolute.value
+               else NULL
+               if(is.null(x@details$absolute.value))
+               {
+                   m <- x@details$mean
+                   s <- x@details$sd
+                   val <- x@summaryAggregator@x
+                   if(!missing(two.sided))
+                       x@details$two.sided <- two.sided
+                   summary <- if(!x@details$two.sided) m-val else abs(m-val)
+                   x@summaryAggregator@passed <- summary < c*s 
+               }
+               else
+               {
+                    x@summaryAggregator@passed <-
+                        x@summaryAggregator@x > x@details$absolute.value
+               }
                return(x)
            }
            process@frameProcesses <- lapply(process@frameProcesses, efun,
-                                            thresh)    
+                                            thresh, ...)    
        },
            
            stop("Don't know how to deal with process of type '",  process@type,

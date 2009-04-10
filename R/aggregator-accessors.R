@@ -114,9 +114,9 @@ setMethod("show", signature("stringAggregator"),
 setMethod("writeLines", signature("numericAggregator", "file", "missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
-              writeLines(paste("<b><span class=\"QANumAggr\" ",
+              writeLines(paste("<div class=\"QANumAggr\" ",
                                "style=\"color:", col, ";\">", signif(text@x,2),
-                               "</span></b><br>", sep=""), con)
+                               "</div>", sep=""), con)
           })
 
 ## display details about aggregator
@@ -137,12 +137,12 @@ setMethod("writeLines", signature("rangeAggregator", "file", "missing"),
           function(text, con){
               x <- text
               perc <- (x@x-x@min)/diff(c(x@min, x@max))*100
-              class <- ifelse(x@passed, "QARangeAggrPass", "QARangeAggrFail")
-              writeLines(paste("<table class=\"QARangeAggr\">\n",
-                               "<tr>\n<td class=\"", class, "\" width=\"",
-                               perc, "%\" >\n</td>\n<td class=\"QARangeAggr",
-                               "\" width=\"", 100-perc, "%\" >\n</td>\n",
-                               "</tr>\n</table>", sep=""), con)
+              class <- ifelse(x@passed, "passed", "failed")
+              writeLines(paste("<div class=\"QARange\">\n",
+                               "<div class=\"", class, "\" style=\"width:", perc,
+                               "%\"></div>\n",
+                               "<div class=\"label\">", signif(perc,1), "%</div>\n",
+                               "</div>", sep=""), con)
           })
 
 ## display details about aggregator

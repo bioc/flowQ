@@ -5,8 +5,9 @@
 ## display details about process
 setMethod("show", signature("qaProcessFrame"),
           function(object)
-              cat("Quality process output for frame '", object@frameID, "'\n",
-                  sep="")
+              cat("Quality process output for frame '", object@frameID, "' ",
+                  ifelse(object@summaryAggregator@passed, "", "not "),
+                  "passing the requirements\n", sep="")
           )
 
 

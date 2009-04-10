@@ -1,29 +1,59 @@
 ## Create quasi-random guids. This is only based on the time stamp,
 ## not on MAC address.
 guid <- function()
-    format.hexmode(as.integer(Sys.time())/runif(1)*proc.time()["elapsed"])
+    as.character(format.hexmode(as.integer(Sys.time())/runif(1)*proc.time()["elapsed"]))
 
 
-locateParameter<-function(flowList,parm,flowSetIndx,flowFrameIndx){ 
-
-    if(length(parm)!=1){
-        stop("Only one parameter is to be specified")
-    }
-    temp <- pData(parameters(flowList[[flowSetIndx]][[flowFrameIndx]]))
-    mIndx <- is.na(temp["desc"])
-        temp["desc"][mIndx] <- temp["name"][mIndx]
-        nameIndx <- temp["desc"]==parm
-	if(length(temp["name"][nameIndx])>1){
-	 stop("Multiple channels in a flowFrame stained for the same cell type")
+## Check for the class of object x and its length and cast error if wrong
+checkClass <- function(x, class, length=NULL, verbose=FALSE,
+                       mandatory=TRUE)
+{
+    if(mandatory && missing(x))
+        stop("Argument '", substitute(x), "' missing with no default",
+             call.=verbose)
+    msg <- paste("'", substitute(x), "' must be object of class ",
+                 paste("'", class, "'", sep="", collapse=" or "), sep="")
+    fail <- !any(sapply(class, function(c, y) is(y, c), x))
+    if(!is.null(length) && length(x) != length)
+    {
+        if(!is.null(x))
+        {
+            fail <- TRUE
+            msg <- paste(msg, "of length", length)
         }
-        return(temp["name"][nameIndx])   
+    }
+    if(fail) stop(msg, call.=verbose) else invisible(NULL)     
 }
 
-locateDuplicatedParameters<-function(flowList){
-	
+
+
+
+## FIXME: What does this function do?
+locateParameter<-function(flowList, parm, flowSetIndx, flowFrameIndx)
+{
+    if(length(parm)!=1)
+        stop("Only one parameter is to be specified")
+    temp <- pData(parameters(flowList[[flowSetIndx]][[flowFrameIndx]]))
+    mIndx <- is.na(temp["desc"])
+    
+    temp["desc"][mIndx] <- temp["name"][mIndx]
+    nameIndx <- temp["desc"]==parm
+    if(length(temp["name"][nameIndx])>1){
+        stop("Multiple channels in a flowFrame stained for the same cell type")
+    }
+    return(temp["name"][nameIndx])   
+}
+
+
+
+
+## FIXME: What does this function do?
+locateDuplicatedParameters<-function(flowList)
+{
     alqLen<- length(flowList)
     names <-data.frame()
-    for( i in seq_len(alqLen)){
+    for( i in seq_len(alqLen))
+    {
         temp <- pData(parameters(flowList[[i]][[1]]))	
         mIndx <- is.na(temp["desc"])
         temp["desc"][mIndx] <- temp["name"][mIndx]
@@ -36,49 +66,62 @@ locateDuplicatedParameters<-function(flowList){
 	
 }
 
+
+
+
+## FIXME: What does this function do?
 normalizeSets <- function(flowList,dupes,peaks=NULL)
-{   patientID<-sampleNames(flowList[[1]])
+{
+    patientID<-sampleNames(flowList[[1]])
     alqLen<-length(flowList)
-    for (cellType  in dupes){
-        for( i in patientID){
+    for (cellType  in dupes)
+    {
+        for(i in patientID)
+        {
             inList<-list()   
             alqTable <- rep(FALSE,alqLen)
             frameIndx<-1
-            for(j in seq_len(alqLen)){
-                        
+            for(j in seq_len(alqLen))
+            {
                 parm <- locateParameter(flowList,cellType,j,i)
-                if(length(parm)!=0){
-    
+                if(length(parm)!=0)
+                {
                     value<-flowList[[j]][[i]][,parm]
                     colnames(value) <- cellType
                     inList[[frameIndx]] <- value            
                     frameIndx <- frameIndx + 1
                     alqTable[j] <- TRUE
-                }
-            }
+                } ## end if(length ...
+            } ## end for(j ...
                   
             inSet <- flowSet(inList)
             inFrame<-as(inSet,"flowFrame")                
             cur1<-curv1Filter(cellType, filterId="myCurv1Filter")
-	    if(is.null(peaks))	peakCount<- length(filter(inFrame,cur1)@filterDetails$myCurv1Filter$boundaries)
-	    else  peakCount <- peaks
+            peakCount<- if(is.null(peaks))
+                length(filter(inFrame,cur1)@filterDetails$myCurv1Filter$boundaries)
+	    else peaks
 
-            norm1 <- normalization(normFun=function(x, parameters, ...) warpSet(x, parameters,peakNr=peakCount, ...),
-                            parameters=as.character(cellType), arguments=list(grouping=NULL),
-                            normalizationId="Norm")
+            norm1 <- normalization(normFun=function(x, parameters, ...)
+                                   warpSet(x, parameters,peakNr=peakCount, ...),
+                                   parameters=as.character(cellType),
+                                   arguments=list(grouping=NULL),
+                                   normalizationId="Norm")
             nData <- normalize(inSet,norm1)
             frameIndx<-1
-            for(m in which(alqTable==T)){
+            for(m in which(alqTable==T))
+            {
                 parm <- locateParameter(flowList,cellType,m,i)
                 exprs(flowList[[m]]@frames[[i]])[,parm] <-
-                                      exprs(nData[[frameIndx]])
+                    exprs(nData[[frameIndx]])
                 frameIndx <- frameIndx +1
-            }
-        
-      }
-  }
-  return(flowList)
+            } ## end for(m ...
+        } ## end for(i ...
+    } ## end for(celltype ...
+    return(flowList)
 }
+
+
+
 
 ## QA process indicating too many events on the margins in comparison to
 ## average number of margin events for a particular channel. The 'grouping'
@@ -87,41 +130,42 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
 ## by the standard deviation of the average number of margin events for a
 ## particular channel.
 qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
-                                   cFactor=1, pdf=TRUE, ...)
+                                   cFactor=2, absolute.value=NULL,
+                                   name="margin events",
+                                   sum.dimensions=c(7,7), det.dimensions=c(7,3),
+                                   pdf=TRUE, ...)
 {
     ## some sanity checking
-    if(!is(set, "flowSet"))
-       stop("'set' needs to be of class 'flowSet'")
-    frameIDs <- sampleNames(set)
-    ls <- length(set)
-    if(is.null(channels)){
-        parms <- setdiff(colnames(set[[1]]), c("time", "Time"))
-    }else{
-        if(!all(channels %in% colnames(set[[1]])))
-            stop("Invalid channel(s)")
-        parms <- channels
-    }
+    checkClass(set, "flowSet")
+    checkClass(outdir, "character", 1)
+    checkClass(cFactor, "numeric", 1)
+    checkClass(absolute.value, c("numeric", "NULL"), 1)
     if(!is.null(grouping))
         if(!is.character(grouping) || ! grouping %in% colnames(pData(set)))
             stop("'grouping' must be a character indicating one of the ",
                  "phenotypic variables in 'set'")
-    if(!is.character(outdir) || length(outdir)!=1)
-        stop("'outdir' must be a valid file path")
-    if(!is.numeric(cFactor) || length(cFactor)!=1)
-        stop("'cFactor' must be numeric scalar")
+    checkClass(sum.dimensions, "numeric")
+    sum.dimensions <- rep(sum.dimensions, 2)
+    checkClass(det.dimensions, "numeric")
+    det.dimensions <- rep(det.dimensions, 2)
+    checkClass(name, "character", 1)
+    checkClass(pdf, "logical", 1)
+    cn <- colnames(set)
+    parms <- if(is.null(channels)) setdiff(cn, flowCore:::findTimeChannel(set)) else
+    if(!all(channels %in% cn)) stop("Invalid channel(s)") else channels
+    frameIDs <- sampleNames(set)
+    ls <- length(set)
     lp <- length(parms)
     
     ## count events on the margins using an expression filter
     ranges <- range(set[[1]], parms)
     perc <- matrix(ncol=ls, nrow=lp, dimnames=list(parms, frameIDs))
     cat("computing margin events...")
-    for(p in parms){
-        ef <- char2ExpressionFilter(paste("`", p, "`==", ranges[,p], sep="",
-                     collapse="|"), filterId=p)
-        ff <- filter(set, ef)
-        perc[p,] <- sapply(ff, function(x) summary(x)$p)
-        cat(".")
-    }
+    perc <- t(sapply(parms, function(x) 
+                 {
+                     ff <- filter(set, boundaryFilter(x))
+                     sapply(ff, function(y) summary(y)$q)
+                 }))
     cat("\n")
     
     ## create summary plot
@@ -131,7 +175,302 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
     ## Necessary because the directory path in Windows returned by tmpdir is odd
     tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     sfile <- file.path(tmp, "summary.pdf")
-    pdf(file=sfile)
+    pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
+    col.regions=colorRampPalette(c("white",  "darkblue"))(256)
+    print(levelplot(t(perc)*100, scales = list(x = list(rot = 90)),
+                    xlab="", ylab="", main="% margin events",
+                    col.regions=col.regions))
+    dev.off()
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
+
+    ## deal with groups if there are any
+    frameProcesses <- list()
+    grps <- if(!is.null(grouping)) pData(set)[,grouping] else rep(1,ls)
+    grps <- split(1:ls, grps, drop=TRUE)
+    allData <- lapply(grps, function(x, set)
+                      exprs(as(set[x,parms], "flowFrame")), set)
+    
+    ## create graphs and aggregators for each frame (and each channel)
+    cat("creating frame plots...")
+    for(i in 1:length(set)){
+        fnames <- NULL
+        ## this will hold the aggregators for all channels
+        agTmp <- aggregatorList()
+        thisGrp <-
+            if(is.null(grouping)) "1" else as.character(pData(set)[i,grouping])
+        mv <- sv <- NULL
+        for(j in 1:length(parms))
+        {
+            ## the frame and parameter specific density plots
+            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+                                          gsub("\\..*$", "", parms[j]), ".pdf",
+                                          sep=""))
+            pdf(file=tfile, width=sum.dimensions[1], height=sum.dimensions[2])
+            par(mar=c(1,0,1,0))
+            ll <- list(allData[[thisGrp]][,j], exprs(set[[i]][,parms[j]]))
+            bw <- bw.nrd0(ll[[2]])
+            dens <- lapply(ll, density, bw=bw)
+            rl <- range(unlist(ll))
+            xlim <- rl + c(-1,1) * (diff(rl)/7)
+            ylim <- c(0, max(c(dens[[1]]$y, dens[[2]]$y)))
+            plot(1,1,xlim=xlim, ylim=ylim, type="n", axes=FALSE, ann=FALSE)
+            polygon(dens[[1]], col="gray", border="gray")
+            lines(dens[[2]], col="darkred", lwd=3)
+            dev.off()
+            fnames <- c(fnames, tfile)
+            
+            m <- mean(perc[j,grps[[thisGrp]]])
+            s <- sd(perc[j,grps[[thisGrp]]])
+            if(is.na(s))
+                s <- sd(perc[j,])
+            ## test whether the particular frame and channel passes the check
+            ## and use a rangeAggregator to store that information
+            passed <- if(is.null(absolute.value))
+                perc[j,i] <= m+s*cFactor & perc[j,i] >= m-s*cFactor
+            else
+                perc[j,i] <= absolute.value
+            mv <- c(mv, m)
+            sv <- c(sv,s)
+            agTmp[[j]] <- new("rangeAggregator", passed=passed,
+                              x=perc[j,i], min=0, max=1)
+            cat(".")
+        }
+
+        ## summarize the results for separate channels
+        names(agTmp) <- parms
+        nfail <- !sapply(agTmp, slot, "passed")
+        val <- if(sum(nfail)==1 && length(nfail)>2) factor(2) else factor(0)
+        if(sum(nfail)==0)
+            val <- factor(1)
+        ba <- new("discreteAggregator", x=val)
+        ## bundle up the graphs for all channels for this particular frame
+        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150, pdf=pdf)
+        fid <- frameIDs[i]
+        frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
+                                                summaryAggregator=ba,
+                                                frameAggregators=agTmp,
+                                                frameGraphs=fGraphs,
+                                                details=list(events=perc[,i],
+                                                mevents=rowMeans(perc),
+                                                m=mv, s=sv,
+                                                absolute.value=absolute.value))
+    }
+    
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name=name,
+               type="margin events", summaryGraph=sgraph,
+               frameProcesses=frameProcesses))
+}    
+
+
+
+
+## QA process indicating strange patterns in signal intensity over time.
+## This is done for all channels at once now, with drilldown to the separate
+## channel results. The cutoff is the variance cutoff used directly in function
+## 'timeLinePlot'
+qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
+                               name="time line",
+                               sum.dimensions=NULL, det.dimensions=c(7,7),
+                               pdf=TRUE, ...)
+{
+    ## some sanity checking
+    checkClass(set, "flowSet")
+    checkClass(outdir, "character", 1)
+    checkClass(cutoff, "numeric", 1)
+    checkClass(sum.dimensions, c("numeric", "NULL"))
+    sum.dimensions <- if(is.null(sum.dimensions)) c(4*lp, 7) else rep(sum.dimensions, 2)
+    checkClass(det.dimensions, "numeric")
+    det.dimensions <- rep(det.dimensions, 2)
+    checkClass(name, "character", 1)
+    checkClass(pdf, "logical", 1)
+    cn <- colnames(set)
+    parms <- if(is.null(channels)) setdiff(cn, flowCore:::findTimeChannel(set)) else
+    if(!all(channels %in% cn)) stop("Invalid channel(s)") else channels
+    frameIDs <- sampleNames(set)
+    ls <- length(set)
+    lp <- length(parms)
+
+    ## create summary plots for each channel
+    cat("creating summary plots...")
+    gid <- guid()
+    tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    sfiles <- NULL
+    summary <- vector(lp, mode="list")
+    for(j in seq_len(lp))
+    {
+        sfile <- file.path(tmp, paste("summary_", j, ".pdf", sep=""))
+        pdf(file=sfile, width=sum.dimensions[1]/lp,
+            height=sum.dimensions[2])
+        binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
+        summary[[j]] <- timeLinePlot(set, parms[j], binSize=binSize,
+                                     varCut=cutoff)
+        dev.off()
+        sfiles <- c(sfiles, sfile)
+        cat(".")
+    }
+    
+    ## glue together the summary graphs and create a qaGraph object
+    sfile <- paste(tmp, "summary.pdf", sep="/")
+    system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
+                 lp, "x1 ", sfile, sep=""))
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp), pdf=pdf)
+
+    ## create graphs and aggregators for each frame and channel
+    frameIDs <- sampleNames(set)
+    frameProcesses <- list()
+    cat("\ncreating frame plots...")
+    for(i in seq_len(ls))
+    {
+        fnames <- NULL
+        agTmp <- aggregatorList()
+        for(j in seq_len(lp)){
+            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+                                          gsub("\\..*$", "", parms[j]), ".pdf",
+                                          sep=""))
+            pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+            timeLinePlot(set[i], parms[j],
+                         main=paste("score=", signif(summary[[j]][i], 4), sep=""),
+                         cex.main=2, binSize=binSize, varCut=cutoff)
+            dev.off()
+            fnames <- c(fnames, tfile)
+            agTmp[[j]] <- new("numericAggregator", passed=summary[[j]][i]<=0,
+                              x=summary[[j]][i])
+            cat(".")
+        }
+
+        ## wrap graphs and aggregators in objects
+        names(agTmp) <- parms
+        nfail <- !sapply(agTmp, slot, "passed")
+        val <- if(sum(nfail)==1) factor(2) else factor(0)
+        if(sum(nfail)==0)
+            val <- factor(1)
+        ba <- new("discreteAggregator", x=val)
+        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
+                               width=min(220, lp*120), pdf=pdf)
+        fid <- frameIDs[i]
+        dr <- lapply(seq_len(lp), function(x) attr(summary[[x]], "raw")[[i]])
+        frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
+                                                summaryAggregator=ba,
+                                                frameAggregators=agTmp,
+                                                frameGraphs=fGraphs,
+                                                details=list(raw=dr))
+    }
+            
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name="time line",
+                     type="time line", summaryGraph=sgraph,
+                     frameProcesses=frameProcesses))
+}    
+
+
+
+## Detect disturbances in the flow of cells over time
+qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
+                               sum.dimensions=c(7,7), det.dimensions=c(7,7),
+                               pdf=TRUE, ...)
+{
+    ## some sanity checking
+    checkClass(set, "flowSet")
+    checkClass(outdir, "character", 1)
+    checkClass(cutoff, "numeric", 1)
+    checkClass(sum.dimensions, "numeric")
+    sum.dimensions <- rep(sum.dimensions, 2)
+    checkClass(det.dimensions, "numeric")
+    det.dimensions <- rep(det.dimensions, 2)
+    checkClass(name, "character", 1)
+    checkClass(pdf, "logical", 1)
+    ls <- length(set)
+    
+    ## create summary plot and its associated qaGraph object
+    cat("creating summary plots...")
+    gid <- guid()
+    tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
+    sfile <- file.path(tmp, "summary.pdf")
+    pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
+    summary <- timeLinePlot(set, colnames(set), binSize=binSize,
+                            varCut=cutoff, type="frequency")
+    dev.off()
+    idir <- file.path(outdir, "images", gid)
+    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
+
+    ## create graphs and aggregators for each frame and wrap in object
+    frameIDs <- sampleNames(set)
+    frameProcesses <- list()
+    cat("\ncreating frame plots...")
+    det.dimensions <- rep(det.dimensions, 2)
+    for(i in seq_len(ls))
+    {
+        tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
+                                      sep=""))
+        pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+        sum <- timeLinePlot(set[i], colnames(set)[[1]],
+                     main=paste("score=", signif(summary[i], 4), sep=""),
+                     cex.main=2, binSize=binSize, type="frequency",
+                     varCut=cutoff)
+        dev.off()
+        ba <- new("binaryAggregator", passed=summary[i]<=0)
+        fg <- qaGraph(fileName=tfile, imageDir=idir, width=220, pdf=pdf)
+        fid <- frameIDs[i]
+        frameProcesses[[fid]] <-
+            qaProcessFrame(fid, ba, fg, details=list(qaScore=sum))
+        cat(".")
+    }
+
+    ## create qaProcess object
+    cat("\n")
+    return(qaProcess(id=gid, name=name, type="time flow",
+                     summaryGraph=sgraph, frameProcesses=frameProcesses))
+}    
+
+
+
+
+## Detect unusually low (or high) cell counts
+qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
+                                 absolute.value=NULL, two.sided=FALSE,
+                                 name="cell number", sum.dimensions=c(7,7),
+                                 pdf=TRUE, ...)
+{
+    ## some sanity checking
+    checkClass(set, "flowSet")
+    checkClass(outdir, "character", 1)
+    checkClass(cFactor, "numeric", 1)
+    checkClass(absolute.value, c("numeric", "NULL"), 1)
+    if(!is.null(grouping))
+        if(!is.character(grouping) || ! grouping %in% colnames(pData(set)))
+            stop("'grouping' must be a character indicating one of the ",
+                 "phenotypic variables in 'set'")
+    checkClass(sum.dimensions, "numeric")
+    sum.dimensions <- rep(sum.dimensions, 2)
+    checkClass(two.sided, "logical", 1)
+    checkClass(name, "character", 1)
+    checkClass(pdf, "logical", 1)
+
+    ## deal with groups if there are any
+    ls <- length(set)
+    grps <- if(!is.null(grouping)) pData(set)[,grouping] else rep(1,ls)
+    grpsi <- split(1:ls, grps, drop=TRUE)
+    sset <- split(set, grps)
+    
+    ## create summary plot and its associated qaGraph object
+    cat("creating summary plots...")
+    gid <- guid()
+    tmp <- tempdir()
+    ## Necessary because the directory path in Windows returned by tmpdir is odd
+    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    cellNumbers <- as.numeric(fsApply(set, nrow))
+    sfile <- file.path(tmp, "summary.pdf")
+  
     col.regions=colorRampPalette(c("white",  "darkblue"))(256)
     print(levelplot(t(perc)*100, scales = list(x = list(rot = 90)),
                     xlab="", ylab="", main="% margin events",
@@ -211,6 +550,8 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
 }    
 
 
+
+
 ## QA process indicating strange patterns in signal intensity over time.
 ## This is done for all channels at once now, with drilldown to the separate
 ## channel results. The cutoff is the variance cutoff used directly in function
@@ -251,7 +592,8 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     tmp <- gsub("\\", "/", tmp, fixed=TRUE)
     sfiles <- NULL
     summary <- vector(lp, mode="list")
-    for(j in seq_len(lp)){
+    for(j in seq_len(lp))
+    {
         sfile <- file.path(tmp, paste("summary_", j, ".pdf", sep=""))
         pdf(file=sfile, width=sum.dimensions[1]/lp,
             height=sum.dimensions[2])
@@ -274,10 +616,12 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     frameIDs <- sampleNames(set)
     frameProcesses <- list()
     cat("\ncreating frame plots...")
-    for(i in seq_len(ls)){
+    for(i in seq_len(ls))
+    {
         fnames <- NULL
         agTmp <- aggregatorList()
-        for(j in seq_len(lp)){
+        for(j in seq_len(lp))
+        {
             tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
@@ -320,7 +664,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     
 
 
-## Detect distrubances in the flow of cells over time
+## Detect disturbances in the flow of cells over time
 qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
                                sum.dimensions=c(7,7), det.dimensions=c(7,7),
                                pdf=TRUE, ...)
@@ -361,7 +705,8 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     frameProcesses <- list()
     cat("\ncreating frame plots...")
     det.dimensions <- rep(det.dimensions, 2)
-    for(i in seq_len(ls)){
+    for(i in seq_len(ls))
+    {
         tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
                                       sep=""))
         pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -385,28 +730,31 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 }    
 
 
+
+
 ## Detect unusually low cell counts
 qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
+                                 absolute.value=NULL, two.sided=FALSE,
                                  name="cell number", sum.dimensions=c(7,7),
                                  pdf=TRUE, ...)
 {
     ## some sanity checking
-    if(!is(set, "flowSet"))
-        stop("'set' needs to be of class 'flowSet'")
-    ls <- length(set)
-    if(!is.character(outdir) || length(outdir)!=1)
-        stop("'outdir' must be a valid file path")
-    if(!is.numeric(cFactor) || length(cFactor)!=1)
-        stop("'cutoff' must be numeric scalar")
+    checkClass(set, "flowSet")
+    checkClass(outdir, "character", 1)
+    checkClass(cFactor, "numeric", 1)
+    checkClass(absolute.value, c("numeric", "NULL"), 1)
     if(!is.null(grouping))
         if(!is.character(grouping) || ! grouping %in% colnames(pData(set)))
             stop("'grouping' must be a character indicating one of the ",
                  "phenotypic variables in 'set'")
-    if(!all(is.numeric(sum.dimensions)))
-        stop("Plot dimensions must be provided as numerics")
+    checkClass(sum.dimensions, "numeric")
     sum.dimensions <- rep(sum.dimensions, 2)
+    checkClass(two.sided, "logical", 1)
+    checkClass(name, "character", 1)
+    checkClass(pdf, "logical", 1)
 
     ## deal with groups if there are any
+    ls <- length(set)
     grps <- if(!is.null(grouping)) pData(set)[,grouping] else rep(1,ls)
     grpsi <- split(1:ls, grps, drop=TRUE)
     sset <- split(set, grps)
@@ -433,17 +781,32 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
     frameIDs <- sampleNames(set)
     frameProcesses <- list()
     cat("\ncreating frame plots...")
-    for(i in seq_len(ls)){
+    for(i in seq_len(ls))
+    {
         thisGrp <-
             if(is.null(grouping)) "1" else as.character(pData(set)[i,grouping])
-        summary <- -(log(cellNumbers[i] / mean(cellNumbers[grpsi[[thisGrp]]])))
-        ba <- new("numericAggregator", x=cellNumbers[i],
-                  passed=summary<cFactor)
+        var <- sd(cellNumbers[grpsi[[thisGrp]]])
+        m <- mean(cellNumbers[grpsi[[thisGrp]]])
+        if(is.null(absolute.value))
+        {
+            summary <- if(!two.sided) m-cellNumbers[i] else abs(m-cellNumbers[i])
+            co <- var*cFactor
+            ba <- new("numericAggregator", x=cellNumbers[i],
+                      passed=summary<co)
+        }
+        else
+        {
+            summary <- cellNumbers[i]
+            co <- absolute.value
+            ba <- new("numericAggregator", x=cellNumbers[i],
+                      passed=summary>co)
+        }
         fid <- frameIDs[i]
         frameProcesses[[fid]] <-
-            qaProcessFrame(fid, ba, details=list(qaScore=summary))
+            qaProcessFrame(fid, ba, details=list(qaScore=summary, mean=m, sd=var,
+                                    two.sided=two.sided, absolute.value=absolute.value))
         cat(".")
-    }
+    }## end for(i in ...
 
     ## create qaProcess object
     cat("\n")
@@ -453,13 +816,12 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=0.5,
 
 
 
-qaProcess.BoundaryPlot <- function(
-flowList,
-dyes=NULL,
-outdir="QAReport",
-cutoff=3,
-det.dimensions=c(400,400),
-pdf=FALSE,...)
+
+## Similar to qaProcess.marginevents but this will compare boundary events across
+## panels.
+qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
+                                   cutoff=3, det.dimensions=c(400,400),
+                                   pdf=FALSE,...)
 {
     cat("creating summary plots...")
     gid <- guid()
@@ -500,7 +862,8 @@ pdf=FALSE,...)
                         eps<- c(.Machine$double.eps, -.Machine$double.eps)
                         ranges<- ranges+ eps   
                         ef <- char2ExpressionFilter(
-                              paste("`", par, "`<=", ranges[1]," | `",par,"`>=",ranges[2], sep="",
+                              paste("`", par, "`<=", ranges[1]," | `",par,"`>=",
+                                    ranges[2], sep="",
                           collapse=""), filterId=cellType)
                         ff <-filter(flowList[[j]]@frames[[i]][,par],ef)
                         perc[j,]<- summary(ff)$p*100                           

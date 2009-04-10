@@ -9,53 +9,81 @@
   using \code{\link{writeQAReport}}.
 }
 \usage{
-qaProcess.marginevents(set, channels = NULL, grouping=NULL, outdir,
-cFactor = 1, pdf=TRUE, \dots)
+
+qaProcess.marginevents(set, channels=NULL, grouping=NULL, outdir,
+cFactor=2, absolute.value=NULL, name="margin events",
+sum.dimensions=c(7,7), det.dimensions=c(7,3), pdf=TRUE, \dots)
+
 }
 
 \arguments{
   
-  \item{set}{ A \code{\link[flowCore]{flowSet}} }
+  \item{set}{ A \code{\link[flowCore]{flowSet}}.}
   
   \item{channels}{ A character vector of channel names for which margin
-    events are to be recorded }
+    events are to be recorded. Will use all available channels except
+    for the time channel if \code{NULL}. }
   
   \item{grouping}{ A character vector defining one of the variables in
-  the phenoData of \code{set} used as a grouping variable. If this
-  argument is uses, comparisons will be made within groups rather than
-  across all samples. }
-
+    the phenoData of \code{set} used as a grouping variable. If this
+    argument is used and if \code{absolute.value} is \code{NULL}, outlier
+    detection will be performed within groups rather than across all
+    samples.}
+  
   \item{outdir}{ The directory to which the graphical output is to be
-  saved. If multiple QA processes are to be combined, make sure to use
-  the same directory every time. }
+    saved. If multiple QA processes are to be combined, make sure to use
+    the same directory for all of them.}
 
-  \item{cFactor}{ The threshold at which the QA process is considered to
-    have failed. This is the fold change of margin event percentages
-  compared to the median percentage of events for the respective
-  channel.}
+  \item{cFactor}{ The outlier threshold at which the QA criterion is
+    considered to have failed. This is essentially the factor of
+    standard deviations away from the average number of cells per sample
+    for the respective channel.}
 
- \item{pdf}{Create vectorized versions of images for this quality
-   process.}
+  \item{absolute.value}{ An absolute percentage of margin events below
+    which the QA criterion is considered to be failed. If this argument
+    is not \code{NULL}, \code{cFactor} is ignored.}
 
+  \item{name}{ The name of the process used for the headings in the HTML
+    output.}
+  
+  \item{sum.dimensions, det.dimensions}{ The dimensions of the pdf
+    deviced in inches used for the summary plot and the sample-specific
+    plots, respectively.}
+  
+  \item{pdf}{ Logical indicating whether to create vectorized versions
+    of images for this quality process. This should be set to
+    \code{FALSE} if disk space is critical, since the pdf versions of
+    the image consume much more space on the hard drive compared to the
+    bitmap version. Setting the argument to \code{FALSE} will also
+    speed up the process.}
+  
   \item{\dots}{Further arguments.}
-
+  
 }
+ 
 \details{
+  
   QA processes of type 'marginevents' record the number of events that
   fall on the margins of the measurement range for each
   channel. Unproportionally high numbers of such events can indicate
-  problems with the instrument settings.
+  problems with the instrument settings or with compensation. These are
+  either determined dynamically as outliers from the typical
+  distribution of margin event percentages for the whole set, or, if
+  \code{absolute.value} is not \code{NULL}, by an absolute cutoff
+  value. If there is a natural grouping among the samples, this can be
+  specified using the \code{grouping} argument. In this case, the
+  outlier detection will be performed within its respective group for a
+  particular sample.
   
   For more details on how to layout \code{\link{qaProcess}} objects to
   HTML, see \code{\link{writeQAReport}} and \code{\link{qaReport}}.
+  
 }
 \value{
   An object of class \code{\link{qaProcess}}.
 }
 
 \author{ Florian Hahne }
-\note{ This function is still experimental }
-
 
 \seealso{
 
@@ -68,7 +96,7 @@ cFactor = 1, pdf=TRUE, \dots)
 \dontrun{
 data(GvHD)
 dest <- tempdir()
-qp <- qaProcess.marginevents(GvHD, channels=c("FL1-H", "FL2-H"),
+qp <- qaProcess.marginevents(GvHD, channels=c("FSC-H", "SSC-H"),
   outdir=dest)
 qp
 }

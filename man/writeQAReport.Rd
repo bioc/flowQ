@@ -15,29 +15,30 @@
 \usage{
 
 writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL,
-pagebreaks = TRUE, pdf=TRUE)
+pagebreaks=TRUE, pdf=TRUE)
 
 }
 
 \arguments{
   
   \item{set}{ A \code{\link[flowCore]{flowSet}} or a list of several
-    \code{\link[flowCore]{flowSet}}s }
+    \code{\link[flowCore]{flowSet}}s.}
   
   \item{processes}{ A list of A \code{\link{qaProcess}} objects or, in
     the case of multiple \code{\link[flowCore]{flowSet}}s, a list of
-    lists of \code{\link{qaProcess}} objects.}
+    lists of \code{\link{qaProcess}} objects. See below for further
+    details.}
 
   \item{outdir}{ The directory to which the HTML report is to be
-    saved. Make sure that each \code{\link{qaProcess}} object was
-    created in the same directory. }
+    saved. Each \code{\link{qaProcess}} object should have been created
+    in the same directory. }
 
   \item{grouping}{ A character scalar indicating a variable in the
     \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
-    grouping factor in the output.}
+    grouping factor in the output. }
 
    \item{pagebreaks}{ A logical indicating whether the output should be
-     on one long page, or split on several pages.}
+     on one long page, or split over several pages. }
    
    \item{pdf}{ A logical indicating whether vectorized versions of the
      images should be included. Setting this to \code{TRUE} implies that
@@ -48,10 +49,11 @@ pagebreaks = TRUE, pdf=TRUE)
 
 \details{
   
-  Both the information about graphical output and the results for a QA
-  process are stored in objects of class \code{\link{qaProcess}}. The
-  creation of such objects is abstracted in dedicated functions and the
-  user should call these functions directly rather than creating
+  Both the information about graphical output generated as part of a QA
+  process as well as the qunatitative or qualitative results are stored
+  in objects of class \code{\link{qaProcess}}. The creation of such
+  objects is abstracted in dedicated constructor function and the user
+  should call these functions directly rather than creating
   \code{\link{qaProcess}} manually. \code{\link{writeQAReport}} takes
   lists of such objects and combines their information in a unified HTML
   document. A grouping factor can be specified to indicate subgroups of

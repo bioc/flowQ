@@ -32,9 +32,21 @@
 \newcommand{\Rfunarg}[1]{{\texttt{#1}}}
 \newcommand{\code}[1]{{\texttt{#1}}}
 
+%% wrapper for figure environments
+%% #1=filename,label #2=width #3=caption
+\newcommand{\myincfig}[3]{%
+  \begin{figure}[htbp]
+    \begin{center}
+      \includegraphics[width=#2]{#1}
+      \caption{\label{#1}#3}
+    \end{center}
+  \end{figure}
+}
+
+
 
 \title{Extending flowQ: how to implement QA processes}
-\author{F. Hahne B. Ellis}
+\author{F. Hahne}
 
 \begin{document}
 \maketitle
@@ -49,6 +61,7 @@ to create your own QA process modules.
 
 <<loadPackage, echo=false,results=hide>>=
 library(flowQ)
+options(width=70)
 @
 
 \section{Installation}
@@ -122,6 +135,19 @@ been computed before. For each of these classes, there are
 output. The user doesn't have to care about this step, a fully
 formated report will be generated when calling the
 \Rfunction{writeQAReport} function.
+
+\myincfig{flowQStructure}{\textwidth}{Schematics of an
+  \Rpackage{flowQ} QA report. Columns in the table represent different
+  QA criteria, rows represent samples. For each criterion there may be
+  a single overall summary plot. For each sample in the respective QA
+  criterion there may be a single detailed plot as well as several
+  channel-specific plots if necessary. Accordingly, for each sample,
+  the overall QA result is sumamrized by a single aggregator, and
+  optional channel-specific results can be summarized by additional
+  channel aggregators. }
+
+Figure~\ref{flowQStructure} shows a schematic of a \Rpackage{flowQ} QA
+report.
 
 \section{Aggregators}
 There are several subclasses of aggregators, all inheriting from the
@@ -223,7 +249,7 @@ the image files are to be stored. If you are planning to place the
 final QA report on a web server, you should make sure, that this path
 is accessable. The safest solution is to chose a directory below the
 root directory of the QA report, e.g., \code{qaReport/images} if the
-root directory is /code{qaReport}.
+root directory is \code{qaReport}.
 
 You can control the final width of the bitmap version of the image
 through the optional \Rfunarg{width} argument, and empty
@@ -378,22 +404,22 @@ the function would have a structure similar to the following:
 In this final section we are going to provide a couple of very simple
 examples for potential QA process functions in order to get you
 started. Note that the inputs to such a function are totally free, and
-you could build arbitraily complex procedures, potentially comparing
+you could build arbitrarily complex procedures, potentially comparing
 features across several \Rclass{flowSets}, groups of
-Rclass{flowFrames} or any other checks you deem to be
+\Rclass{flowFrames} or any other checks you deem to be
 valuable. However, the output always has to be a single object of
 class \Rclass{QAProcess}.
 
 \subsection{Simple process without subprocesses}
-We start with an very simple example which is, in a slightly more
-sophisticated version, already a part of the package in the function
-(qaProcess.cellnumber). The idea is to take a single \Rclass{flowSet}
-as input and check whether the total number of cells for the
-individual \Rclass{flowFrames} is above a certain threshold. The user
-should be able to specify the \Rclass{flowSet}, the threshold value,
-the output directory in which to generate the images and the name of
-the process which will later appear in the report. We could use the
-following function header:
+We start with an very simple example which is --- in a slightly more
+sophisticated version --- already a part of the package in the
+function \Rfunction{qaProcess.cellnumber}. The idea is to take a
+single \Rclass{flowSet} as input and check whether the total number of
+cells for the individual \Rclass{flowFrames} is above a certain
+threshold. The user should be able to specify the \Rclass{flowSet},
+the threshold value, the output directory in which to generate the
+images and the name of the process which will later appear in the
+report. We could use the following function header:
 
 <<celnum1, eval=FALSE>>=
 ## Detect unusually low cell counts
@@ -446,11 +472,11 @@ doesn't exist.
          
 This already looks nice, but we are not done yet. Now it is time to
 create the aggregators for our report. We have to supply them to the
-qaProcess constructor in form of a list, so we first create a list of
-appropriate length. We then iterate over each \Rclass{flowFrame}
-in order to check whether the number of cells is above the threshold
-and create the appropriate \Rclass{numericAggregator} objects. In a
-final step we provide both the \Rclass{qaGraph} object containing the
+qaProcess constructor in the form of a list, so we first create a list
+of appropriate length. We then iterate over each \Rclass{flowFrame} in
+order to check whether the number of cells is above the threshold and
+create the appropriate \Rclass{numericAggregator} objects. In a final
+step we provide both the \Rclass{qaGraph} object containing the
 summary plot as well as the \Robject{frameProcesses} list and the
 user-defined name for the process to the \Rfunction{qaProcess}
 constructor function.
@@ -548,14 +574,14 @@ the \Rpackage{lattice} package for this purpose. It might also be nice
 to get a better understanding of why there are a lot of margin events
 for a particular parameter and sample. This could for instance be
 caused by a shift of the underlying data. We should be able to see
-such things in density plots of the data. If we try to translate this
+such effects in density plots of the data. If we try to translate this
 back into the abstract \Rpackage{flowQ} framework, we realize that we
-will need one single \Rclass{qaGraph} object for each subprocess and
-for each frame. We don't really have a need for a per-frame summary
+will need one single \Rclass{qaGraph} object for each subprocess
+within each frame. We don't really have a need for a per-frame summary
 graph, so we can skip this step. There might be other situations where
-it makes sense to have all parameter-specific plots, frame-specific
-summary plots and also overall summary plots. We will first take care
-of the summary plots.
+it makes sense to have both the parameter-specific plots,
+frame-specific summary plots and also overall summary plots for the
+whole \Rclass{flowSet}. We will first take care of the summary plots.
 <<margin3, eval=FALSE>>=
 marginevents <- function(set, threshold=10, channels=colnames(set), outdir,
                                    name="margin events")
@@ -596,8 +622,8 @@ the check has passed or failed, but even indicate the magnitude of the
 effect. The individual aggregators need to be stored in some form of a
 list, and the \Rclass{aggregatorList} class is the appropriate
 container. You can think of this class as a regular list, and it
-mainly exists for internal software design purpose. We fill exactly
-the same way we would fill a regular R list.
+mainly exists for internal software design purpose. We fill it in
+exactly the same way as we would fill a regular R list.
 
 To complete the \Rclass{qaProcess} object we also need a summary
 aggregator. In this case, we came up with a simple rule: if one of the
@@ -677,8 +703,7 @@ based on a certain test statistic in comparison to all other samples
 or all other samples in the same sample group. The
 \Rclass{qaProcesses} implemented in \Rfunction{qaProcess.cellnumber}
 and \Rfunction{qaProcess.marginevents} use such dynamic assessment,
-but other than that they are pretty similar to the examples shown
-before.
+but other than that they are pretty similar to the above examples.
 
 
 \section{Further extensions of the framework}
@@ -694,7 +719,7 @@ method which generates the necessary HTML code.
 output. The qaProcess object holds all the necessary information, and
 it is straight forward to extract this in order to put it into a data
 base, or to simply create a table containing the QA results. The
-details of such extensions are beyond the scope o this document, but
+details of such extensions are beyond the scope of this document, but
 the interested reader is referred to the documentation of the classes
 presented before, in particular that of \Rclass{qaProcess} and
 \Rclass{qaProcessFrame}.
