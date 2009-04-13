@@ -251,7 +251,7 @@ setMethod("initialize", "qaGraph",
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
                       type <- c(ifelse(pdf, "pdf", NA), "jpg")
-                      files <- c(cf, newFileName)
+                      files <- c(constructPath(cf), newFileName)
                       if(!file.exists(cf) && pdf)
                           file.copy(fileName, cf)
                   }else{
@@ -266,7 +266,7 @@ setMethod("initialize", "qaGraph",
                                                                 collapse="x"),
                                        shQuote(fileName), shQuote(cf)))
                       type <- c(ifelse(pdf, "pdf", NA), tolower(imageInfo["type"]))
-                      files <- c(newFileName, cf)
+                      files <- c(newFileName, constructPath(cf))
                   }
                   ## fill qaGraph object
                   .Object@dimensions <-  matrix(c(dims, newDims), ncol=2,

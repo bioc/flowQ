@@ -103,7 +103,7 @@ htmlBarplot <- function(data, ranges, panel=NULL, frame=NULL,
     ld <- length(data)
     maxRange <- max(ranges)
     width <- ifelse(rownames, maxRange*20 + max(nchar(names(data)))*10, 0)
-    out <- paste("\n<table class=\"qaBar\"",
+    out <- paste("\n<table class=\"qaBar\" align=\"center\"",
                  ifelse(is.null(panel), "", paste("onclick=\"link2Panel(", panel,
                                                   ", ", frame, ")\"", sep="")), ">", sep="")
     rows <- character(ld)

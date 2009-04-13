@@ -14,57 +14,124 @@ myOpenHtmlPage <- function(name, title = "", path="../")
     return(con)
 }
 
-## include links to pdf versions of images if pdf=TRUE
-pdfLink <- function(vimg, bimg, class, id, pdf=TRUE)
+## include links to pdf versions of images if pdf=TRUE and if the vectorized
+## version of the image exists.
+pdfLink <- function(vimg, bimg, class, id, pdf=TRUE, qaGraph=NULL)
 {
-    if(pdf)
-        paste("<a href='", vimg,  "' target='QAdetails'>\n<img",
-              ifelse(missing(class), "", sprintf(" class='%s'", class)),
-              " src='", bimg, "' id='img_", id, "'>\n</a>\n", sep="")
-    else
-        paste("<img",ifelse(missing(class), "", sprintf(" class='%s nolink'", class)),
-              " src='", bimg, "' id='img_", id, "'>\n", sep="")
+    res <- character(length(vimg))
+    for(i in seq_along(vimg))
+    {
+        cl <- ifelse(missing(class), "'", sprintf(" %s'", class))
+        res[[i]] <- if(pdf && !is.null(qaGraph) &&
+                       file.exists(qaGraph[[i]]@fileNames["vectorized"]))
+            sprintf(paste("<a href='%s' target='QAdetails'>\n<img class='%s",
+                          "src='%s'id='img_%s'>\n</a>\n"),
+                    vimg[i], cl, bimg[i], id[i]) else
+        sprintf("<img class='nolink%s src='%s' id='img_%s'>\n",
+                cl, bimg[i], id[i])
+    }
+    return(res)
 }
+
+
+
+## make sure the QAprocesses and the flowSets match
+checkInputs <- function(sets, procs)
+{
+    single <- FALSE
+    if(!is.list(sets))
+    {
+        single <- TRUE
+        sets <- list(sets)
+        procs <- list(procs)
+    }
+    all.list <- is.list(procs) && length(procs) == length(sets)
+    #procs <- lapply(procs, function(x) if(is(x, "qaProcess")) list(x) else x)
+    equal.size <- length(unique(sapply(procs, length))) == 1
+    correct.class <- all(sapply(sets, is, "flowSet")) &&
+                     all(sapply(procs, function(x) sapply(x, is, "qaProcess")))
+    if(!all.list || !equal.size || !correct.class)
+        stop("When 'set' is a list of flowSets, 'processes' needs to be ",
+             "a list of lists of qaProcess objects, where each list corresponds ",
+             "to the results for a particular flowSet.")
+    for(i in seq_along(procs))
+    {
+        sn <- sampleNames(sets[[i]])
+        qn <- matrix(sapply(procs[[i]], function(x) names(x@frameProcesses)),
+                     nrow=length(procs[[i]]), byrow=TRUE)
+        if(!all(apply(qn, 2, "==")))
+            stop("Some of the qaProcess objects in processes[[", i,
+                 "]] are not compatible.")
+        if(length(intersect(sn, qn[1,])) != length(sn))
+            stop("The sampleNames of set[[", i, "]] do not match the names ",
+                 "of the qaProcess frames in processes[[", i, "]].")
+    }
+    return(list(sets=sets, procs=procs, single=single))
+}
+
+
+## Copy the images contained within the qaGraph objects of the process list to
+## the output directory (which is only needed when they have been created some
+## place else...)
+copyGraphs <- function(procs, outdir)
+{
+    procs <- unlist(procs)
+    for(p in procs)
+    {
+        relBase <- file.path(outdir, "images",  p@id)
+        if(!file.exists(relBase))
+            dir.create(relBase, rec=TRUE)
+        sg <- p@summaryGraph@fileNames
+        file.copy(sg, relBase)
+        for(f in p@frameProcesses)
+        {
+            sfg <- f@summaryGraph@fileNames
+            file.copy(sg, relBase)
+            fg <- sapply(f@frameGraphs, slot, "fileNames")
+            if(length(fg))
+                file.copy(fg, relBase)
+        }
+    }
+    invisible()
+}
+
+
 
 
 ## create HTML report for (lists of) QA processes 
 writeQAReport  <- function(set, processes, outdir="./qaReport",
                            grouping=NULL, pagebreaks=TRUE,
                            pdf=TRUE)
-{ 
-    ## We only need panel tabs if 'set' is a list of 'flowSets'
-    single <- FALSE
-    if(!is.list(set)){
-        set <- list(set)
-        single <- TRUE
-    }else if(! all(sapply(processes, is.list)) ||
-       ! length(set) == length(processes))
-        stop("Argument 'processes' must be a list of lists of ",
-             "'qaProcess' objects for multiple panels")
-
-    ## For the overview page, we need to match samples across panels
-    sID <- all(sapply(set, function(x) "SampleID" %in% colnames(pData(x))))
-    if(length(set)>1 && !sID)
-        warning("Some of the panels in 'set' don't have a global ",
-                "sample identifier.\nUnable to create overview.")
-    ## A lot of sanity checking up front
+{
+    ## making sure the inputs are correct
+    inputs <- checkInputs(set, processes)
+    checkClass(outdir, "character", 1)
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
-                    "overwritten")
+                "overwritten")
     if(!file.exists(file.path(outdir, "images")))
         dir.create(file.path(outdir, "images"), rec=TRUE)
-    if(!is(processes, "list") ||
-       !all(sapply(processes, function(x) is(x, "qaProcess") ||
-                   sapply(x, is, "qaProcess"))))
-        stop("'processes' must be a list or list of lists of objects of ",
-             "class 'qaProcess'")
-    if(!all(sapply(set, is, "flowSet")))
-        stop("'set' must be a flow set")
+    checkClass(pagebreaks, "logical", 1)
+    checkClass(pdf, "logical", 1)
+    
+    ## We only need panel tabs if 'set' is a list of 'flowSets'
+    single <- inputs$single
+    set <- inputs$sets
+    processes <- inputs$procs
 
+    ## For the overview page, we need to match samples across panels
+    sID <- all(sapply(set, function(x) "sampleid" %in% tolower(colnames(pData(x)))))
+    if(!single && !sID)
+        warning("Some of the panels in 'set' don't have a global ",
+                "sample identifier.\nUnable to create overview.")
+    
     ## copy infrastructure
     sdir <- system.file("htmlTemplates", package = "flowQ")
-    file.copy(dir(sdir, full.names=TRUE), file.path(outdir, "images"),
-              overwrite=TRUE)
+    idir <- file.path(outdir, "images")
+    file.copy(dir(sdir, full.names=TRUE), idir, overwrite=TRUE)
+
+    ## We have to make sure that all images are copied to the output directory
+    copyGraphs(processes, outdir)
     
     ## iterate over panels
     for(s in seq_along(set)){
@@ -88,7 +155,8 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         
         ## setup of table and table header row
-        process <- if(length(set)>1) processes[[s]] else processes
+        ## process <- if(length(set)>1) processes[[s]] else processes
+        process <- processes[[s]]
         writeLines("\n<table class=\"QA\">", con)
         pIDs <- sapply(process, slot, "id")
         pNames <- sapply(process, slot, "name")
@@ -104,14 +172,13 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     "<div id=\"", pIDs, "_button",
                     "\" onClick=\"toggleImage('", pIDs, "')\">\n",
                     pNames, "\n</div>\n</th>", sep="")
-        esel <- sapply(process, function(x)
-                       length(x@summaryGraph@fileNames))==0
-        th[esel] <- paste("\n<th colspan=\"",
-                          nrAggr[esel], "\" ",
-                          "id=\"", pIDs[esel], "_sumHeader\">\n",
-                          "<div id=\"", pIDs[esel],
+        esel <- sapply(process, function(x) length(x@summaryGraph@fileNames)>0)
+        th[!esel] <- paste("\n<th colspan=\"",
+                          nrAggr[!esel], "\" ",
+                          "id=\"", pIDs[!esel], "_sumHeader\">\n",
+                          "<div id=\"", pIDs[!esel],
                           "_button",
-                          "\">\n", pNames[esel], "\n</div>\n</th>", sep="",
+                          "\">\n", pNames[!esel], "\n</div>\n</th>", sep="",
                           collapse="\n")
         th <- paste(th, collapse="\n")
         pd <- pData(set[[s]][[1]]@parameters)[,c("name", "desc", "minRange",
@@ -121,9 +188,11 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                          "\" onClick=\"toggleImage('parms')\">\n",
                          "flow set details\n</div>\n",  
                          "</th>\n", th, "\n\n</tr>", sep=""), con)
+        graphs <- lapply(process, function(x) x@summaryGraph)
         td <- paste("\n<td colspan=\"", nrAggr, "\"",
                     " id=\"", pIDs, "_sumBack\">\n",
-                    pdfLink(vimg=sumVecLinks, bimg=sumLinks, id=pIDs, pdf=pdf),
+                    pdfLink(vimg=sumVecLinks, bimg=sumLinks, id=pIDs, pdf=pdf,
+                            qaGraph=graphs),
                     "</td>", sep="", collapse="\n")
         writeLines(paste("\n<tr class=\"QASummary\">\n\n<th>",
                          "\n<span id=\"img_parms\" style=\"display:none;\">",
@@ -276,7 +345,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                         names(thisProcess@summaryGraph))
                     sVecGraph <- gsub("\\..*$", ".pdf", sGraph)
                     writeLines(pdfLink(vimg=sVecGraph, bimg=sGraph, class="QASumGraph",
-                                       id=sid, pdf=pdf), con)
+                                       id=sid, pdf=pdf,
+                                       qaGraph=list(thisProcess@summaryGraph)),
+                               con)
                 }
                 writeLines("</td>", con)
                 for(d in seq_along(thisProcess@frameAggregators)){
@@ -289,7 +360,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                                             names(thisProcess@frameGraphs[[d]]))
                         fVecGraph <- gsub("\\..*$", ".pdf", fGraph)
                         writeLines(pdfLink(vimg=fVecGraph, bimg=fGraph, class="QADetGraph",
-                                           id=id, pdf=pdf), con)
+                                           id=id, pdf=pdf,
+                                           qaGraph=list(thisProcess@frameGraphs[[d]])),
+                                   con)
                     }
                     writeLines("</td>", con)
                 }## end for d
@@ -391,7 +464,10 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
 failedProcesses <- function(processes, set)
 {
     ## some sanity checking first
-    sampleIDs <- lapply(set, function(x) pData(x)$SampleID)
+    sampleIDs <- lapply(set, function(x) {
+                            pd <- pData(x)
+                            pdid <- match("sampleid", tolower(colnames(pd)))
+                            pd[,pdid]})
     if(!all(listLen(lapply(sampleIDs, unique))==listLen(sampleIDs)))
         stop("'SampleIDs' must be unique in each panel")
     sids <- unlist(sampleIDs)
@@ -417,7 +493,8 @@ failedProcesses <- function(processes, set)
                 samp <- sids[match(pro@frameID, fids)]
                 mlist <- rbind(mlist, c(samp, pro@frameID, nrSamp+1))
                 ## check for the multiple channels and iterate over those 
-                if(length(pro@frameAggregators) && !processes[[i]][[j]]@type %in% c("Density","ECDF","KLD","SummaryStatistic","BoundaryEvents")){
+                if(length(pro@frameAggregators) && !processes[[i]][[j]]@type %in%
+                   c("Density","ECDF","KLD","SummaryStatistic","BoundaryEvents")){
                     channels <- names(pro@frameAggregators)
                     clist <- c(clist, channels)
                     
