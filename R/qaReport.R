@@ -59,7 +59,7 @@ checkInputs <- function(sets, procs)
         sn <- sampleNames(sets[[i]])
         qn <- matrix(sapply(procs[[i]], function(x) names(x@frameProcesses)),
                      nrow=length(procs[[i]]), byrow=TRUE)
-        if(!all(apply(qn, 2, "==")))
+        if(!all(apply(qn, 2, function(x) length(unique(x))==1)))
             stop("Some of the qaProcess objects in processes[[", i,
                  "]] are not compatible.")
         if(length(intersect(sn, qn[1,])) != length(sn))
