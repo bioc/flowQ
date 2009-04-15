@@ -363,9 +363,9 @@ set cutoff of 3\% can be visualized using the
 
 <<displayBoundaryData,echo=true,results=hide>>=
 resBoundary <- qaProcess.BoundaryPlot(tData, dyes=c("FSC-A","CD3"), 
-                                      outdir="myDir", cutoff=3, pdf=TRUE)
+                                      outdir=dest, cutoff=3, pdf=TRUE)
 imagePath <- resBoundary@summaryGraph@fileNames[1]
-#writeQAReport(tData[[1]], list(resBoundary), outdir="myDir",pdf=TRUE)
+#writeQAReport(tData[[1]], list(resBoundary), outdir=dest,pdf=TRUE)
 @
 
 The percentage of boundary events for "FSC-A" and "CD3" are shown in
@@ -499,8 +499,8 @@ return(result)
 
 <<ECDF plots 1, echo=true>>=
 dyes<- c("FSC-A","SSC-A")
-resFSCECDF <- qaProcess.ECDFPlot(nData,dyes=dyes,outdir="myDir",alpha=0.4,pdf=TRUE)
-#ecdfUrl<-writeQAReport(nData[[1]], list(resFSCECDF), outdir="myDir",pdf=TRUE)
+resFSCECDF <- qaProcess.ECDFPlot(nData,dyes=dyes,outdir=dest,alpha=0.4,pdf=TRUE)
+#ecdfUrl<-writeQAReport(nData[[1]], list(resFSCECDF), outdir=dest,pdf=TRUE)
 #browseURL(ecdfUrl)
 
 @
@@ -517,7 +517,7 @@ ECDF plots for forward and side scatter is shown below.
 @
 
 <<ECDF plots 2, echo=true,results=hide>>=
-resCD8ECDF <- qaProcess.ECDFPlot(nData,dyes=c("CD8","CD27"),outdir="myDir",alpha=0.4,pdf=TRUE)
+resCD8ECDF <- qaProcess.ECDFPlot(nData,dyes=c("CD8","CD27"),outdir=dest,alpha=0.4,pdf=TRUE)
 @
 
 <<genTblECDF2,echo=false>>=
@@ -582,8 +582,8 @@ these arguments to the dyes input of the
 \Rfunction{qaProcess.densityPlot}
 
 <<Density plots 1, echo=true,results=hide>>=
-resDensityFSC <- qaProcess.DensityPlot(nData,dyes=c("FSC-A","SSC-A"),outdir="myDir",alpha=0.2,pdf=TRUE)
-#densityUrl<-writeQAReport(nData[[1]], list(resDensity), outdir="myDir")
+resDensityFSC <- qaProcess.DensityPlot(nData,dyes=c("FSC-A","SSC-A"),outdir=dest,alpha=0.2,pdf=TRUE)
+#densityUrl<-writeQAReport(nData[[1]], list(resDensity), outdir=dest)
 #browseURL(densityUrl)
 @
 
@@ -600,7 +600,7 @@ The density plots for forward/side scatter are show below.
 
 
 <<Density plots 2, echo=true,results=hide>>=
-resDensityCD8 <- qaProcess.DensityPlot(nData,dyes=c("CD8","CD27"),outdir="myDir",alpha=0.2,pdf=TRUE)
+resDensityCD8 <- qaProcess.DensityPlot(nData,dyes=c("CD8","CD27"),outdir=dest,alpha=0.2,pdf=TRUE)
 @
 
 
@@ -678,10 +678,10 @@ as input to the \Rfunction{qaProcess.2DStatsPlot}
 
 <<2DSummary_mean, echo=true,results=hide>>=
 par<-c("FSC-A","SSC-A","CD4","CD8")
-resMean <- qaProcess.2DStatsPlot(nData,dyes=par,outdir="myDir",func=mean,
+resMean <- qaProcess.2DStatsPlot(nData,dyes=par,outdir=dest,func=mean,
 outBound=0.28,pdf=TRUE)
 imagePath <- resMean@summaryGraph@fileNames[1]
-#summaryUrl<-writeQAReport(nData[[1]], list(resMean), outdir="myDir",pdf=TRUE)
+#summaryUrl<-writeQAReport(nData[[1]], list(resMean), outdir=dest,pdf=TRUE)
 #browseURL(summaryUrl)
 
 @
@@ -695,10 +695,10 @@ the figure below.
 
 <<2DSummary_median, echo=true,results=hide>>=
 par<-c("FSC-A","SSC-A","CD4","CD8")
-resMedian <- qaProcess.2DStatsPlot(nData,dyes=par,outdir="myDir",func=median,
+resMedian <- qaProcess.2DStatsPlot(nData,dyes=par,outdir=dest,func=median,
 outBound=0.28,pdf=TRUE)
 imagePath <- resMedian@summaryGraph@fileNames[1]
-#summaryUrl<-writeQAReport(nData[[1]], list(resMedian), outdir="myDir",pdf=TRUE)
+#summaryUrl<-writeQAReport(nData[[1]], list(resMedian), outdir=dest,pdf=TRUE)
 #browseURL(summaryUrl)
 @
 
@@ -732,7 +732,7 @@ defined as
 
 \begin{equation}
 \label{eq:test} 
-\ KLI=\int \frac{f_{1}(x)}{f_{2}(x)}f_{2}(x) dx
+\ KLI=\int{\log{ \frac{f_{1}(x)}{f_{2}(x)}}f_{1}(x) dx}
 \end{equation}
 
 Density estimation followed by numerical integration can be used to
@@ -756,8 +756,8 @@ The KLDistance plot can be generated using the function
 \Rfunction{qaProcess.KLDistPlot}
 
 <<KL Distance plots, echo=true,results=hide>>=
-resKLdist <- qaProcess.KLDistPlot(nData,dyes=c("SSC-A","CD8"),outdir="myDir",alpha=0.05,pdf=TRUE)
-writeQAReport(nData[[1]], list(resKLdist), outdir="myDir")
+resKLdist <- qaProcess.KLDistPlot(nData,dyes=c("SSC-A","CD8"),outdir=dest,alpha=0.05,pdf=TRUE)
+writeQAReport(nData[[1]], list(resKLdist), outdir=dest)
 imagePath <- resKLdist@summaryGraph@fileNames[1]
 #browseURL(klDistURL)
 @

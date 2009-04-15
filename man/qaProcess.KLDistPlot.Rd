@@ -56,10 +56,11 @@
 
 
 \examples{
-
-\dontrun{
-
-}
+data(qData)
+dest <- tempdir()
+resKLdist <- qaProcess.KLDistPlot(qData,dyes=c("SSC-A","FSC-A"),outdir=dest,alpha=0.05,pdf=TRUE)
+resKLdist
+%writeQAReport(qData[[1]], list(resKLdist), outdir=dest)
 
 }
 

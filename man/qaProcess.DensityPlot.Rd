@@ -56,11 +56,11 @@ If set to NULL, all parameters that are duplicated across the list of
 
 
 \examples{
-
-\dontrun{
-
-
-}
+data(qData)
+dest <- tempdir()
+resDensityFSC <- qaProcess.DensityPlot(qData,dyes=c("FSC-A","SSC-A"),outdir=dest,alpha=0.2,pdf=TRUE)
+%densityUrl<-writeQAReport(qData[[1]], list(resDensity), outdir=dest)
+%browseURL(densityUrl)
 
 }
 

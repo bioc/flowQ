@@ -61,11 +61,12 @@ detailed analysis of the data.
 
 
 \examples{
-
-\dontrun{
-
-}
-
+data(qData)
+dest <- tempdir()
+resBoundary <- qaProcess.BoundaryPlot(qData, dyes=c("FSC-A","CD3"), 
+                                      outdir=dest, cutoff=3, pdf=TRUE)
+resBoundary
+%writeQAReport(qData[[1]], list(resBoundary), outdir=dest,pdf=TRUE)
 }
 
 \keyword{ dynamic }

@@ -61,10 +61,13 @@
 
 
 \examples{
-
-\dontrun{
-
-}
+data(qData)
+dest <- tempdir()
+par<-c("FSC-A","SSC-A","CD4","CD8")
+resMean <- qaProcess.2DStatsPlot(qData,dyes=par,outdir=dest,func=mean,outBound=0.28,pdf=TRUE)
+resMean
+%summaryUrl<-writeQAReport(qData[[1]], list(resMean), outdir=dest,pdf=TRUE)
+%browseURL(summaryUrl)
 
 }
 

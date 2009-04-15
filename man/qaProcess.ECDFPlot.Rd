@@ -60,10 +60,12 @@
 
 
 \examples{
-
-\dontrun{
-
-}
+data(qData)
+dyes<- c("FSC-A","SSC-A")
+dest <- tempdir()
+resFSCECDF <- qaProcess.ECDFPlot(qData,dyes=dyes,outdir=dest,alpha=0.4,pdf=TRUE)
+resFSCECDF
+%writeQAReport(nData[[1]], list(resFSCECDF), outdir=dest,pdf=TRUE)
 
 }
 
