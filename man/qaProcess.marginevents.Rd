@@ -12,7 +12,7 @@
 
 qaProcess.marginevents(set, channels=NULL, grouping=NULL, outdir,
 cFactor=2, absolute.value=NULL, name="margin events",
-sum.dimensions=c(7,7), det.dimensions=c(7,3), pdf=TRUE, \dots)
+sum.dimensions=NULL, det.dimensions=c(7,3), pdf=TRUE, \dots)
 
 }
 

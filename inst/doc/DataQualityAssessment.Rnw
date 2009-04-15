@@ -89,14 +89,14 @@ functions. Roughly, the internal structure of a \Rclass{qaProcess}
 object can be thought of as a list of QA results for each sample in a
 \Rclass{flowSet}, including visualizations by means of diagnostic
 plots and sample-specific quantitative or qualitative values
-(Figure~\ref{flowQStructure}. This design allows the software to
+(Figure~\ref{flowQStructure}). This design allows the software to
 bundle the results of multiple modules using a module-independent
 front end. For the convenient interactive navigation on a computer,
 the front end is a clickable HTML report, but in the setting of an
 automated pipeline, this might as well be direct storage in a data
 base.
 
-\myincfig{flowQStructure}{\textwidth}{Schematics of a
+\myincfig{flowQStructure}{0.95\textwidth}{Schematics of an
   \Rpackage{flowQ} QA report. Columns in the table represent different
   QA criteria, rows represent samples. For each criterion there may be
   a single overall summary plot. For each sample in the respective QA
@@ -106,15 +106,14 @@ base.
   optional channel-specific results can be summarized by additional
   channel aggregators.}{flowQStructure}
 
-Figure~\ref{flowQStructure} shows a schematic of a \Rpackage{flowQ} QA
-report.
 
 The most simple FCM experiments can be handled by a single
-\Rclass{flowSet}, however more complicated designs like longitudinal
-sample studies or multi-panel experiments are prevalent, and we have
-taken some steps to accomodate such designs in our framework. We begin
-by taking a look at the simple designs first. More complicted
-multi-panel designs are treated in section~\ref{multipanel}.
+\Rclass{flowSet}, however more complicated designs such as
+longitudinal sample studies or multi-panel experiments are prevalent,
+and we have taken some steps to accomodate such designs in our
+framework. We begin by taking a look at the simple designs first. More
+complicted multi-panel designs are treated in
+section~\ref{multipanel}.
 
 \section{Quality assessment of single panel experiments}
 There are four methods in \Rpackage{flowQ} that are implemented for
@@ -141,13 +140,13 @@ sensitivity of the outlier detection:
 <<cellnum, results=hide>>=
 library(flowQ)
 data(GvHD)
-#GvHD <- GvHD[1:10]
+GvHD <- GvHD[1:10]
 dest <- file.path(tempdir(), "flowQ")
 qp1 <- qaProcess.cellnumber(GvHD, outdir=dest, cFactor=0.75)
 @ 
 <<cellnumfig, echo=false, results=tex>>=
 img <- qp1@summaryGraph@fileNames[1]
-cat(sprintf("\\myincfig{%s}{0.75\\textwidth}{%s}{%s}\n", img,
+cat(sprintf("\\myincfig{%s}{0.5\\textwidth}{%s}{%s}\n", img,
             paste("Summary graphics for the cell number QA criterion produced",
                   "by the \\Rfunction{qaProcess.cellnumber} function."), 
             "cellnum"))
@@ -161,19 +160,19 @@ artificially given the minimum or the maximum value of the dynamic
 range. A high number of these events usually indicates potential
 problems with compensation, instrument settings or drifts. We can use
 the \Rfunction{qaProcess.marginevents} constructor to create a
-\Rclass{qaProcess} object that checks for abnormal boundary
-events. The inputs are very similar to the previous example, but we
-need to additionally specify the channels we want to include in the
-analysis. The default is to take all, but for now we will only use FSC
-and SSC. We also don't create pdf versions of the graphics in order to
-save some time and disk space.
+\Rclass{qaProcess} object that checks for abnormal accumulation of
+boundary events. The inputs are very similar to the previous example,
+but we need to additionally specify the channels we want to include in
+the analysis. The default is to take all, but for now we will only use
+FSC and SSC. We also don't create pdf versions of the graphics in
+order to save some time and disk space.
 <<margin, results=hide>>=
 qp2 <- qaProcess.marginevents(GvHD, channels=c("FSC-H", "SSC-H"), outdir=dest,
                               pdf=FALSE)
 @ 
 <<marginsumfig, echo=false, results=tex>>=
 img <- qp2@summaryGraph@fileNames[2]
-cat(sprintf("\\myincfig{%s}{0.8\\textwidth}{%s}{%s}\n", img,
+cat(sprintf("\\myincfig{%s}{0.8\textwidth}{%s}{%s}\n", img,
             paste("Summary graphics of the FSC-H channel for the boundary event",
                   "QA criterion produced by the \\Rfunction{qaProcess.marginevent}",
                   "function."), "marginsum"))
@@ -181,7 +180,7 @@ cat(sprintf("\\myincfig{%s}{0.8\\textwidth}{%s}{%s}\n", img,
 <<margindetfig, echo=false, results=tex>>=
 img <- qp2@frameProcesses[[1]]@frameGraphs[[1]]@fileNames[[2]]
 
-cat(sprintf("\\myincfig{%s}{0.2\\textwidth}{%s}{%s}\n", img,
+cat(sprintf("\\myincfig{%s}{0.6\\textwidth}{%s}{%s}\n", img,
             paste("Detailed sample-specific graphics of the FSC-H channel",
                   "for the boundary event QA criterion produced by the",
                   "\\Rfunction{qaProcess.marginevent}function."), "margindet"))
@@ -212,7 +211,7 @@ qp4 <- qaProcess.timeflow(GvHD, outdir=dest, cutoff=2)
 @ 
 <<timefig, echo=false, results=tex>>=
 img <- qp3@summaryGraph@fileNames[2]
-cat(sprintf("\\myincfig{%s}{0.8\\textwidth}{%s}{%s}\n", img,
+cat(sprintf("\\myincfig{%s}{0.6\\textwidth}{%s}{%s}\n", img,
             paste("Summary graphics of the FL1-H channel for the time line",
                   "QA criterion produced by the \\Rfunction{qaProcess.timeline}",
                   "function."), "timeline"))

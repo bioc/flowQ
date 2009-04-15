@@ -132,7 +132,7 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
 qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
                                    cFactor=2, absolute.value=NULL,
                                    name="margin events",
-                                   sum.dimensions=c(7,7), det.dimensions=c(7,3),
+                                   sum.dimensions=NULL, det.dimensions=c(7,3),
                                    pdf=TRUE, ...)
 {
     ## some sanity checking
@@ -144,15 +144,18 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
         if(!is.character(grouping) || ! grouping %in% colnames(pData(set)))
             stop("'grouping' must be a character indicating one of the ",
                  "phenotypic variables in 'set'")
+    cn <- colnames(set)
+    parms <- if(is.null(channels)) setdiff(cn, flowCore:::findTimeChannel(set)) else
+    if(!all(channels %in% cn)) stop("Invalid channel(s)") else channels
+    if(is.null(sum.dimensions))
+        sum.dimensions <- c(7, length(parms))
     checkClass(sum.dimensions, "numeric")
     sum.dimensions <- rep(sum.dimensions, 2)
     checkClass(det.dimensions, "numeric")
     det.dimensions <- rep(det.dimensions, 2)
     checkClass(name, "character", 1)
     checkClass(pdf, "logical", 1)
-    cn <- colnames(set)
-    parms <- if(is.null(channels)) setdiff(cn, flowCore:::findTimeChannel(set)) else
-    if(!all(channels %in% cn)) stop("Invalid channel(s)") else channels
+   
     frameIDs <- sampleNames(set)
     ls <- length(set)
     lp <- length(parms)
