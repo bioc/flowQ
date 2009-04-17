@@ -146,7 +146,7 @@ qp1 <- qaProcess.cellnumber(GvHD, outdir=dest, cFactor=0.75)
 @ 
 <<cellnumfig, echo=false, results=tex>>=
 img <- qp1@summaryGraph@fileNames[1]
-to <- file.path(img, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(img, to)
 cat(sprintf("\\myincfig{%s}{0.5\\textwidth}{%s}{%s}\n", to,
             paste("Summary graphics for the cell number QA criterion produced",
@@ -174,7 +174,7 @@ qp2 <- qaProcess.marginevents(GvHD, channels=c("FSC-H", "SSC-H"), outdir=dest,
 @ 
 <<marginsumfig, echo=false, results=tex>>=
 img <- qp2@summaryGraph@fileNames[2]
-to <- file.path(img, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(img, to)
 cat(sprintf("\\myincfig{%s}{0.8\textwidth}{%s}{%s}\n", to,
             paste("Summary graphics of the FSC-H channel for the boundary event",
@@ -183,7 +183,7 @@ cat(sprintf("\\myincfig{%s}{0.8\textwidth}{%s}{%s}\n", to,
 @
 <<margindetfig, echo=false, results=tex>>=
 img <- qp2@frameProcesses[[1]]@frameGraphs[[1]]@fileNames[[2]]
-to <- file.path(img, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(img, to)
 cat(sprintf("\\myincfig{%s}{0.6\\textwidth}{%s}{%s}\n", to,
             paste("Detailed sample-specific graphics of the FSC-H channel",
@@ -216,7 +216,7 @@ qp4 <- qaProcess.timeflow(GvHD, outdir=dest, cutoff=2)
 @ 
 <<timefig, echo=false, results=tex>>=
 img <- qp3@summaryGraph@fileNames[2]
-to <- file.path(img, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(img, to)
 cat(sprintf("\\myincfig{%s}{0.6\\textwidth}{%s}{%s}\n", to,
             paste("Summary graphics of the FL1-H channel for the time line",
@@ -382,7 +382,7 @@ events for an aliquot. The horizontal bars for aliquots whose boundary
 events exceed our setcutoff value of 3\% are colored red.
 
 <<displayBoundImage,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -523,7 +523,7 @@ ECDF plots for forward and side scatter is shown below.
 
 <<produceFSCECDFimage,echo=false,results=tex>>=
 file.copy(imagePath, to)
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
 
@@ -540,7 +540,7 @@ getDistance(resCD8ECDF,c("CD8","CD27"))
 ECDF plots for dyes CD8 and CD27 are shown below
 
 <<produceCD8ECDFimage,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -608,7 +608,7 @@ getDistance(resDensityFSC,c("FSC-A","SSC-A"))
 The density plots for forward/side scatter are show below.
 
 <<produceDensityFSC,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -627,7 +627,7 @@ getDistance(resDensityCD8,c("CD8","CD27"))
 The density plots for dyes CD8 and CD27 are show below.
 
 <<produceDensityCD27,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -707,7 +707,7 @@ The scatter plot of mean FSC/SSC and CD4/CD8 value pairs are shown in
 the figure below.
 
 <<2Dsummaryplot_mean,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -725,7 +725,7 @@ The scatter plot of median FSC/SSC and CD4/CD8 value pairs are shown
 in the figure below.
 
 <<2Dsummaryplot_median,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
@@ -785,7 +785,7 @@ imagePath <- resKLdist@summaryGraph@fileNames[1]
 
 The KL Distance for the aliquots for parameters "SSC-"A and "CD8" are  shown below.
 <<KLDistanceplot,echo=false,results=tex>>=
-to <- file.path(imagePath, paste(flowQ:::guid(), "pdf", sep=""))
+to <- paste(flowQ:::guid(), "pdf", sep=".")
 file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
