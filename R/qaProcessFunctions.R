@@ -174,17 +174,14 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
     ## create summary plot
     require("lattice")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-    sfile <- file.path(tmp, "summary.pdf")
+    idir <- createImageDir(outdir, gid)
+    sfile <- file.path(idir, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
     col.regions=colorRampPalette(c("white",  "darkblue"))(256)
     print(levelplot(t(perc)*100, scales = list(x = list(rot = 90)),
                     xlab="", ylab="", main="% margin events",
                     col.regions=col.regions))
     dev.off()
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## deal with groups if there are any
@@ -206,7 +203,7 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
         for(j in 1:length(parms))
         {
             ## the frame and parameter specific density plots
-            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
             pdf(file=tfile, width=sum.dimensions[1], height=sum.dimensions[2])
@@ -299,14 +296,12 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     ## create summary plots for each channel
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
     summary <- vector(lp, mode="list")
     for(j in seq_len(lp))
     {
-        sfile <- file.path(tmp, paste("summary_", j, ".pdf", sep=""))
+        sfile <- file.path(idir, paste("summary_", j, ".pdf", sep=""))
         pdf(file=sfile, width=sum.dimensions[1]/lp,
             height=sum.dimensions[2])
         binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
@@ -318,10 +313,9 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     }
     
     ## glue together the summary graphs and create a qaGraph object
-    sfile <- paste(tmp, "summary.pdf", sep="/")
+    sfile <- paste(idir, "summary.pdf", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp), pdf=pdf)
 
     ## create graphs and aggregators for each frame and channel
@@ -333,7 +327,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
         fnames <- NULL
         agTmp <- aggregatorList()
         for(j in seq_len(lp)){
-            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
             pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -394,16 +388,13 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     ## create summary plot and its associated qaGraph object
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
-    sfile <- file.path(tmp, "summary.pdf")
+    sfile <- file.path(idir, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
     summary <- timeLinePlot(set, colnames(set), binSize=binSize,
                             varCut=cutoff, type="frequency")
     dev.off()
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## create graphs and aggregators for each frame and wrap in object
@@ -413,7 +404,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     det.dimensions <- rep(det.dimensions, 2)
     for(i in seq_len(ls))
     {
-        tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
+        tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), ".pdf",
                                       sep=""))
         pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
         sum <- timeLinePlot(set[i], colnames(set)[[1]],
@@ -436,121 +427,6 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 }    
 
 
-
-
-## Detect unusually low (or high) cell counts
-qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
-                                 absolute.value=NULL, two.sided=FALSE,
-                                 name="cell number", sum.dimensions=c(7,7),
-                                 pdf=TRUE, ...)
-{
-    ## some sanity checking
-    checkClass(set, "flowSet")
-    checkClass(outdir, "character", 1)
-    checkClass(cFactor, "numeric", 1)
-    checkClass(absolute.value, c("numeric", "NULL"), 1)
-    if(!is.null(grouping))
-        if(!is.character(grouping) || ! grouping %in% colnames(pData(set)))
-            stop("'grouping' must be a character indicating one of the ",
-                 "phenotypic variables in 'set'")
-    checkClass(sum.dimensions, "numeric")
-    sum.dimensions <- rep(sum.dimensions, 2)
-    checkClass(two.sided, "logical", 1)
-    checkClass(name, "character", 1)
-    checkClass(pdf, "logical", 1)
-
-    ## deal with groups if there are any
-    ls <- length(set)
-    grps <- if(!is.null(grouping)) pData(set)[,grouping] else rep(1,ls)
-    grpsi <- split(1:ls, grps, drop=TRUE)
-    sset <- split(set, grps)
-    
-    ## create summary plot and its associated qaGraph object
-    cat("creating summary plots...")
-    gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
-    cellNumbers <- as.numeric(fsApply(set, nrow))
-    sfile <- file.path(tmp, "summary.pdf")
-  
-    col.regions=colorRampPalette(c("white",  "darkblue"))(256)
-    print(levelplot(t(perc)*100, scales = list(x = list(rot = 90)),
-                    xlab="", ylab="", main="% margin events",
-                    col.regions=col.regions))
-    dev.off()
-    idir <- file.path(outdir, "images", gid)
-    sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
-
-    ## deal with groups if there are any
-    frameProcesses <- list()
-    grps <- if(!is.null(grouping)) pData(set)[,grouping] else rep(1,ls)
-    grps <- split(1:ls, grps, drop=TRUE)
-    allData <- lapply(grps, function(x, set)
-                      exprs(as(set[x,parms], "flowFrame")), set)
-    
-    ## create graphs and aggregators for each frame (and each channel)
-    cat("creating frame plots...")
-    for(i in 1:length(set)){
-        fnames <- NULL
-        agTmp <- aggregatorList()
-        thisGrp <-
-            if(is.null(grouping)) "1" else as.character(pData(set)[i,grouping])
-        mv <- sv <- NULL
-        for(j in 1:length(parms)){
-            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
-                                          gsub("\\..*$", "", parms[j]), ".pdf",
-                                          sep=""))
-            pdf(file=tfile, height=3)
-            par(mar=c(1,0,1,0))
-            ll <- list(allData[[thisGrp]][,j], exprs(set[[i]][,parms[j]]))
-            bw <- bw.nrd0(ll[[2]])
-            dens <- lapply(ll, density, bw=bw)
-            rl <- range(unlist(ll))
-            xlim <- rl + c(-1,1) * (diff(rl)/7)
-            ylim <- c(0, max(c(dens[[1]]$y, dens[[2]]$y)))
-            plot(1,1,xlim=xlim, ylim=ylim, type="n", axes=FALSE, ann=FALSE)
-            polygon(dens[[1]], col="gray", border="gray")
-            lines(dens[[2]], col="darkred", lwd=3)
-            dev.off()
-            fnames <- c(fnames, tfile)
-            
-            m <- mean(perc[j,grps[[thisGrp]]])
-            s <- sd(perc[j,grps[[thisGrp]]])
-            if(is.na(s))
-                s <- sd(perc[j,])
-            passed <- perc[j,i] <= m+s*cFactor & perc[j,i] >= m-s*cFactor
-            mv <- c(mv, m)
-            sv <- c(sv,s)
-            agTmp[[j]] <- new("rangeAggregator", passed=passed,
-                              x=perc[j,i], min=0, max=1)
-            cat(".")
-        }
-
-        ## summarize the results for separate channels and bundle things up
-        names(agTmp) <- parms
-        nfail <- !sapply(agTmp, slot, "passed")
-        val <- if(sum(nfail)==1) factor(2) else factor(0)
-        if(sum(nfail)==0)
-            val <- factor(1)
-        ba <- new("discreteAggregator", x=val)
-        fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir, width=150, pdf=pdf)
-        fid <- frameIDs[i]
-        frameProcesses[[fid]] <- qaProcessFrame(frameID=fid,
-                                                summaryAggregator=ba,
-                                                frameAggregators=agTmp,
-                                                frameGraphs=fGraphs,
-                                                details=list(events=perc[,i],
-                                                mevents=rowMeans(perc),
-                                                m=mv, s=sv))
-    }
-    
-    ## create qaProcess object
-    cat("\n")
-    return(qaProcess(id=gid, name="margin events",
-               type="margin events", summaryGraph=sgraph,
-               frameProcesses=frameProcesses))
-}    
 
 
 
@@ -590,14 +466,12 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     ## create summary plots for each channel
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
     summary <- vector(lp, mode="list")
     for(j in seq_len(lp))
     {
-        sfile <- file.path(tmp, paste("summary_", j, ".pdf", sep=""))
+        sfile <- file.path(idir, paste("summary_", j, ".pdf", sep=""))
         pdf(file=sfile, width=sum.dimensions[1]/lp,
             height=sum.dimensions[2])
         binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
@@ -609,10 +483,9 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     }
     
     ##glue together the summary graphs and create a qaGraph object
-    sfile <- paste(tmp, "summary.pdf", sep="/")
+    sfile <- paste(idir, "summary.pdf", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp), pdf=pdf)
 
     ## create graphs and aggregators for each frame and channel
@@ -625,7 +498,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
         agTmp <- aggregatorList()
         for(j in seq_len(lp))
         {
-            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
             pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -691,16 +564,13 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     sum.dimensions <- rep(sum.dimensions, 2)
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     binSize <- min(max(1, floor(median(fsApply(set, nrow)/100))), 500)
-    sfile <- file.path(tmp, "summary.pdf")
+    sfile <- file.path(idir, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
     summary <- timeLinePlot(set, colnames(set)[[1]], binSize=binSize,
                             varCut=cutoff, type="frequency")
     dev.off()
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## create graphs and aggregators for each frame and wrap in object
@@ -710,7 +580,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     det.dimensions <- rep(det.dimensions, 2)
     for(i in seq_len(ls))
     {
-        tfile <- file.path(tmp, paste("frame_", sprintf("%0.2d", i), ".pdf",
+        tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), ".pdf",
                                       sep=""))
         pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
         sum <- timeLinePlot(set[i], colnames(set)[[1]],
@@ -733,6 +603,13 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
 }    
 
 
+createImageDir <- function(outdir, gid)
+{
+    id <- file.path(outdir, "images", gid)
+    if(!file.exists(id))
+        dir.create(id, recursive=TRUE)
+    return(win2UnixPath(id)) 
+}
 
 
 ## Detect unusually low cell counts
@@ -765,11 +642,9 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
     ## create summary plot and its associated qaGraph object
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    ## Necessary because the directory path in Windows returned by tmpdir is odd
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     cellNumbers <- as.numeric(fsApply(set, nrow))
-    sfile <- file.path(tmp, "summary.pdf")
+    sfile <- file.path(idir, "summary.pdf")
     pdf(file=sfile, width=sum.dimensions[1], height=sum.dimensions[2])
     col <- "gray"
     par(mar=c(10.1, 4.1, 4.1, 2.1), las=2)
@@ -777,7 +652,6 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
             cex.names=0.8, cex.axis=0.8)
     abline(h=mean(cellNumbers), lty=3, lwd=2)
     dev.off()
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=350, pdf=pdf)
 
     ## create aggregators for each frame and wrap in object
@@ -828,8 +702,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
 {
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
     alqLen<- length(flowList)
     patientID=sampleNames(flowList[[1]])
@@ -896,7 +769,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
             cat(".")
 	}
      
-    	sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
+    	sfile <- file.path(idir, paste("summary_", cellType, ".png", sep=""))
         png(file=sfile, width=det.dimensions[1]*2,height=det.dimensions[2]*2)
         formula <- paste("`","Aliquot","`","~","`",cellType,"`","|","Patient",sep="")   
         print(barchart( eval(parse(text=formula)), 
@@ -912,10 +785,9 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
         cat(".")
 	
     }
-    sfile <- paste(tmp, "summary.png", sep="/")
+    sfile <- paste(idir, "summary.png", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, 
 		width=max(det.dimensions[1],det.dimensions[2]*lp),pdf=pdf)
 	
@@ -927,7 +799,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
 	fnames <- NULL
         agTmp <- aggregatorList()
         for(j in seq_len(lp)){  ##over nrow(dyes)
-	      tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
+	      tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
                                           gsub("\\..*$", "", j), ".png",
                                           sep=""))
 	      png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -982,8 +854,7 @@ qaProcess.2DStatsPlot <- function(
 
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
     alqLen<- length(flowList)
     patientID=sampleNames(flowList[[1]])
@@ -1050,7 +921,7 @@ qaProcess.2DStatsPlot <- function(
         }
         
         formula<-paste("`",dyes[cellType,1],"`"," ", "~"," ","`",dyes[cellType,2],"`","|","Patient",sep="")
-        sfile <- file.path(tmp, paste("summary_", paste(dyes[cellType,1],"_",dyes[cellType,2],sep=""), ".png", sep=""))
+        sfile <- file.path(idir, paste("summary_", paste(dyes[cellType,1],"_",dyes[cellType,2],sep=""), ".png", sep=""))
         png(file=sfile, width=det.dimensions[1]*1.5,height=det.dimensions[2]*1.5)
         print(xyplot(eval(parse(text=formula)),data=outRes, 
                                         auto.key=list(space="right"),
@@ -1066,10 +937,9 @@ qaProcess.2DStatsPlot <- function(
         sfiles <- c(sfiles, sfile)
         cat(".")
     }
-    sfile <- paste(tmp, "summary.png", sep="/")
+    sfile <- paste(idir, "summary.png", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                                     lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, 
 		width=max(det.dimensions[1],det.dimensions[2]*lp),pdf=pdf)
     frameProcesses <- list()
@@ -1080,7 +950,7 @@ qaProcess.2DStatsPlot <- function(
         fnames <- NULL
         agTmp <- aggregatorList()
         for(j in seq_len(lp)){  ##over nrow(dyes)
-            tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
                                             gsub("\\..*$", "", j), ".png",
                                             sep=""))
             png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -1131,10 +1001,8 @@ qaProcess.DensityPlot <- function(
 ){
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
-  
     alqLen<- length(flowList)
     patientID=sampleNames(flowList[[1]])
     myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
@@ -1200,7 +1068,7 @@ qaProcess.DensityPlot <- function(
             }
   
         xrange<-c(0.9*valRange[1,],1.1*valRange[2,])
-        sfile <- file.path(tmp, paste("summary_", cellType, 
+        sfile <- file.path(idir, paste("summary_", cellType, 
 				".png", sep=""))
         png(file=sfile, width=det.dimensions[1]*1.5,
 			height=det.dimensions[2]*1.5)
@@ -1225,11 +1093,10 @@ qaProcess.DensityPlot <- function(
         cat(".")
    }
   
-    sfile <- paste(tmp, "summary.png", sep="/")
+    sfile <- paste(idir, "summary.png", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "),
 			    " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, 
 		    width=max(det.dimensions[1],
 			    det.dimensions[2]*lp), pdf=pdf)
@@ -1251,7 +1118,7 @@ qaProcess.DensityPlot <- function(
 	fnames <- NULL
         agTmp <- aggregatorList()
 	for(j in seq_len(lp)){   #over dupes
-	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
+	    tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
                                           gsub("\\..*$", "", j), ".png",
                                           sep=""))
 	    png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -1296,8 +1163,7 @@ qaProcess.ECDFPlot <- function(flowList,
 ){
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
     alqLen<- length(flowList)
     patientID=sampleNames(flowList[[1]])
@@ -1372,7 +1238,7 @@ qaProcess.ECDFPlot <- function(flowList,
 	}
 
         xrange<-c(0.9*valRange[1,],1.1*valRange[2,])
-	sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
+	sfile <- file.path(idir, paste("summary_", cellType, ".png", sep=""))
         png(file=sfile, width=det.dimensions[1],height=det.dimensions[2])
         print(ecdfplot(~x|patientID, 
 		        data = list(patientID = factor(names(tempgrph[[cellType]]),
@@ -1394,10 +1260,9 @@ qaProcess.ECDFPlot <- function(flowList,
 	
     }
 
-    sfile <- paste(tmp, "summary.png", sep="/")
+    sfile <- paste(idir, "summary.png", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, 
 		      width=max(det.dimensions[1],
 			      det.dimensions[2]*lp), pdf=pdf)
@@ -1419,7 +1284,7 @@ qaProcess.ECDFPlot <- function(flowList,
             agTmp <- aggregatorList()
 	    for(j in seq_len(lp)){   #over dupes
         
-                tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
+                tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
                                             gsub("\\..*$", "", j), ".png",
                                             sep=""))
                 png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -1466,8 +1331,7 @@ qaProcess.KLDistPlot <- function(
 ){
     cat("creating summary plots...")
     gid <- guid()
-    tmp <- tempdir()
-    tmp <- gsub("\\", "/", tmp, fixed=TRUE)
+    idir <- createImageDir(outdir, gid)
     sfiles <- NULL
   
     alqLen<- length(flowList)
@@ -1532,7 +1396,7 @@ qaProcess.KLDistPlot <- function(
         outRes<-rbind(tm,outRes)
         cat(".")
 	}
-        sfile <- file.path(tmp, paste("summary_", cellType, ".png", sep=""))
+        sfile <- file.path(idir, paste("summary_", cellType, ".png", sep=""))
         png(file=sfile, width=det.dimensions[1]*2,height=det.dimensions[2]*2)
         print(grph<-levelplot(z~x*y|Patient,data=outRes,xlab="Aliquot",ylab="Aliquot",
                                main=cellType,scales = list(x = list(rot = 90)),
@@ -1542,10 +1406,9 @@ qaProcess.KLDistPlot <- function(
         cat(".")
     }
 
-    sfile <- paste(tmp, "summary.png", sep="/")
+    sfile <- paste(idir, "summary.png", sep="/")
     system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  lp, "x1 ", sfile, sep=""))
-    idir <- file.path(outdir, "images", gid)
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(det.dimensions[1],det.dimensions[2]*lp), pdf=pdf)
 
     frameProcesses <- list()
@@ -1564,7 +1427,7 @@ qaProcess.KLDistPlot <- function(
 	fnames <- NULL
         agTmp <- aggregatorList()
 	for(j in seq_len(lp)){   #over dupes	
-	    tfile <- file.path(tmp, paste("frame_", sprintf("%0.2s", i), "_",
+	    tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
                                           gsub("\\..*$", "", j), ".png",
                                           sep=""))
 	    png(file=tfile, width=det.dimensions[1], height=det.dimensions[2])

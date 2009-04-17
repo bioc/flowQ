@@ -194,25 +194,87 @@ setClass("qaGraph",
 
 ## ImageMagick is very particular about how to specify a path. This function
 ## tries to accomodate all possible inputs (realtive and absolute)
-## FIXME: Need to make sure this also works for windows.
 constructPath <- function(path){
     curDir <- getwd()
+    if(path == "")
+        return(curDir)
     curDirSplt <- strsplit(curDir, "[/\\]")[[1]]
     pathSplt <-  strsplit(path, "[/\\]")[[1]]
-    common <- suppressWarnings(min(which(curDirSplt != pathSplt)))
-    if(common==1)
-        file.path(curDir, path)
+    if(.Platform$OS.type=="windows")
+    {
+	if(curDirSplt[[1]] !=  pathSplt[[1]])
+        {
+	    curDir
+        }
+	else
+	{
+	    common <- suppressWarnings(min(which(curDirSplt[-1] != pathSplt[-1])))
+	    if(is.infinite(common))
+	    {
+	        curDir
+	    }
+	    else
+	    {
+		if(common==1)
+		{
+            	    paste(c(curDir, pathSplt[-1]), 
+ 		        collapse=.Platform$file.sep, sep="")
+		}
+		else if(common == length(pathSplt))
+		{
+		    path
+		}
+		else
+		{
+		   file.path(paste(curDirSplt[1:(common)], 
+	               collapse=.Platform$file.sep, sep=""), 
+		       paste(pathSplt[(common+1):length(pathSplt)],
+		       collapse=.Platform$file.sep, sep=""))  
+		}
+	    } 
+	}
+	      
+    }
     else
-        file.path(paste(curDirSplt[1:(common-1)], collapse=.Platform$file.sep,
-                        sep=""), paste(pathSplt[common:length(pathSplt)],
-                                       collapse=.Platform$file.sep, sep=""))
+    {	
+        common <- suppressWarnings(min(which(curDirSplt != pathSplt)))
+	if(is.infinite(common))
+	{
+	    curDir
+	}
+	else
+	{
+       	    if(common==1)
+	    {
+                file.path(curDir, path)
+	    }
+	    else if((common+1) == length(pathSplt))
+		{
+		    path
+		}
+            else
+	    {
+                file.path(paste(curDirSplt[1:(common-1)], 
+	                  collapse=.Platform$file.sep, sep=""), 
+		       	  paste(pathSplt[common:length(pathSplt)],
+		       	  collapse=.Platform$file.sep, sep=""))
+	    }
+	}
+    }
 }
 
 
+win2UnixPath <- function(path)
+{
+    gsub("\\", "/", path.expand(path), fixed=TRUE)
+}
+
 setMethod("initialize", "qaGraph",
           function(.Object, fileName, imageDir, width=NULL, empty=FALSE, pdf=TRUE){
-              sysFun <- if(.Platform$OS.type=="windows") shell else system
+	      sysFun <- if(.Platform$OS.type=="windows") shell else system
               if(!empty){
+	          fileName <- win2UnixPath(fileName)
+	          imageDir <- win2UnixPath(imageDir)
                   ## check arguments
                   if(!is.null(width) && (length(width)!=1 ||
                                          !is.numeric(width)))
@@ -223,9 +285,10 @@ setMethod("initialize", "qaGraph",
                   ## get file information
                   if(!file.exists(imageDir))
                       dir.create(imageDir, recursive=TRUE)
-			fn <- basename(fileName)
-			inf <- basename(sysFun(paste("identify", shQuote(fileName)),
-                                      intern=TRUE))
+		  fn <- basename(fileName)
+		  file.copy(fileName, imageDir)
+		  inf <- basename(sysFun(paste("identify", shQuote(fileName)),
+                                  intern=TRUE))
                   iInf <- gsub(paste(".*", fn, " ", sep=""), "", inf)
                   imageInfo <- c(fileName, strsplit(iInf, " ")[[1]][1:2])
                   names(imageInfo) <- c("file", "type", "dimensions")
@@ -241,20 +304,19 @@ setMethod("initialize", "qaGraph",
                   cf <- file.path(imageDir, fn)
                   
                   ## convert image to vectorized or bitmap version
-                  if(tolower(imageInfo["type"])=="pdf"){
+                  if(tolower(imageInfo["type"])=="pdf")
+		  {
                       ## original image is vectorized
                       convType <- "jpg"
-                      newPath <- constructPath(imageDir)                      
-                      newFileName <- file.path(newPath, paste(bname, convType, sep="."))
+                      newFileName <- file.path(imageDir, paste(bname, convType,
+		      		     	        sep="."))
                       if(!file.exists(newFileName))
                           sysFun(paste("convert -resize", paste(newDims, 
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
                       type <- c(ifelse(pdf, "pdf", NA), "jpg")
                       files <- c(constructPath(cf), newFileName)
-                      if(!file.exists(cf) && pdf)
-                          file.copy(fileName, cf)
-                  }else{
+                                        }else{
                       ## original image is bitmap
                       convType <- "pdf"
                       newFileName <- file.path(imageDir, paste(bname, convType,
