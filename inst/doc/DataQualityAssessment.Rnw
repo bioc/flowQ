@@ -522,8 +522,8 @@ getDistance(resFSCECDF,dyes)
 ECDF plots for forward and side scatter is shown below.
 
 <<produceFSCECDFimage,echo=false,results=tex>>=
-file.copy(imagePath, to)
 to <- paste(flowQ:::guid(), "pdf", sep=".")
+file.copy(imagePath, to)
 cat('\\includegraphics[width=1.0\\textwidth]{', to, '}\n', sep="")
 @
 
