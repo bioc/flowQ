@@ -10,8 +10,8 @@
 }
 \usage{
 
-qaProcess.marginevents(set, channels=NULL, grouping=NULL, outdir,
-cFactor=2, absolute.value=NULL, name="margin events",
+qaProcess.marginevents(set, channels=NULL,side ="both", grouping=NULL, 
+outdir, cFactor=2, absolute.value=NULL, name="margin events",
 sum.dimensions=NULL, det.dimensions=c(7,3), pdf=TRUE, \dots)
 
 }
@@ -23,7 +23,12 @@ sum.dimensions=NULL, det.dimensions=c(7,3), pdf=TRUE, \dots)
   \item{channels}{ A character vector of channel names for which margin
     events are to be recorded. Will use all available channels except
     for the time channel if \code{NULL}. }
-  
+
+  \item{side}{Object of class \code{"character"}. The margin
+       on which to evaluate the filter. Either \code{upper} for the
+       upper margin or \code{lower} for the lower margin or \code{both}
+       for both margins. }
+
   \item{grouping}{ A character vector defining one of the variables in
     the phenoData of \code{set} used as a grouping variable. If this
     argument is used and if \code{absolute.value} is \code{NULL}, outlier

@@ -14,8 +14,8 @@
 }
 \usage{
 
-writeQAReport(set, processes, outdir = "./qaReport", grouping = NULL,
-pagebreaks=TRUE, pdf=TRUE)
+writeQAReport(set, processes=NULL, globalProcess=NULL, 
+              outdir = "./qaReport", grouping = NULL,pagebreaks=TRUE, pdf=TRUE)
 
 }
 
@@ -24,10 +24,14 @@ pagebreaks=TRUE, pdf=TRUE)
   \item{set}{ A \code{\link[flowCore]{flowSet}} or a list of several
     \code{\link[flowCore]{flowSet}}s.}
   
-  \item{processes}{ A list of A \code{\link{qaProcess}} objects or, in
+  \item{processes}{ A list of  \code{\link{qaProcess}} objects or, in
     the case of multiple \code{\link[flowCore]{flowSet}}s, a list of
     lists of \code{\link{qaProcess}} objects. See below for further
     details.}
+
+ \item{globalProcess}{ A list of  \code{\link{qaProcess}} objects generated
+ by multipanel comparison qaProcess functions, when set is a list of 
+  \code{\link[flowCore]{flowSet}}s .}
 
   \item{outdir}{ The directory to which the HTML report is to be
     saved. Each \code{\link{qaProcess}} object should have been created
