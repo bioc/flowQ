@@ -4,27 +4,32 @@
 ## write method to create HTML output
 setMethod("writeLines", signature("data.frame", "file", "missing"),
           function(text, con){
-              modes <- sapply(text, mode)
-              for(i in which(modes == "numeric"))
-                  text[,i] <-  round(as.numeric(as.character(text[,i])),3)
-              th <- paste("<th>",
-                          colnames(text), "</th>", sep="")
-              th[ncol(text)] <- gsub("<th", "<th class=\"right\"", th[ncol(text)])
-              th <- paste("<tr>\n",
-                          paste(th, sep="", collapse="\n"), "\n</tr>\n", sep="",
-                          collapse="\n")
-              td <- apply(text, 1, function(x) 
-                          paste("<td>", x, "</td>", sep=""))
-              td[ncol(text),] <-
-                  gsub("<td", "<td class=\"right\"", td[ncol(text),])
-              td <- paste(apply(td,2,function(x)
-                                paste("<tr>\n",
-                                      paste(x, collapse="\n", sep=""), "\n</tr>", sep="",
-                                      collapse="/n")), collapse="\n", sep="")
-              paste("<tr>\n", td, "</tr>\n", sep="",
-                    collapse="/n")
-              writeLines(paste("<table class=\"QAParameter\" align=\"center\">\n",
-                               th, td, "\n</table>", sep=""), con)
+              if(length(text))
+              {  
+                  modes <- sapply(text, mode)
+                  for(i in which(modes == "numeric"))
+                       text[,i] <- as.character(round(as.numeric(text[,i]), 3))
+                  
+                  th <- paste("<th>",
+                              colnames(text), "</th>", sep="")
+                  th[ncol(text)] <- gsub("<th", "<th class=\"right\"", th[ncol(text)])
+                  th <- paste("<tr>\n",
+                              paste(th, sep="", collapse="\n"), "\n</tr>\n", sep="",
+                              collapse="\n")
+                  td <- apply(text, 1, function(x) paste("<td>", x, "</td>", sep=""))
+                  if(!is.matrix(td))
+                      td <- as.matrix(td)
+                  td[ncol(text), ] <-
+                      gsub("<td", "<td class=\"right\"", td[ncol(text)],)
+                  td <- paste(apply(td,2,function(x)
+                                    paste("<tr>\n",
+                                          paste(x, collapse="\n", sep=""), "\n</tr>", sep="",
+                                          collapse="/n")), collapse="\n", sep="")
+                  paste("<tr>\n", td, "</tr>\n", sep="",
+                        collapse="/n")
+                  writeLines(paste("<table class=\"QAParameter\" align=\"center\">\n",
+                                   th, td, "\n</table>", sep=""), con)
+              }
           })
 
 
@@ -44,8 +49,11 @@ setMethod("show", signature("qaProcessSummary"),
 setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
           function(text, con)
       {
+
           samples <- rownames(text@summary)
           channels <- colnames(text@summary)
+          ordNames <- names(sort(rowSums(sapply(text@ranges, c)),decreasing=T))
+          
           panels <- length(text@panels)
           ## we want a summary of all failed qaChecks across panels
           sumRanges <- text@ranges[[1]]
@@ -59,7 +67,7 @@ setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
           if(panels>1)
               writeLines("<th class=\"left\"><span>Summary</span></th>", con)
           writeLines(paste(paste("<th class=\"right\"><a href=\"index", 1:panels, ".html\">",
-                                 "panel ", 1:panels, "\n<br><span>",
+                                 text@pnams, "\n<br><span>",
                                  shortNames(names(text@panels), n=12), "</span></a>",
                                  "\n</th>", sep="", collapse="\n"), "\n</tr>", sep=""), con)
           ## iterate over rows (samples)
@@ -72,14 +80,15 @@ setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
                                thisSamp, "</th>", sep=""), con)
               if(panels>1)
               {
-                  writeLines("\n<td class=\"sum\">", con)
-                  writeLines(htmlBarplot(text@summary[s,], sumRanges), con)
+                  writeLines("\n<td class=\"sum\">", con) 
+             
+                  writeLines(htmlBarplot(text@summary[s,][ordNames], sumRanges[ordNames]), con)
                   writeLines("</td>", con)
               }
               ## now iterate over each pannel
               for(p in seq_len(panels)){
                   writeLines("\n<td class=\"bars\">", con)
-                  writeLines(htmlBarplot(text@panels[[p]][s,], text@ranges[[p]],
+                  writeLines(htmlBarplot(text@panels[[p]][s,][ordNames], text@ranges[[p]][ordNames],
                                          p, match(thisSamp,
                                                   text@mapping[[p]][,"sample"]),
                                          FALSE), con)
@@ -131,8 +140,13 @@ htmlBarplot <- function(data, ranges, panel=NULL, frame=NULL,
 ## truncate character vectors to 'n' chars for pretty names plotting
 shortNames <- function(x, n=13)
 {
-    if(any(nchar(x)>n))
-        x <- paste(sapply(x, substring, 1,n), "...", sep="")
+    for(i in seq_along(x))
+    {
+        if(nchar(x[i])>n)
+            x[i] <- paste(sapply(x[i], substring, 1,n), "...", sep="")
+        if(x[i]=="")
+            x[i] <- "&nbsp;"
+    }
     return(x)
 }
 

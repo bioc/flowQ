@@ -36,38 +36,79 @@ pdfLink <- function(vimg, bimg, class, id, pdf=TRUE, qaGraph=NULL)
 
 
 ## make sure the QAprocesses and the flowSets match
-checkInputs <- function(sets, procs)
-{
+checkInputs <- function(sets, procs, gproc, grouping)
+{    
+    
+
+   ## Force inputs to be lists
     single <- FALSE
     if(!is.list(sets))
     {
-        single <- TRUE
+        single <- TRUE              ## single flowSet
         sets <- list(sets)
         procs <- list(procs)
+        if(!is.null(gproc) && !is.list(gproc))
+            gproc <- list(gproc)
     }
-    all.list <- is.list(procs) && length(procs) == length(sets)
-    #procs <- lapply(procs, function(x) if(is(x, "qaProcess")) list(x) else x)
-    equal.size <- length(unique(sapply(procs, length))) == 1
-    correct.class <- all(sapply(sets, is, "flowSet")) &&
-                     all(sapply(procs, function(x) sapply(x, is, "qaProcess")))
-    if(!all.list || !equal.size || !correct.class)
-        stop("When 'set' is a list of flowSets, 'processes' needs to be ",
-             "a list of lists of qaProcess objects, where each list corresponds ",
-             "to the results for a particular flowSet.")
-    for(i in seq_along(procs))
+
+    
+ 
+
+    if(!is.null(procs))
     {
-        sn <- sampleNames(sets[[i]])
-        qn <- matrix(sapply(procs[[i]], function(x) names(x@frameProcesses)),
-                     nrow=length(procs[[i]]), byrow=TRUE)
-        if(!all(apply(qn, 2, function(x) length(unique(x))==1)))
-            stop("Some of the qaProcess objects in processes[[", i,
-                 "]] are not compatible.")
-        if(length(intersect(sn, qn[1,])) != length(sn))
-            stop("The sampleNames of set[[", i, "]] do not match the names ",
-                 "of the qaProcess frames in processes[[", i, "]].")
+       
+        all.list <- is.list(procs) & length(procs) == length(sets)
+        procs <- lapply(procs, function(x) if(is(x, "qaProcess")) list(x) else x)
+        #correct.class <- all(sapply(sets, is, "flowSet")) &&
+        #all(sapply(procs, function(x)  sapply(x,is, "qaProcess")))
+        if(!all.list)
+            stop("When 'set' is a list of flowSets, 'processes' needs to be ",
+                 "a list of lists of qaProcess objects, where each list corresponds ",
+                 "to the results for a particular flowSet.")
+        for(i in seq_along(procs))
+        {  
+            sn <- sampleNames(sets[[i]])
+            qn <- matrix(sapply(procs[[i]], function(x) names(x@frameProcesses)),
+                         nrow=length(procs[[i]]), byrow=TRUE)
+            if(!all(apply(qn, 2, function(x) length(unique(x))==1)))
+                stop("Some of the qaProcess objects in processes[[", i,
+                     "]] are not compatible.")
+            if(length(intersect(sn, qn[1,])) != length(sn))
+                stop("The sampleNames of set[[", i, "]] do not match the names ",
+                     "of the qaProcess frames in processes[[", i, "]].")
+        }
     }
-    return(list(sets=sets, procs=procs, single=single))
+   # else
+   # {
+   #     single <- TRUE
+   #     sets <- if(!is.list(sets)) list(sets) else sets[1]
+   # }
+
+     ## Add the globalProcess to the list of processes and also add a dummy 
+    ## flowSet to the list of flowSets if needed
+ 
+	if(!is.null(gproc))
+    {  
+        dfs <- flowCore:::copyFlowSet(sets[[1]])
+        opd <- pData(dfs)
+        gpat <- if(is.null(grouping)) "sampleid" else paste("sampleid", grouping, sep="|")
+        csel <- grep(gpat, tolower(colnames(opd)))
+        pData(dfs) <- opd[,csel, drop=FALSE]
+        opa <- parameters(dfs[[1]])
+        popa <- pData(opa)
+        popa[,-1] <- NA
+        pData(opa) <- popa
+        dfs[[1]]@parameters <- opa
+        if(!single)
+            gproc <- list(gproc) 
+        sets <- if(is.null(procs[[1]])) list("comparison across panels"=dfs) else
+        c("comparison across panels"=dfs, sets)
+        procs <- if(is.null(procs[[1]])) (gproc) else c(gproc, procs)
+    }
+ 
+   return(list(sets=sets, procs=procs, single=single, gproc=!is.null(gproc[[1]])))
 }
+
 
 
 ## Copy the images contained within the qaGraph objects of the process list to
@@ -99,12 +140,12 @@ copyGraphs <- function(procs, outdir)
 
 
 ## create HTML report for (lists of) QA processes 
-writeQAReport  <- function(set, processes, outdir="./qaReport",
+writeQAReport  <- function(set, processes=NULL, globalProcess=NULL, outdir="./qaReport",
                            grouping=NULL, pagebreaks=TRUE,
                            pdf=TRUE)
-{
+{    
     ## making sure the inputs are correct
-    inputs <- checkInputs(set, processes)
+    inputs <- checkInputs(set, processes, globalProcess, grouping)
     checkClass(outdir, "character", 1)
     if(file.exists(file.path(outdir, "index.html")))
         warning("Target directory already exists. Content may be ",
@@ -113,14 +154,17 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         dir.create(file.path(outdir, "images"), rec=TRUE)
     checkClass(pagebreaks, "logical", 1)
     checkClass(pdf, "logical", 1)
-    
+   
     ## We only need panel tabs if 'set' is a list of 'flowSets'
+    ## FIXME: Need to somehow factor in the globalProcess argument
     single <- inputs$single
     set <- inputs$sets
     processes <- inputs$procs
 
+
     ## For the overview page, we need to match samples across panels
-    sID <- all(sapply(set, function(x) "sampleid" %in% tolower(colnames(pData(x)))))
+    sID <- all(sapply(set, function(x) "sampleid" %in% 
+                   tolower(colnames(pData(x)))))
     if(!single && !sID)
         warning("Some of the panels in 'set' don't have a global ",
                 "sample identifier.\nUnable to create overview.")
@@ -134,6 +178,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
     copyGraphs(processes, outdir)
     
     ## iterate over panels
+   
     for(s in seq_along(set)){
         
         ## rearange set according to grouping if necessary
@@ -155,8 +200,9 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         
         ## setup of table and table header row
-        ## process <- if(length(set)>1) processes[[s]] else processes
-        process <- processes[[s]]
+                                        # process <- if(length(set)>1) processes[[s]] else processes
+        
+         process <- processes[[s]]
         writeLines("\n<table class=\"QA\">", con)
         pIDs <- sapply(process, slot, "id")
         pNames <- sapply(process, slot, "name")
@@ -174,12 +220,12 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                     pNames, "\n</div>\n</th>", sep="")
         esel <- sapply(process, function(x) length(x@summaryGraph@fileNames)>0)
         th[!esel] <- paste("\n<th colspan=\"",
-                          nrAggr[!esel], "\" ",
-                          "id=\"", pIDs[!esel], "_sumHeader\">\n",
-                          "<div id=\"", pIDs[!esel],
-                          "_button",
-                          "\">\n", pNames[!esel], "\n</div>\n</th>", sep="",
-                          collapse="\n")
+                           nrAggr[!esel], "\" ",
+                           "id=\"", pIDs[!esel], "_sumHeader\">\n",
+                           "<div id=\"", pIDs[!esel],
+                           "_button",
+                           "\">\n", pNames[!esel], "\n</div>\n</th>", sep="",
+                           collapse="\n")
         th <- paste(th, collapse="\n")
         pd <- pData(set[[s]][[1]]@parameters)[,c("name", "desc", "minRange",
                                                  "maxRange")]
@@ -212,7 +258,7 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
         lastGrp <- grps[1]
         for(f in frameIDs){
             showRow <- ifelse(counter>fpp, "none", "table-row")
-            pd <- pData(set[[s]])[f,]
+            pd <- pData(set[[s]])[f,,drop=FALSE]
             phi <- paste("<span id=\"img_pd_", counter,
                          "\" style=\"display:none;\"",
                          ">", sep="", collapse="\n")
@@ -386,40 +432,56 @@ writeQAReport  <- function(set, processes, outdir="./qaReport",
                              nt, ", ", lf, ")\">Frames ", from, "-", to,
                              "</span>", sep=""), con)
         }
+        
         np <- length(set)
         iFiles <- if(!sID && np>1) c("", 1:(np-1)) else as.character(1:np)
+   
         if(np>1){
+
             writeLines("\n</td><td align=\"right\">", con)
+            if(!inputs$gproc) 
+               pnams <- paste("Panel ", 1:np) 
+                     else
+               pnams <-   c("Multipanel", paste("Panel ", 1:(np-1)))
+            if(!is.null(names(set)[s]) && nchar(names(set)[s])>0)
+                pnams[s] <- paste(pnams[s], " <i><small>(", names(set)[s],
+                               ")</i></small>", sep="")
             panels <- paste("<span class=\"QAPanels\" id=\"panels_", 1:np,
                             "\"n><a class=\"QAPanels\" href=\"index",
-                            iFiles, ".html\">Panel ",
-                            1:np, "</a></span>", sep="")
+                            iFiles, ".html\">",
+                            pnams, "</a></span>", sep="")
             if(!is.null(names(set)))
-                panels[s] <- gsub(paste("Panel", s),
-                                  paste("Panel ", s, " <i><small>(",
-                                        names(set)[s],
-                                        ")</i></small>", sep=""),
-                                  gsub("QAPanels","QAPanelsAct", panels[s]))
+                panels[s] <- gsub("QAPanels","QAPanelsAct", panels[s])
             if(sID)
                 panels <- c(paste("<span class=\"QAPanels\" id=\"panels_0",
                                   "\"n><a class=\"QAPanels\" href=\"index",
                                   ".html\">Summary</a></span>", sep=""),
                             panels)
             writeLines(panels, con) 
+        }else{
+        	pnams <- paste(" ") 
+
         }
         writeLines("</td></tr></table></div>", con)  
         closeHtmlPage(con)
     }##end s
 
     ## We create an overview page if we have multiple panels
-    if(sID){
-        if(single)
-          processes <- list(processes)
+    nps <- sapply(processes, length)
+    oneOnly <- all(nps==1)
+    if(sID && !oneOnly)
+    {
+        #if(single)
+        #    processes <- list(processes)
         ifile <- "index"
         con <- myOpenHtmlPage(file.path(outdir, ifile), "qatest", "images/")
         on.exit(closeHtmlPage(con))
-        summary <- failedProcesses(processes, set)
+        summary <- failedProcesses(processes, set, pnams)
         writeLines(summary, con)
+    }
+    else
+    {
+        file.copy(file.path(outdir, "index1.html"), file.path(outdir, "index.html"))
     }
     return(file.path(outdir, "index.html"))
 }
@@ -442,7 +504,7 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
         else{
             argLists[[i]]$set <- set
             argLists[[i]]$outdir <- outdir
-             argLists[[i]]$grouping <- grouping
+            argLists[[i]]$grouping <- grouping
             processes[[i]] <- do.call(qaFunctions[i], argLists[[i]])
         }
         save(processes, file=file.path(outdir, "processes.rda"))
@@ -461,26 +523,27 @@ qaReport <- function(set, qaFunctions, outdir="./qaReport", argLists,
 ## The phenoData of the list of flowSets that gets passed as the second
 ## argument has to contain a column sampleIDs which provides the mapping
 ## of samples over panels.
-failedProcesses <- function(processes, set)
+failedProcesses <- function(processes, set, pnams)
 {
     ## some sanity checking first
     sampleIDs <- lapply(set, function(x) {
-                            pd <- pData(x)
-                            pdid <- match("sampleid", tolower(colnames(pd)))
-                            pd[,pdid]})
+        pd <- pData(x)
+        pdid <- match("sampleid", tolower(colnames(pd)))
+        pd[,pdid]})
     if(!all(listLen(lapply(sampleIDs, unique))==listLen(sampleIDs)))
         stop("'SampleIDs' must be unique in each panel")
     sids <- unlist(sampleIDs)
     comSids <- unique(sids)
     fids <- unlist(lapply(set, function(x) rownames(pData(x))))
-    #if(any(duplicated(fids)))
-    #    stop("The 'FrameIDs' in the whole experiment are not unique")
-    allChannels <- c(unique(unlist(lapply(set, colnames))), "global")
+    ##if(any(duplicated(fids)))
+    ##    stop("The 'FrameIDs' in the whole experiment are not unique")
+    #allChannels <- c(unique(unlist(lapply(set, colnames))), "global")
+    allChannels <- c(unique(unlist(lapply(unlist(processes), cnams))), "global")
     res <- ranges <- mapping <- vector(length(set), mode="list")
     ## iterate over panels
     for(i in seq_along(processes)){
         fmat <- matrix(0, ncol=length(allChannels), nrow=length(comSids),
-                           dimnames=list(comSids, allChannels))
+                       dimnames=list(comSids, allChannels))
         clist <- slist <- NULL
         nrSum <- 0
         ## iterate over qaProcess objects for one panel
@@ -493,8 +556,6 @@ failedProcesses <- function(processes, set)
                 samp <- sids[match(pro@frameID, fids)]
                 mlist <- rbind(mlist, c(samp, pro@frameID, nrSamp+1))
                 ## check for the multiple channels and iterate over those 
-                if(length(pro@frameAggregators) && !processes[[i]][[j]]@type %in%
-                   c("Density","ECDF","KLD","SummaryStatistic","BoundaryEvents")){
                     channels <- names(pro@frameAggregators)
                     clist <- c(clist, channels)
                     
@@ -503,12 +564,6 @@ failedProcesses <- function(processes, set)
                             fmat[samp, channels[chan]] + 
                                 as.numeric(!pro@frameAggregators[[chan]]@passed)
                     }
-                ## count the "global" qaProcesses    
-                }else{
-                    fmat[samp, "global"] <- fmat[samp, "global"] +
-                        as.numeric(!pro@summaryAggregator@passed)
-                    nrSum <- nrSum+1
-                }
                 slist <- c(slist, samp)
                 nrSamp <- nrSamp+1
             }
@@ -532,6 +587,15 @@ failedProcesses <- function(processes, set)
         for(i in 2:length(res))
             sum <- sum+res[[i]]
     names(res) <- names(ranges) <- names(mapping) <- names(set)
+    os <- cbind(rowSums(sum), sapply(res, rowSums))
+    colnames(os) <- c("global", 1:(ncol(os)-1))
     return(new("qaProcessSummary", panels=res, summary=sum, ranges=ranges,
-               mapping=mapping))
+               mapping=mapping, pnams=pnams, overallSum=os))
 }
+
+
+
+
+
+cnams <- function(proc)
+  unique(unlist(lapply(proc@frameProcesses, function(x) names(x@frameAggregators))))

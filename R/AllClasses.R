@@ -489,5 +489,7 @@ setClass("qaProcessSummary",
          representation(panels="list",
                         summary="matrix",
                         ranges="list",
-                        mapping="list")
+                        mapping="list",
+                        pnams="character",
+			overallSum="matrix")
          )

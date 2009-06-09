@@ -178,11 +178,12 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
 ## value, essentially this is a factor in the confidence intervall defined
 ## by the standard deviation of the average number of margin events for a
 ## particular channel.
-qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
+qaProcess.marginevents <- function(set, channels=NULL,side="both", grouping=NULL, outdir,
                                    cFactor=2, absolute.value=NULL,
                                    name="margin events",
                                    sum.dimensions=NULL, det.dimensions=c(7,3),
-                                   pdf=TRUE, ...)
+                                   pdf=TRUE,
+                                   ...)
 {
     ## some sanity checking
     checkClass(set, "flowSet")
@@ -214,8 +215,8 @@ qaProcess.marginevents <- function(set, channels=NULL, grouping=NULL, outdir,
     perc <- matrix(ncol=ls, nrow=lp, dimnames=list(parms, frameIDs))
     cat("computing margin events...")
     perc <- t(sapply(parms, function(x) 
-                 {
-                     ff <- filter(set, boundaryFilter(x))
+                 {  
+                     ff <- filter(set, boundaryFilter(x,side=side))
                      sapply(ff, function(y) summary(y)$q)
                  }))
     cat("\n")
@@ -867,7 +868,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
         val <- if(sum(nfail[!is.na(nfail)])==1) factor(2) else factor(0)
      	    if(sum(nfail[!is.na(nfail)])==0)
              val <- factor(1)
-        ba <- new("discreteAggregator", x=val)
+        ba <- new("discreteAggregator", x=val,passed= as.logical(sum(nfail==0)))
 	fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
 				  width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
 	fid <- patientID[i]
@@ -929,8 +930,30 @@ qaProcess.2DStatsPlot <- function(
                 par2 <- locateParameter(flowList,dyes[cellType,2],j,i)
                 if(length(par1)!=0 && length(par2)!=0 && nrow(flowList[[j]]@frames[[i]])!=1 && !is.na(par1) && !is.na(par2)) {
                                	parLbl[j] <- paste(j," ",par1,"/",par2)
-	                        value1 <- func(exprs(flowList[[j]]@frames[[i]][,par1]))
-        	                value2 <- func(exprs(flowList[[j]]@frames[[i]][,par2]))
+			       			    eps<- c(.Machine$double.eps, - .Machine$double.eps)
+								fFrame <- flowList[[j]]@frames[[i]]
+
+                                valRange1<-range(fFrame[,par1])
+                            	ranges <- t(valRange1) +eps
+                                ef <- char2ExpressionFilter(
+                                       paste("`", par1, "`>", ranges[1]," & `",par1,"`<",
+                                       ranges[2], sep="",
+                                       collapse=""), filterId=as.character(cellType))
+                                ff <-filter(fFrame,ef)
+				                fFrame <- Subset(fFrame,ff)
+
+				                valRange2<-range(fFrame[,par2])
+                            	ranges <- t(valRange2) +eps
+                                ef <- char2ExpressionFilter(
+                                       paste("`", par2, "`>", ranges[1]," & `",par2,"`<",
+                                       ranges[2], sep="",
+                                       collapse=""), filterId=as.character(cellType))
+                                ff <-filter(fFrame,ef)
+        			            fFrame <- Subset(fFrame,ff)
+  
+
+	                            value1 <- func(exprs(fFrame[,par1]))
+        	                    value2 <- func(exprs(fFrame[,par2]))
                 	        newres<-data.frame(Aliquot=j,x=value1,y=value2, Patient=i,check.names=FALSE)
                    		res<-rbind(res,newres)
 			
@@ -944,7 +967,9 @@ qaProcess.2DStatsPlot <- function(
 		stop("\n Parameters",paste(colnames(res)[2:3],"should occur only in pairs in
                  in more than one Aliquot in the dataset \n"))
             }
-	    tempIndx <- which(pcout(x=as.matrix(res[,2:3]),outbound=outBound)$wfinal01==0)
+            #tempIndx <- which(pcout(x=as.matrix(res[,2:3]),outbound=outBound)$wfinal01==0)
+            tempIndx <- which(pcout(x=as.matrix(res[,2:3]))$wfinal<=outBound)
+
             if(length(tempIndx)==0){
                 indx<-NA
 	    }else{
@@ -1029,7 +1054,7 @@ qaProcess.2DStatsPlot <- function(
         val <- if(sum(nfail)==1) factor(2) else factor(0)
         if(sum(nfail)==0)
                 val <- factor(1)
-        ba <- new("discreteAggregator", x=val)
+        ba <- new("discreteAggregator", x=val, passed =as.logical(sum(nfail==0)))
         fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
                         width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
         fid <- patientID[i]
@@ -1094,13 +1119,21 @@ qaProcess.DensityPlot <- function(
                 par <- locateParameter(flowList,cellType,j,i)
                 if(length(par)!=0 && !is.na(par) && nrow(flowList[[j]]@frames[[i]])!=1){
 			parLbl[j] <- paste(j," ",par)
-			value=exprs(flowList[[j]]@frames[[i]][,par])
+
+                        eps<- c(.Machine$double.eps, - .Machine$double.eps)
+			valRange<-range(flowList[[j]]@frames[[i]][,par])
+                       	ranges <- t(valRange) +eps
+                        ef <- char2ExpressionFilter(
+                              paste("`", par, "`>", ranges[1]," & `",par,"`<",
+                                    ranges[2], sep="",
+                          collapse=""), filterId=cellType)
+			ff <-filter(flowList[[j]]@frames[[i]][,par],ef)
+                        value=exprs(Subset(flowList[[j]]@frames[[i]][,par],ff))
                         colnames(value) <- cellType
                         newres<-data.frame(Patient=rep(i,nrow(value)),
                                       Aliquot=rep(j,nrow(value)),
                                       data=value,check.names=FALSE)
                         res<-rbind(res,newres)
-                        valRange<-range(flowList[[j]]@frames[[i]][,par])
                         tempStat[j,]<- density(value,n=256,from=valRange[1,],
                                            to=valRange[2,])$y
                         tempInput[[j]] <-value
@@ -1215,7 +1248,7 @@ qaProcess.DensityPlot <- function(
      	    if(sum(nfail)==0)
              val <- factor(1)
 
-	ba <- new("discreteAggregator", x=val)
+	ba <- new("discreteAggregator", x=val,passed =as.logical(sum(nfail)==0))
 	fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
 				  width=min(det.dimensions[1],
 					  lp*det.dimensions[2]), pdf=pdf)
@@ -1277,7 +1310,15 @@ qaProcess.ECDFPlot <- function(flowList,
 		par <- locateParameter(flowList,cellType,j,i)
 		if(length(par)!=0 && !is.na(par) && nrow(flowList[[j]]@frames[[i]])!=1){
              		parLbl[j] <- paste(j," ",par)
-		    	value=exprs(flowList[[j]]@frames[[i]][,par])
+			eps<- c(.Machine$double.eps, - .Machine$double.eps)
+			valRange<-range(flowList[[j]]@frames[[i]][,par])
+                       	ranges <- t(valRange) +eps
+                        ef <- char2ExpressionFilter(
+                              paste("`", par, "`>", ranges[1]," & `",par,"`<",
+                                    ranges[2], sep="",
+                          collapse=""), filterId=cellType)
+                        ff <-filter(flowList[[j]]@frames[[i]][,par],ef)
+                        value=exprs(Subset(flowList[[j]]@frames[[i]][,par],ff))
 	               	colnames(value) <- cellType
 			newres<-data.frame(Patient=rep(i,nrow(value)),
 				      Aliquot=rep(j,nrow(value)),
@@ -1387,7 +1428,7 @@ qaProcess.ECDFPlot <- function(flowList,
      	    if(sum(nfail)==0)
              val <- factor(1)
           
-            ba <- new("discreteAggregator", x=val)
+            ba <- new("discreteAggregator", x=val,passed =as.logical(sum(nfail)==0))
             fGraphs <- qaGraphList(imageFiles=fnames, 
 			    imageDir=idir,
                             width=min(det.dimensions[1], 
@@ -1450,7 +1491,15 @@ qaProcess.KLDistPlot <- function(
                         par <- locateParameter(flowList,cellType,j,i)
                         if(length(par)!=0 && !is.na(par) && nrow(flowList[[j]]@frames[[i]])!=1 ){
    			  	parLbl[j] <- paste(j," ",par)
-                           	value=exprs(flowList[[j]]@frames[[i]][,par])
+				eps<- c(.Machine$double.eps, - .Machine$double.eps)
+				valRange<-range(flowList[[j]]@frames[[i]][,par])
+				ranges <- t(valRange) +eps
+				ef <- char2ExpressionFilter(
+				paste("`", par, "`>", ranges[1]," & `",par,"`<",
+				  ranges[2], sep="",collapse=""), filterId=cellType)
+				ff <-filter(flowList[[j]]@frames[[i]][,par],ef)
+				summary(ff)    	                
+				value=exprs(Subset(flowList[[j]]@frames[[i]][,par],ff))
                            	colnames(value) <- cellType
                            	tempList[[j]]<-value
                         }
@@ -1543,7 +1592,7 @@ qaProcess.KLDistPlot <- function(
      	    if(sum(nfail)==0)
              val <- factor(1)
 
-	ba <- new("discreteAggregator", x=val)
+	ba <- new("discreteAggregator", x=val,passed =as.logical(sum(nfail==0)))
 	fGraphs <- qaGraphList(imageFiles=fnames, imageDir=idir,
 				  width=min(det.dimensions[1], lp*det.dimensions[2]), pdf=pdf)
 	fid <- patientID[i]
