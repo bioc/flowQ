@@ -12,11 +12,20 @@
 
 }
 \section{Slots}{
-	 \describe{
-	   \item{\code{panels}:}{Object of class \code{"list"}}
-	    \item{\code{ranges}:}{Object of class \code{"matrix"}}
-	     \item{\code{summary}:}{Object of class \code{"list"}}
-	      \item{\code{mapping}:}{Object of class \code{"list"}}
+  
+  \describe{
+    
+    \item{\code{panels}:}{Object of class \code{"list"}}
+    
+    \item{\code{ranges}:}{Object of class \code{"matrix"}}
+    
+    \item{\code{summary}:}{Object of class \code{"list"}}
+    
+    \item{\code{mapping}:}{Object of class \code{"list"}}
+
+    \item{\code{pnams}:}{Object of class \code{"character"}}
+
+    \item{\code{overallSum}:}{Object of class \code{"matrix"}} 
 	      
   }
 }
