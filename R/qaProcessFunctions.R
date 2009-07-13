@@ -144,14 +144,14 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
             } ## end for(j ...
                   
             inSet <- flowSet(inList)
-            inFrame<-as(inSet,"flowFrame")                
-            cur1<-curv1Filter(cellType, filterId="myCurv1Filter")
-            peakCount<- if(is.null(peaks))
-                length(filter(inFrame,cur1)@filterDetails$myCurv1Filter$boundaries)
-	    else peaks
+     #       inFrame<-as(inSet,"flowFrame")                
+     #       cur1<-curv1Filter(cellType, filterId="myCurv1Filter")
+     #       peakCount<- if(is.null(peaks))
+     #           length(filter(inFrame,cur1)@filterDetails$myCurv1Filter$boundaries)
+	 #   else peaks
 
             norm1 <- normalization(normFun=function(x, parameters, ...)
-                                   warpSet(x, parameters,peakNr=peakCount, ...),
+                                   warpSet(x, parameters,peakNr=peaks,...),
                                    parameters=as.character(cellType),
                                    arguments=list(grouping=NULL),
                                    normalizationId="Norm")
