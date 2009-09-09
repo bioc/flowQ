@@ -118,7 +118,7 @@ copyGraphs <- function(procs, outdir)
 {
     procs <- unlist(procs)
     for(p in procs)
-    {
+    {   
         relBase <- file.path(outdir, "images",  p@id)
         if(!file.exists(relBase))
             dir.create(relBase, rec=TRUE)
@@ -175,6 +175,7 @@ writeQAReport  <- function(set, processes=NULL, globalProcess=NULL, outdir="./qa
     file.copy(dir(sdir, full.names=TRUE), idir, overwrite=TRUE)
 
     ## We have to make sure that all images are copied to the output directory
+	
     copyGraphs(processes, outdir)
     
     ## iterate over panels
@@ -202,7 +203,7 @@ writeQAReport  <- function(set, processes=NULL, globalProcess=NULL, outdir="./qa
         ## setup of table and table header row
                                         # process <- if(length(set)>1) processes[[s]] else processes
         
-         process <- processes[[s]]
+        process <- processes[[s]]
         writeLines("\n<table class=\"QA\">", con)
         pIDs <- sapply(process, slot, "id")
         pNames <- sapply(process, slot, "name")
@@ -593,8 +594,35 @@ failedProcesses <- function(processes, set, pnams)
                mapping=mapping, pnams=pnams, overallSum=os))
 }
 
-
-
+### writes the QA report into a tab delimited file
+writeQATextReport  <- function(set, processes=NULL, globalProcess=NULL, fileName="textReport.txt")
+{    
+    ## making sure the inputs are correct
+    inputs <- checkInputs(set, processes,globalProcess, grouping=NULL)
+    if(file.exists(fileName))
+        warning("Target File already exists. Content may be ",
+                "overwritten")
+    single <- inputs$single
+    set <- inputs$sets
+    processes <- inputs$procs
+    con = file(fileName, open = "wt")
+	for(s in seq_along(set)){           
+			## rearange set according to grouping if necessary
+			grps <- NULL
+			process <- processes[[s]]			
+			tblList <- lapply(process,txtFormatQAObject)
+			tbl <- tblList[[1]]
+			
+			for( x in tblList[-1]){
+				
+				tbl <- cbind(tbl,x)
+			}		
+			cat('\t',file=con)
+			suppressWarnings(write.table(tbl,file=con,col.names=T,append=T,sep="\t",quote=F))	
+			cat("\n",file=con)		
+	}
+	close(con)
+}
 
 
 cnams <- function(proc)

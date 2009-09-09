@@ -150,3 +150,291 @@ shortNames <- function(x, n=13)
     return(x)
 }
 
+## formats the output from qaProcess objects to a tab delimited format 
+## suitable for writing to a text file
+
+txtFormatQAObject<- function(qp){
+
+	switch(qp@type,
+		"Density" =,
+		"ECDF" =,
+		"KLD" =,
+		{	
+			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@x
+								})	
+								unlist(tm)		
+					})))
+			passed <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@passed
+								})	
+								unlist(tm)		
+					})))	
+			tbl <- combineAltCols(qp,vals,passed)	
+			thresh <- qp@frameProcesses[[1]]@details$absolute.value
+			if(is.null(thresh)){
+				alpha <- qp@frameProcesses[[1]]@details$alpha
+				tbl <- cbind(tbl,"Alpha" = matrix( rep(alpha,nrow(vals)),ncol=1))
+			}else{
+				tbl <- cbind(tbl,"Threshold" = matrix( rep(thresh,nrow(vals)),ncol=1)) 			
+			}
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+					   ))	   				
+			colnames(sumry) <- "Summary"	
+			tbl <- cbind(tbl, "Summary" = sumry)		
+		},
+		"2DStat" = {
+		
+			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
+			thresh <- qp@frameProcesses[[1]]@details$thresh
+			tempVals <- sapply(channels,function(x){
+					qp@frameProcesses[[1]]@details$stat[[x]]
+			})
+			alqLen <- length(qp@frameProcesses[[2]]@details$stat[[1]][[1]])
+			chnl <- sapply(channels,function(x){
+				paste(x, "_Alq", seq_len(alqLen),sep="")
+			})
+			
+			tmpS <- list()
+			vals <- sapply(channels,function(x){
+				   
+					tmp <- data.frame(tempVals[,x],stringsAsFactors=FALSE)
+					rownames(tmp) <- chnl[,x]
+					tmpS[[x]] <<- t(tmp)					
+			})
+			vals <- tmpS
+			
+			passed <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@passed
+								})	
+								unlist(tm)		
+					})))
+			colnames(passed) <- channels
+			Threshold <- matrix(rep(thresh,length(qp@frameProcesses)),ncol=1)
+			colnames(Threshold) <- "Threshold"
+			
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+					   ))	   				
+			colnames(sumry) <- "Summary"	
+			newVal <- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(passed)),ncol=1)
+			colnames(newVal) <- "Process"
+
+			sapply(channels,function(x){
+				psd <- passed[,x,drop=F]
+				colnames(psd) <- paste(colnames(psd),"Passed",sep="_")
+				tmp <- data.frame(vals[[x]],psd,check.names=F)
+				newVal <<- cbind(newVal,tmp)
+			})
+			
+			tbl <- cbind(newVal,Threshold)
+			
+	},
+	"BoundaryEvents"={
+	
+			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
+			sampNames <- names(qp@frameProcesses)
+			thresh <- qp@frameProcesses[[1]]@details$thresh
+			tempVals <- sapply(channels,function(x){
+					qp@frameProcesses[[1]]@details$bPerc[[x]]
+			})
+			alqLen <- length(qp@frameProcesses[[1]]@details$bPerc[[1]][[1]])
+			chnl <- sapply(channels,function(x){
+				paste(x, "_Alq", seq_len(alqLen),sep="")
+			})
+			
+			tmpS <- list()
+			vals <- sapply(channels,function(x){
+				   
+					tmp <- data.frame(tempVals[,x],stringsAsFactors=FALSE,check.names=F)
+					rownames(tmp) <- chnl[,x]
+					colnames(tmp) <- rownames(tempVals)
+					tmpS[[x]] <<- t(tmp)					
+			})
+			vals <- tmpS
+		
+			
+			passed <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@passed
+								})	
+								unlist(tm)		
+					})))
+			colnames(passed) <- channels
+			Threshold <- matrix(rep(thresh,length(qp@frameProcesses)),ncol=1)
+			colnames(Threshold) <- "Threshold"
+			
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+					   ))	   				
+			colnames(sumry) <- "Summary"	
+			newVal <- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(passed)),ncol=1)
+			colnames(newVal) <- "Process"
+			
+			sapply(channels,function(x){
+			  
+				psd <- passed[,x,drop=F]
+				colnames(psd) <- paste(colnames(psd),"Passed",sep="_")
+				tmp <- data.frame(vals[[x]],psd,check.names=F)
+				newVal <<- cbind(newVal,tmp)
+			})
+			tbl <- cbind(newVal,Threshold)			
+
+			},
+	"margin events" = {
+			sampNames <- names(qp@frameProcesses)
+			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
+			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@x
+								})	
+								unlist(tm)		
+					})))
+			passed <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@passed
+								})	
+								unlist(tm)		
+					})))	
+			tbl <- combineAltCols(qp,vals,passed)	
+			thresh <- qp@frameProcesses[[1]]@details$absolute.value
+			if(is.null(thresh)){
+					cFactor <- qp@frameProcesses[[1]]@details$cFactor
+					m <- qp@frameProcesses[[1]]@details$m
+					s <- qp@frameProcesses[[1]]@details$s
+					threshLow <- m - s*cFactor
+					threshHigh <- m + s*cFactor
+					threshLow <- matrix(rep(threshLow,length(sampNames)),ncol=length(channels),byrow=T)
+					colnames(threshLow) <- paste("threshLow",channels,sep="_")
+					threshHigh <- matrix(rep(threshHigh,length(sampNames)),ncol=length(channels),byrow=T)
+					colnames(threshHigh) <- paste("threshHigh",channels,sep="_")
+					thresh <- cbind(threshLow,threshHigh)
+			
+			}else{
+					thresh <- matrix(rep(absolute.value,length(sampNames)),ncol=1)		
+					colnames(thresh) <- "Threshold"			
+			}
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+								 ))	   
+			colnames(sumry) <- "Summary"
+			tbl <- cbind(tbl,thresh,sumry)	
+	},
+	"cell number"= {
+			sampNames <- names(qp@frameProcesses)
+			absolute.value <- qp@frameProcesses[[1]]@details$absolute.value
+			mean <- qp@frameProcesses[[1]]@details$mean
+			sd <- qp@frameProcesses[[1]]@details$sd
+			cFactor <- qp@frameProcesses[[1]]@details$cFactor
+		    if(is.null(absolute.value)){
+				thresh <- mean -sd*cFactor
+			
+			}else{
+				thresh <- absolute.value
+				
+			}
+			thresh <- matrix(rep(thresh,length(sampNames),ncol=1))
+			colnames(thresh) <- "Threshold"
+			rownames(thresh) <- sampNames
+			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									x@details$mean
+							   })
+							  ))
+			colnames(vals) <- "CellNumber"
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+								 ))	 
+			colnames(sumry) <- "Summary"
+			passed <- sumry
+			passed[,1] <- NA
+			colnames(passed) <- "Passed"
+			
+			process<- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
+			colnames(process) <- "Process"
+			tbl <- cbind(data.frame(process), vals,passed,sumry)
+	},
+	"time line" = { ##qaProcess.timeline  ## anything less than or equal to zero is pass
+			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
+			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@x
+								})	
+								unlist(tm)		
+					})))
+			colnames(vals) <- channels
+			passed <- t(data.frame(lapply(qp@frameProcesses,function(x){
+									tm <-lapply(x@frameAggregators,function(y){
+												y@passed
+								})	
+								unlist(tm)		
+					})))	
+			colnames(passed) <- channels
+			tbl <- combineAltCols(qp,vals,passed)	
+			
+			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+					   ))	   
+			colnames(sumry) <- "Summary"
+			tbl <- cbind(tbl,sumry)	
+	},
+	"time flow" = { 
+	## qaProcess.timeflow 
+	## NA is filled in for passed field 
+	## anything less than or equal to zero is pass
+			sampNames <- names(qp@frameProcesses)
+			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
+										x@details$qaScore
+							   })
+							  ))
+			colnames(vals) <- "TimeFlow"
+
+			thresh <- matrix(rep(0,length(sampNames),ncol=1))
+			colnames(thresh) <- "Threshold"
+			rownames(thresh) <- sampNames	
+	       	sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
+										x@summaryAggregator@passed
+								  })
+								 ))	 
+			colnames(sumry) <- "Summary"
+			
+			passed <- sumry
+			passed[,1] <- NA
+			colnames(passed) <- "Passed"
+			process<- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
+			colnames(process) <- "Process"
+			tbl <- cbind(data.frame(process),vals,passed,thresh,sumry)			
+	}
+	)
+	tbl
+	
+}
+
+### helper function used by txtFormatQAObject to combine results of a particular
+### parameter together
+
+combineAltCols <- function(qp,vals,passed){
+	parms <- colnames(vals)
+	if(!all(colnames(passed) %in% parms))
+		stop("Column names dont match, combine failed")
+		
+	newVal <- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
+	colnames(newVal) <- "Process"
+
+	sapply(parms,function(x){
+		tmp <- data.frame(vals[,x,drop=F],passed[,x,drop=F],check.names=F)
+		colnames(tmp) <- c(x,paste(x,"Passed",sep="_"))
+		newVal <<- cbind(newVal,tmp)
+	})
+	newVal
+}
+
