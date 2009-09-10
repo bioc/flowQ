@@ -3,7 +3,7 @@
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("binaryAggregator", "file", "missing"),
+setMethod("writeLines", signature("binaryAggregator", "file", "missing","missing"),
           function(text, con){
               if(!is.na(text@passed)){
                   if(text@passed)
@@ -29,7 +29,7 @@ setMethod("show", signature("binaryAggregator"),
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("discreteAggregator", "file", "missing"),
+setMethod("writeLines", signature("discreteAggregator", "file", "missing","missing"),
           function(text, con){
               switch(as.character(text@x),
                      "1"=writeLines(paste("<img class=\"QABinAggr\"",
@@ -59,7 +59,7 @@ setMethod("show", signature("discreteAggregator"),
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("factorAggregator", "file", "missing"),
+setMethod("writeLines", signature("factorAggregator", "file", "missing","missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
               lx <- levels(text@x)
@@ -89,7 +89,7 @@ setMethod("show", signature("factorAggregator"),
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("stringAggregator", "file", "missing"),
+setMethod("writeLines", signature("stringAggregator", "file", "missing","missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
               writeLines(paste("<b><span class=\"QAStringAggr\" ",
@@ -111,7 +111,7 @@ setMethod("show", signature("stringAggregator"),
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("numericAggregator", "file", "missing"),
+setMethod("writeLines", signature("numericAggregator", "file", "missing","missing"),
           function(text, con){
               col <- ifelse(text@passed, "green", "red")
               writeLines(paste("<div class=\"QANumAggr\" ",
@@ -133,7 +133,7 @@ setMethod("show", signature("numericAggregator"),
 ## ---------------------------------------------------------------------------
 
 ## write method to create HTML output
-setMethod("writeLines", signature("rangeAggregator", "file", "missing"),
+setMethod("writeLines", signature("rangeAggregator", "file", "missing","missing"),
           function(text, con){
               x <- text
               perc <- (x@x-x@min)/diff(c(x@min, x@max))*100

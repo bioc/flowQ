@@ -3,7 +3,7 @@
 \alias{stringAggregator-class}
 \alias{stringAggregator}
 \alias{show,stringAggregator-method}
-\alias{writeLines,stringAggregator,file,missing-method}
+\alias{writeLines,stringAggregator,file,missing,missing-method}
 
 \title{Class "stringAggregator"  }
 
@@ -30,7 +30,7 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
   \describe{
     \item{show}{\code{signature(object = "stringAggregator")}:  print
   object details}
-    \item{writeLines}{\code{signature(text = "stringAggregator", con = "file", sep = "missing")}:  write to HTML file connection}
+    \item{writeLines}{\code{signature(text = "stringAggregator", con = "file", sep = "missing", useBytes= "missing")}:  write to HTML file connection}
 	 }
 }
 

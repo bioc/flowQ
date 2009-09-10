@@ -3,7 +3,7 @@
 \alias{binaryAggregator-class}
 \alias{binaryAggregator}
 \alias{show,binaryAggregator-method}
-\alias{writeLines,binaryAggregator,file,missing-method}
+\alias{writeLines,binaryAggregator,file,missing,missing-method}
 
 \title{Class "binaryAggregator" }
 \description{ Abstraction of a binary type of aggregator with possible
@@ -29,7 +29,7 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
     \item{show}{\code{signature(object = "binaryAggregator")}: print
   object details }
     \item{writeLines}{\code{signature(text = "binaryAggregator", con =
-  "file", sep = "missing")}: write to HTML file connection }
+  "file", sep = "missing", useBytes="missing")}: write to HTML file connection }
 	 }
 }
 

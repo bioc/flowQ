@@ -3,7 +3,7 @@
 \alias{numericAggregator-class}
 \alias{numericAggregator}
 \alias{show,numericAggregator-method}
-\alias{writeLines,numericAggregator,file,missing-method}
+\alias{writeLines,numericAggregator,file,missing,missing-method}
 
 \title{Class "numericAggregator" }
 
@@ -31,7 +31,8 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
   \describe{
     \item{show}{\code{signature(object = "numericAggregator")}: print
   object details}
-    \item{writeLines}{\code{signature(text = "numericAggregator", con = "file", sep = "missing")}: write to HTML file connection }
+    \item{writeLines}{\code{signature(text = "numericAggregator", con = "file",
+        sep = "missing", useBytes= "missing")}: write to HTML file connection }
 	 }
        }
 

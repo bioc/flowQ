@@ -3,7 +3,7 @@
 \alias{rangeAggregator-class}
 \alias{rangeAggregator}
 \alias{show,rangeAggregator-method}
-\alias{writeLines,rangeAggregator,file,missing-method}
+\alias{writeLines,rangeAggregator,file,missing,missing-method}
 
 \title{Class "rangeAggregator"  }
 
@@ -34,7 +34,8 @@ Class \code{"\linkS4class{qaAggregator}"}, by class "numericAggregator", distanc
   \describe{
     \item{show}{\code{signature(object = "rangeAggregator")}: print
   object details }
-    \item{writeLines}{\code{signature(text = "rangeAggregator", con = "file", sep = "missing")}:  write to HTML file connection }
+    \item{writeLines}{\code{signature(text = "rangeAggregator", con = "file",
+         sep = "missing",useBytes ="missing")}:  write to HTML file connection }
 	 }
        }
 

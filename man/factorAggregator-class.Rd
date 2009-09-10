@@ -3,7 +3,7 @@
 \alias{factorAggregator-class}
 \alias{factorAggregator}
 \alias{show,factorAggregator-method}
-\alias{writeLines,factorAggregator,file,missing-method}
+\alias{writeLines,factorAggregator,file,missing,missing-method}
 
 \title{Class "factorAggregator" }
 
@@ -30,7 +30,8 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
   \describe{
     \item{show}{\code{signature(object = "factorAggregator")}: print
   object details  }
-    \item{writeLines}{\code{signature(text = "factorAggregator", con = "file", sep = "missing")}:   write to HTML file connection}
+    \item{writeLines}{\code{signature(text = "factorAggregator", con = "file", 
+        sep = "missing", useBytes= "missing")}:   write to HTML file connection}
 	 }
        }
 

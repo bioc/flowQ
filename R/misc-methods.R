@@ -2,7 +2,7 @@
 ## writeLines for data frames
 ## ---------------------------------------------------------------------------
 ## write method to create HTML output
-setMethod("writeLines", signature("data.frame", "file", "missing"),
+setMethod("writeLines", signature("data.frame", "file", "missing","missing"),
           function(text, con){
               if(length(text))
               {  
@@ -46,7 +46,7 @@ setMethod("show", signature("qaProcessSummary"),
 
 
 ## write method to create HTML output
-setMethod("writeLines", signature("qaProcessSummary", "file", "missing"),
+setMethod("writeLines", signature("qaProcessSummary", "file", "missing","missing"),
           function(text, con)
       {
 

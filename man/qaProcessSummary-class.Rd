@@ -2,7 +2,7 @@
 \docType{class}
 \alias{qaProcessSummary-class}
 \alias{qaProcessSummary}
-\alias{writeLines,qaProcessSummary,file,missing-method}
+\alias{writeLines,qaProcessSummary,file,missing,missing-method}
 \alias{show,qaProcessSummary-method}
 
 \title{Class "qaProcessSummary" }

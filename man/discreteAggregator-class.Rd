@@ -3,7 +3,7 @@
 \alias{discreteAggregator-class}
 \alias{discreteAggregator}
 \alias{show,discreteAggregator-method}
-\alias{writeLines,discreteAggregator,file,missing-method}
+\alias{writeLines,discreteAggregator,file,missing,missing-method}
 
 \title{Class "discreteAggregator" }
 
@@ -32,7 +32,7 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
   \describe{
     \item{show}{\code{signature(object = "discreteAggregator")}: print
   object details }
-    \item{writeLines}{\code{signature(text = "discreteAggregator", con = "file", sep = "missing")}:  write to HTML file connection }
+    \item{writeLines}{\code{signature(text = "discreteAggregator", con = "file", sep = "missing", useBytes="missing")}:  write to HTML file connection }
 	 }
  }
 
