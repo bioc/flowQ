@@ -9,12 +9,13 @@
 
 \description{ QA processes create graphical output which can be bundled
   in a single HTML document. This class stores all information that is
-  needed by \code{\link{writeQAReport}} to produce such HTML reports.}
+  needed by \code{\link[flowQ]{writeQAReport}} to produce such HTML reports.}
 
 \section{Objects from the Class}{ Objects should be created using the
-  constructor functions. See \code{\link{qaProcess.timeline}} and
-  \code{\link{qaProcess.marginevents}} for details. When writing new QA
-  process functions, the constructors \code{\link{qaProcessFrame}} and
+  constructor functions. See \code{\link[flowQ]{qaProcess.timeline}} and
+  \code{\link[flowQ]{qaProcess.marginevents}} for details. When writing new QA
+  process functions, the constructors
+  \code{\link[flowQ:qaProcessFrame-class]{qaProcessFrame}} and 
   \code{qaProcess} should be used. The latter expects the mandatory
   arguments \code{id}, \code{type} and \code{frameProcesses} and also
   accepts the optional arguments \code{name} and \code{summaryGraph}.
@@ -26,14 +27,16 @@
       unique identifier }
     \item{\code{name}:}{Object of class \code{"character"}, the name of
       the process }
-    \item{\code{type}:}{Object of class \code{"character"}, the type of process }
+    \item{\code{type}:}{Object of class \code{"character"}, the type of
+	 process } 
     \item{\code{frameIDs}:}{Object of class \code{"character"}, the
-      identifiers of the \code{\link[flowCore]{flowSet}}s to which the
-      subprocesses are linkes }
+      identifiers of the \code{\link[flowCore:flowSet-class]{flowSets}}
+	 to which the subprocesses are linkes }
     \item{\code{summaryGraph}:}{Object of class \code{"qaGraph"}, a
       graphical summary of the processe's outcome }
     \item{\code{frameProcesses}:}{Object of class \code{"list"}, more
-      detailed information for each \code{\link[flowCore]{flowFrame}} }
+      detailed information for each
+	 \code{\link[flowCore:flowFrame-class]{flowFrame}} } 
   }
 }
 \section{Methods}{
@@ -45,7 +48,10 @@
 
 \author{ Florian Hahne}
 
-\seealso{ \code{\linkS4class{qaGraphList}}, \code{\link{writeQAReport}}, \code{\linkS4class{qaProcessFrame}}
+\seealso{
+  \code{\link[flowQ:qaGraphList-class]{qaGraphList}},
+  \code{\link[flowQ]{writeQAReport}},
+  \code{\link[flowQ:qaProcessFrame-class]{qaProcessFrame}}
 }
 
 \examples{

@@ -5,17 +5,17 @@
 \description{
   
   This function combines all graphical output of multiple QA process
-  functions for one \code{\link[flowCore]{flowSet}} in a single
+  functions for one \code{\link[flowCore:flowSet-class]{flowSet}} in a single
   hyperlinked HTML document.
 
 }
 \usage{
-qaReport(set, qaFunctions, outdir = "./qaReport", argLists, grouping =
-NULL, \dots)
+qaReport(set, qaFunctions, outdir = "./qaReport",
+         argLists, grouping = NULL, \dots)
 }
 
 \arguments{
-  \item{set}{ A \code{\link[flowCore]{flowSet}} }
+  \item{set}{ A \code{\link[flowCore:flowSet-class]{flowSet}} }
   
   \item{qaFunctions}{ A character vector of the names of QA process
     functions to be used }
@@ -27,19 +27,19 @@ NULL, \dots)
     functions specified via \code{qaFunctions} }
   
   \item{grouping}{ A character scalar indicating a variable in the
-    \code{\link[flowCore]{flowSet}}'s \code{phenoData} that is used as a
-    grouping factor in the output. }
+    \code{\link[flowCore:flowSet-class]{flowSet}}'s \code{phenoData}
+    that is used as a grouping factor in the output. }
 
   \item{\dots}{Further arguments that are passed on to
-    \code{\link{writeQAReport}}.}
+    \code{\link[flowQ]{writeQAReport}}.}
   
 }
 \details{
   
   This is a simple convenience function to produce HTML QA reports
-  for a single \code{\link[flowCore]{flowSet}} given a list of QA
+  for a single \code{\link[flowCore:flowSet-class]{flowSet}} given a list of QA
   process functions. For more fine-grained control use function 
-  \code{\link{writeQAReport}} directly.
+  \code{\link[flowQ]{writeQAReport}} directly.
 
   An entry point to the output of this function can be found at
   \code{outdir/index.html}.
@@ -50,8 +50,10 @@ NULL, \dots)
 
 \author{ Florian Hahne }
 
-\seealso{ \code{\link{qaProcess.marginevents}}, \code{\link{writeQAReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}}}
+\seealso{ \code{\link[flowQ]{qaProcess.marginevents}},
+  \code{\link[flowQ]{writeQAReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.timeline}}}
 \examples{
 \dontrun{
 data(GvHD)

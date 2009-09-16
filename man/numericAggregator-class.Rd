@@ -18,13 +18,13 @@ and \code{passed} is a logical scalar.  }
 \section{Slots}{
 	 \describe{
     \item{\code{x}:}{Object of class \code{"numeric"} coding the outcome
-    state}
+    state.}
     \item{\code{passed}:}{Object of class \code{"logical"} indicating
-      whether the process has passed the QA requirements }
+      whether the process has passed the QA requirements. }
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{qaAggregator}"}, directly.
+Class \code{\link[flowQ:qaAggregator-class]{qaAggregator}}, directly.
 }
 
 \section{Methods}{
@@ -41,13 +41,15 @@ Class \code{"\linkS4class{qaAggregator}"}, directly.
 
 
 \seealso{
-  \code{\link{qaProcess.marginevents}}, \code{\link{qaReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}},
-  \code{\linkS4class{discreteAggregator}},
-  \code{\linkS4class{factorAggregator}},
-  \code{\linkS4class{binaryAggregator}},
-  \code{\linkS4class{stringAggregator}},
-  \code{\linkS4class{rangeAggregator}},
+  \code{\link[flowQ]{qaProcess.marginevents}},
+  \code{\link[flowQ]{qaReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.timeline}},
+  \code{\link[flowQ:discreteAggregator-class]{discreteAggregator}},
+  \code{\link[flowQ:factorAggregator-class]{factorAggregator}},
+  \code{\link[flowQ:binaryAggregator-class]{binaryAggregator}},
+  \code{\link[flowQ:stringAggregator-class]{stringAggregator}},
+  \code{\link[flowQ:rangeAggregator-class]{rangeAggregator}}
 }
 \examples{
 showClass("numericAggregator")

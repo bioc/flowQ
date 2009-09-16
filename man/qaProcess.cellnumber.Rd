@@ -5,24 +5,26 @@
 
 \description{
   
-  This function takes a \code{\link[flowCore]{flowSet}} as input and
+  This function takes a \code{\link[flowCore:flowSet-class]{flowSet}} as
+  input and 
   creates all necessary output for a 'cellnumber' type QA
   process. Objects created by this function can be laid out as HTML
-  using \code{\link{writeQAReport}}.
+  using \code{\link[flowQ]{writeQAReport}}.
   
 }
 
 \usage{
 
 qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
-                     absolute.value=NULL, two.sided = FALSE, name="cell number",
-                     sum.dimensions=c(7,7), pdf=TRUE, \dots)
+                     absolute.value=NULL, two.sided = FALSE,
+                     name="cell number", sum.dimensions=c(7,7),
+                     pdf=TRUE, \dots)
 
 }
 
 \arguments{
   
-  \item{set}{ A \code{\link[flowCore]{flowSet}}. }
+  \item{set}{ A \code{\link[flowCore:flowSet-class]{flowSet}}. }
 
   \item{grouping}{ A character vector defining one of the variables in
   the phenoData of \code{set} used as a grouping variable. If this
@@ -73,12 +75,14 @@ qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
   outlier detection will be performed within its respective group for a
   particular sample.
   
-  For more details on how to layout \code{\link{qaProcess}} objects to
-  HTML, see \code{\link{writeQAReport}} and \code{\link{qaReport}}.
+  For more details on how to layout
+  \code{\link[flowQ:qaProcess-class]{qaProcess}} objects to 
+  HTML, see \code{\link[flowQ]{writeQAReport}} and
+  \code{\link[flowQ]{qaReport}}. 
   
 }
 \value{
-  An object of class \code{\link{qaProcess}}.
+  An object of class \code{\link[flowQ:qaProcess-class]{qaProcess}}.
 }
 
 \author{ Florian Hahne }
@@ -87,9 +91,12 @@ qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
 
 \seealso{
 
-  \code{\link{writeQAReport}}, \code{\link{qaReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.marginevents}},
-  \code{\link{qaProcess.timeflow}}, \code{\link{qaProcess.timeline}}
+  \code{\link[flowQ]{writeQAReport}},
+  \code{\link[flowQ]{qaReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.marginevents}},
+  \code{\link[flowQ]{qaProcess.timeflow}}, 
+  \code{\link[flowQ]{qaProcess.timeline}}
 
 }
 

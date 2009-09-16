@@ -23,20 +23,22 @@ evaluateProcess(process, thresh, ...)
   can be very time consuming.
 }
 \value{
- An updated object of class \code{\link{qaProcess}}
+ An updated object of class \code{\link[flowQ:qaProcess-class]{qaProcess}}
 }
 
 \author{ Florian Hahne }
 \note{
-  This function needs to be extended for new types of \code{\link{qaProcess}}.
+  This function needs to be extended for new types of
+  \code{\link[flowQ:qaProcess-class]{qaProcess}}. 
 }
-\seealso{ \code{\link{qaProcess}}, \code{\link{writeQAReport}}}
+\seealso{ \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{writeQAReport}}}
 \examples{
 \dontrun{
 data(GvHD)
 dest <- tempdir()
 qp1 <- qaProcess.timeline(GvHD[1:3], channel="FL1-H", outdir=dest,
-cutoff=1)
+         cutoff=1)
 evaluateProcess(qp1, thresh=4)
 }
 }

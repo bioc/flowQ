@@ -50,7 +50,9 @@
 \author{ Florian Hahne }
 
 
-\seealso{ \code{\linkS4class{qaGraphList}}, \code{\link{writeQAReport}}, \code{\linkS4class{qaProcess}}
+\seealso{ \code{\link[flowQ:qaGraphList-class]{qaGraphList}},
+  \code{\link[flowQ]{writeQAReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}}
 }
 \examples{
 showClass("qaGraph")

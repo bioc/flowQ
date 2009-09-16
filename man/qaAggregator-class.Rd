@@ -5,7 +5,8 @@
 
 \title{ Abstraction of the possible outcomes of a QA process }
 \description{ Virtual parent class for different types of QA aggregators}
-\section{Objects from the Class}{A virtual Class: No objects may be created from it.}
+\section{Objects from the Class}{A virtual Class: No objects may be
+  created from it.} 
 \section{Slots}{
 	 \describe{
     \item{\code{passed}:}{Object of class \code{"logical"} indicating
@@ -25,14 +26,16 @@ No methods defined with class "qaAggregator" in the signature.
 
 
 \seealso{
-  \code{\link{qaProcess.marginevents}}, \code{\link{qaReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}},
-  \code{\linkS4class{binaryAggregator}},
-  \code{\linkS4class{discreteAggregator}},
-  \code{\linkS4class{factorAggregator}},
-  \code{\linkS4class{numericAggregator}},
-  \code{\linkS4class{stringAggregator}},
-  \code{\linkS4class{rangeAggregator}},
+  \code{\link[flowQ]{qaProcess.marginevents}},
+  \code{\link[flowQ]{qaReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.timeline}},
+  \code{\link[flowQ:binaryAggregator-class]{binaryAggregator}},
+  \code{\link[flowQ:discreteAggregator-class]{discreteAggregator}},
+  \code{\link[flowQ:factorAggregator-class]{factorAggregator}},
+  \code{\link[flowQ:numericAggregator-class]{numericAggregator}},
+  \code{\link[flowQ:stringAggregator-class]{stringAggregator}},
+  \code{\link[flowQ:rangeAggregator-class]{rangeAggregator}}
 }
 \examples{
 showClass("qaAggregator")

@@ -4,7 +4,7 @@
 \title{ Validate a QAProcess object }
 \description{
   Check for integrety and existence of files specified in a
-  \code{\link{qaProcess}} object.
+  \code{\link[flowQ:qaProcess-class]{qaProcess}} object.
   
 }
 \usage{
@@ -12,18 +12,20 @@ validProcess(object)
 }
 
 \arguments{
-  \item{object}{ A \code{\link{qaProcess}} object }
+  \item{object}{ A \code{\link[flowQ:qaProcess-class]{qaProcess}} object }
 }
 
 \value{
- The function is called for it's side effects
+ The function is called for it's side effects.
 }
 
 \author{ Florian Hahne }
 
-\seealso{ \code{\link{qaProcess.marginevents}}, \code{\link{qaReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.timeline}},
-  \code{\link{writeQAReport}}
+\seealso{ \code{\link[flowQ]{qaProcess.marginevents}},
+  \code{\link[flowQ]{qaReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.timeline}},
+  \code{\link[flowQ]{writeQAReport}}
 }
 % \examples{
 

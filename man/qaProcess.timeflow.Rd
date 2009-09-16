@@ -5,10 +5,11 @@
 
 \description{
 
-  This function takes a \code{\link[flowCore]{flowSet}} as input and
+  This function takes a \code{\link[flowCore:flowSet-class]{flowSet}} as
+  input and 
   creates all necessary output for a 'timeflow' type QA
   process. Objects created by this function can be laid out as HTML
-  using \code{\link{writeQAReport}}.
+  using \code{\link[flowQ]{writeQAReport}}.
   
 }
 
@@ -21,7 +22,7 @@ sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
 
 \arguments{
   
-  \item{set}{ A \code{\link[flowCore]{flowSet}}.}
+  \item{set}{ A \code{\link[flowCore:flowSet-class]{flowSet}}.}
   
   \item{outdir}{ The directory to which the graphical output is to be
     saved. If multiple QA processes are to be combined, make sure to use
@@ -29,7 +30,8 @@ sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
 
   \item{cutoff}{ The threshold at which the QA criterion is considered
     to have failed. An absolute value in the timeline deviation score as
-    computed by the \code{\link[flowViz]{timeLinePlot}} function.}
+    computed by the
+    \code{\link[flowViz:timeLinePlot-methods]{timeLinePlot}} function.} 
   
   \item{name}{ The name of the process used for the headings in the HTML
     output.}
@@ -53,13 +55,15 @@ sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
   clogging of the needle or similar issues. If the flow rate is to high,
   the frequency of measuring cell douplettes increases.
   
-  For more details on how to layout \code{\link{qaProcess}} objects to
-  HTML, see \code{\link{writeQAReport}} and \code{\link{qaReport}}.
+  For more details on how to layout
+  \code{\link[flowQ:qaProcess-class]{qaProcess}} objects to 
+  HTML, see \code{\link[flowQ]{writeQAReport}} and
+  \code{\link[flowQ]{qaReport}}. 
   
 }
 \value{
   
-  An object of class \code{\link{qaProcess}}.
+  An object of class \code{\link[flowQ:qaProcess-class]{qaProcess}}.
   
 }
 
@@ -69,10 +73,13 @@ sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
 
 \seealso{
 
-  \code{\link{writeQAReport}}, \code{\link{qaReport}},
-  \code{\link{qaProcess}}, \code{\link{qaProcess.marginevents}},
-  \code{\link{qaProcess.timeline}}, \code{\link{qaProcess.cellnumber}}
-
+  \code{\link[flowQ]{writeQAReport}},
+  \code{\link[flowQ]{qaReport}},
+  \code{\link[flowQ:qaProcess-class]{qaProcess}},
+  \code{\link[flowQ]{qaProcess.marginevents}}
+  \code{\link[flowQ]{qaProcess.timeline}},
+  \code{\link[flowQ]{qaProcess.cellnumber}}
+  
 }
 
 
