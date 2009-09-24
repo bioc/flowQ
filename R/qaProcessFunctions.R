@@ -731,7 +731,7 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
         }
         fid <- frameIDs[i]
         frameProcesses[[fid]] <-
-            qaProcessFrame(fid, ba, details=list(qaScore=summary, mean=m, sd=var,
+            qaProcessFrame(fid, ba, details=list(qaScore=summary, mean=m, sd=var,co=co,
                                     two.sided=two.sided, absolute.value=absolute.value,
 									cFactor=cFactor))
         cat(".")

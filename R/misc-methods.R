@@ -330,25 +330,20 @@ txtFormatQAObject<- function(qp){
 	},
 	"cell number"= {
 			sampNames <- names(qp@frameProcesses)
-			absolute.value <- qp@frameProcesses[[1]]@details$absolute.value
-			mean <- qp@frameProcesses[[1]]@details$mean
-			sd <- qp@frameProcesses[[1]]@details$sd
-			cFactor <- qp@frameProcesses[[1]]@details$cFactor
-		    if(is.null(absolute.value)){
-				thresh <- mean -sd*cFactor
-			
-			}else{
-				thresh <- absolute.value
-				
-			}
-			thresh <- matrix(rep(thresh,length(sampNames),ncol=1))
+ 			absolute.value <- qp@frameProcesses[[1]]@details$absolute.value
+            co <- qp@frameProcesses[[1]]@details$co  
+
+	     	thresh <- matrix(rep(co,length(sampNames),ncol=1))
 			colnames(thresh) <- "Threshold"
 			rownames(thresh) <- sampNames
 			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
-									x@details$mean
+									x@details$qaScore
 							   })
 							  ))
-			colnames(vals) <- "CellNumber"
+            if(is.null(absolute.value))
+				colnames(vals) <- "CalcValues"
+            else
+				colnames(vals) <- "CellNumber"
 			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
 										x@summaryAggregator@passed
 								  })
@@ -360,7 +355,7 @@ txtFormatQAObject<- function(qp){
 			
 			process<- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
 			colnames(process) <- "Process"
-			tbl <- cbind(data.frame(process), vals,passed,sumry)
+			tbl <- cbind(data.frame(process),vals,thresh,passed,sumry)
 	},
 	"time line" = { ##qaProcess.timeline  ## anything less than or equal to zero is pass
 			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
