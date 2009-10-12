@@ -72,24 +72,29 @@ locateParameter<-function(flowList, parm, flowSetIndx, flowFrameIndx)
     }
 }
 
-## FIXME: What does this function do?
+
 locateDuplicatedParameters<-function(flowList)
 {
     alqLen<- length(flowList)
     names <-data.frame()
     for( i in seq_len(alqLen))
-    {
-        temp <- pData(parameters(flowList[[i]][[1]]))	
-        mIndx <- is.na(temp["desc"])
-        temp["desc"][mIndx] <- temp["name"][mIndx]
-        names<-rbind(names,temp[1:nrow(temp)-1,"desc",drop=FALSE])
+    {   
+	    if(!any(fsApply(flowList[[i]],nrow)==1)){
+			temp <- pData(parameters(flowList[[i]][[1]]))	
+			mIndx <- is.na(temp["desc"])
+			temp["desc"][mIndx] <- temp["name"][mIndx]
+			names<-rbind(names,temp[1:nrow(temp)-1,"desc",drop=FALSE])
+		}
     }
     dupes<- names[duplicated(names[,1]),1] 
     dIndx <- !duplicated(dupes)
     dupes<-dupes[dIndx]
-    return(as.character(dupes))
-	
+	if(length(dupes)==0)
+	  message("No duplicate parameters found")
+	else
+    return(as.character(dupes))	
 }
+
 
 
 preProcessFlowList <- function(flowList){
@@ -765,6 +770,10 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
     legend <-vector(mode="character",length=alqLen)
     if(is.null(dyes)){
 	dupes <- locateDuplicatedParameters(flowList)
+    if(length(dupes)==0)
+			stop("Duplicated parameters do not appear in the 
+                  list of flowSets provided")
+
     }else{
 	dupes <- as.character(dyes)
     }
@@ -1106,6 +1115,9 @@ qaProcess.DensityPlot <- function(
     myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
     if(is.null(dyes)){
 		dupes <- locateDuplicatedParameters(flowList)
+		if(length(dupes)==0)
+			stop("Duplicated parameters do not appear in the 
+                  list of flowSets provided")
     }else{
 		dupes <- as.character(dyes)
     }
@@ -1299,6 +1311,10 @@ qaProcess.ECDFPlot <- function(flowList,
     myCol<- colorRampPalette(brewer.pal(9, "Set1"))(alqLen)
     if(is.null(dyes)){
 	dupes <- locateDuplicatedParameters(flowList)
+     if(length(dupes)==0)
+			stop("Duplicated parameters do not appear in the 
+                  list of flowSets provided")
+
     }else{
 	dupes <- as.character(dyes)
     }
@@ -1486,6 +1502,10 @@ qaProcess.KLDistPlot <- function(
     
     if(is.null(dyes)){
 	dupes <- locateDuplicatedParameters(flowList)
+    if(length(dupes)==0)
+			stop("Duplicated parameters do not appear in the 
+                  list of flowSets provided")
+
     }else{
 	dupes <- as.character(dyes)
     }
