@@ -79,7 +79,7 @@ locateDuplicatedParameters<-function(flowList)
     names <-data.frame()
     for( i in seq_len(alqLen))
     {   
-	    if(!any(fsApply(flowList[[i]],nrow)==1)){
+	    if(!all(fsApply(flowList[[i]],nrow)==1)){
 			temp <- pData(parameters(flowList[[i]][[1]]))	
 			mIndx <- is.na(temp["desc"])
 			temp["desc"][mIndx] <- temp["name"][mIndx]
