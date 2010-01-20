@@ -1045,7 +1045,7 @@ qaProcess.DensityPlot <- function(
 				## normalize by total count 
                 tempDist[[cellType]][[i]] <- sum(dst,na.rm=T)/length(which(!is.na(dst)==T))
 				tempgrph[[cellType]][[i]] <- 
-						xyplot(dx ~ dy | Patient,data=res,groups=Aliquot,
+						xyplot(dy ~ dx | Patient,data=res,groups=Aliquot,
 								col=myCol[unique(res[,"Aliquot"])], ,ylab="Density",
 								xlab=as.character(cellType),
 								key=simpleKey(text=parLbl,space="right", points=F,col=myCol),
