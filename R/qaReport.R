@@ -127,9 +127,12 @@ copyGraphs <- function(procs, outdir)
         for(f in p@frameProcesses)
         {
             sfg <- f@summaryGraph@fileNames
-            file.copy(sg, relBase)
+			
+			if(length(sfg) >0){
+				file.copy(sfg, relBase)
+			}
             fg <- sapply(f@frameGraphs, slot, "fileNames")
-            if(length(fg))
+            if(length(fg) >0)
                 file.copy(fg, relBase)
         }
     }

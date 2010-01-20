@@ -17,7 +17,7 @@
 
 qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
                      absolute.value=NULL, two.sided = FALSE,
-                     name="cell number", sum.dimensions=c(7,7),
+                     name="cell number", sum.dimensions=NULL,
                      pdf=TRUE, \dots)
 
 }
@@ -104,7 +104,7 @@ qaProcess.cellnumber(set, grouping=NULL, outdir, cFactor=2,
 \examples{
 \dontrun{
 data(GvHD)
-dest <- tempdir()
+dest <- file.path(tempdir(), "flowQ")
 qp <- qaProcess.cellnumber(GvHD, outdir=dest, cFactor=2)
 qp
 }

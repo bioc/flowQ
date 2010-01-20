@@ -200,66 +200,51 @@ constructPath <- function(path){
         return(curDir)
     curDirSplt <- strsplit(curDir, "[/\\]")[[1]]
     pathSplt <-  strsplit(path, "[/\\]")[[1]]
-    if(.Platform$OS.type=="windows")
-    {
-	if(curDirSplt[[1]] !=  pathSplt[[1]])
-        {
-	    curDir
-        }
-	else
-	{
-	    common <- suppressWarnings(min(which(curDirSplt[-1] != pathSplt[-1])))
-	    if(is.infinite(common))
-	    {
-	        curDir
-	    }
-	    else
-	    {
-		if(common==1)
-		{
-            	    paste(c(curDir, pathSplt[-1]), 
- 		        collapse=.Platform$file.sep, sep="")
-		}
-		else if(common == length(pathSplt))
-		{
+    if(.Platform$OS.type=="windows"){
+		if(curDirSplt[[1]] !=  pathSplt[[1]]){
+	        #curDir
+			paste( c(curDir,pathSplt),collapse=.Platform$file.sep, sep="")
+        }else{
+			common <- suppressWarnings(min(which(curDirSplt[-1] != pathSplt[-1])))
+			if(is.infinite(common)){
+				curDir
+			}else if(common == length(pathSplt)){
+	    # else
+	    # {
+		# if(common==1)
+		# {		path
+        #    	   paste(c(curDir, pathSplt[-1]), 
+ 		#        collapse=.Platform$file.sep, sep="")
+		# }
+		
+		
 		    path
-		}
-		else
-		{
-		   file.path(paste(curDirSplt[1:(common)], 
+			}else{
+				file.path(paste(curDirSplt[1:(common)], 
 	               collapse=.Platform$file.sep, sep=""), 
 		       paste(pathSplt[(common+1):length(pathSplt)],
 		       collapse=.Platform$file.sep, sep=""))  
-		}
+			}
 	    } 
-	}
+	
 	      
-    }
-    else
-    {	
+    }else{	
         common <- suppressWarnings(min(which(curDirSplt != pathSplt)))
-	if(is.infinite(common))
-	{
-	    curDir
-	}
-	else
-	{
+		if(is.infinite(common)){
+			curDir
+		}else{
        	    if(common==1)
-	    {
+			{
                 file.path(curDir, path)
-	    }
-	    else if((common+1) == length(pathSplt))
-		{
-		    path
-		}
-            else
-	    {
+			} else if((common+1) == length(pathSplt)){
+				path
+			}else{
                 file.path(paste(curDirSplt[1:(common-1)], 
 	                  collapse=.Platform$file.sep, sep=""), 
 		       	  paste(pathSplt[common:length(pathSplt)],
 		       	  collapse=.Platform$file.sep, sep=""))
-	    }
-	}
+			}
+		}
     }
 }
 
@@ -271,7 +256,7 @@ win2UnixPath <- function(path)
 
 setMethod("initialize", "qaGraph",
           function(.Object, fileName, imageDir, width=NULL, empty=FALSE, pdf=TRUE){
-	      sysFun <- if(.Platform$OS.type=="windows") shell else system
+		  sysFun <- if(.Platform$OS.type=="windows") shell else system
               if(!empty){
 	          fileName <- win2UnixPath(fileName)
 	          imageDir <- win2UnixPath(imageDir)
@@ -281,7 +266,7 @@ setMethod("initialize", "qaGraph",
                       stop("'width' must be numeric scalar")
                   if(!file.exists(fileName))
                       stop("Unable to find file '", fileName, "'")
-                  
+          
                   ## get file information
                   if(!file.exists(imageDir))
                       dir.create(imageDir, recursive=TRUE)
@@ -304,7 +289,7 @@ setMethod("initialize", "qaGraph",
                   cf <- file.path(imageDir, fn)
                   
                   ## convert image to vectorized or bitmap version
-                  if(tolower(imageInfo["type"])=="pdf")
+          if(tolower(imageInfo["type"])=="pdf")
 		  {
                       ## original image is vectorized
                       convType <- "jpg"
@@ -315,8 +300,15 @@ setMethod("initialize", "qaGraph",
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
                       type <- c(ifelse(pdf, "pdf", NA), "jpg")
-                      files <- c(constructPath(cf), newFileName)
-                                        }else{
+					#  files <-c(paste( constructPath(cf),fileName,sep="/"),
+					#           paste(constructPath(cf),newFileName,sep="/"))
+                     files <- c(constructPath(fileName), constructPath(newFileName))
+					  if(file.exists(fileName) && pdf==FALSE){
+						file.remove(fileName)
+						files[1] <- NA
+					  }
+							   
+           }else{
                       ## original image is bitmap
                       convType <- "pdf"
                       newFileName <- file.path(imageDir, paste(bname, convType,
@@ -328,7 +320,10 @@ setMethod("initialize", "qaGraph",
                                                                 collapse="x"),
                                        shQuote(fileName), shQuote(cf)))
                       type <- c(ifelse(pdf, "pdf", NA), tolower(imageInfo["type"]))
-                      files <- c(newFileName, constructPath(cf))
+                      #files <- c(newFileName, constructPath(cf))
+					  files <- c(constructPath(fileName), constructPath(newFileName))
+					  # files <-c(paste( constructPath(cf),fileName,sep="/"),
+					           # paste(constructPath(cf),newFileName,sep="/"))
                   }
                   ## fill qaGraph object
                   .Object@dimensions <-  matrix(c(dims, newDims), ncol=2,
@@ -347,7 +342,7 @@ setMethod("initialize", "qaGraph",
 qaGraph <- function(...)
     new("qaGraph", ...)
 
-
+ 
 
 ## ===========================================================================
 ## qaGraphList
@@ -456,13 +451,13 @@ setMethod("initialize", "qaProcess",
                   name <- "anonymous QA Process"
               if(missing(summaryGraph))
                   summaryGraph <- qaGraph(empty=TRUE)
-              .Object@id <- id
+		      .Object@id <- id
               .Object@name <- name
               .Object@type <- type
               .Object@frameIDs <- fids
               .Object@summaryGraph <- summaryGraph
               .Object@frameProcesses <- frameProcesses
-              validProcess(.Object)
+			  validProcess(.Object)
               return(.Object)
           })
 

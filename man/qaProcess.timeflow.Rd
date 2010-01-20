@@ -16,7 +16,7 @@
 \usage{
 
 qaProcess.timeflow(set, outdir, cutoff=2, name="time flow",
-sum.dimensions=c(7,7), det.dimensions=c(7,7), pdf=TRUE, \dots)
+sum.dimensions=NULL, det.dimensions=c(3,2), pdf=TRUE, \dots)
 
 }
 

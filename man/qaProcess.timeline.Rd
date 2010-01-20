@@ -16,7 +16,7 @@
 \usage{
 
 qaProcess.timeline(set, channels=NULL, outdir, cutoff=1,
-  name="time line", sum.dimensions=NULL, det.dimensions=c(7,7),
+  name="time line", sum.dimensions=NULL, det.dimensions=c(3,2),
   pdf=TRUE, \dots)
 
 }

@@ -201,10 +201,9 @@ txtFormatQAObject<- function(qp){
 			
 			tmpS <- list()
 			vals <- sapply(channels,function(x){
-				   
-					tmp <- data.frame(tempVals[,x],stringsAsFactors=FALSE)
+					tmp <- data.frame(tempVals[,x],stringsAsFactors=FALSE,check.names=F)
 					rownames(tmp) <- chnl[,x]
-					tmpS[[x]] <<- t(tmp)					
+					tmpS[[x]] <<- t(tmp)				
 			})
 			vals <- tmpS
 			
@@ -309,16 +308,22 @@ txtFormatQAObject<- function(qp){
 					cFactor <- qp@frameProcesses[[1]]@details$cFactor
 					m <- qp@frameProcesses[[1]]@details$m
 					s <- qp@frameProcesses[[1]]@details$s
-					threshLow <- m - s*cFactor
-					threshHigh <- m + s*cFactor
+					
+					if(!is.null(m ) || !is.null(s)){
+						threshLow <- m - s*cFactor
+						threshHigh <- m + s*cFactor
+					}else{
+						threshLow <- threshHigh <- rep(NA,length(sampNames))
+					}
 					threshLow <- matrix(rep(threshLow,length(sampNames)),ncol=length(channels),byrow=T)
 					colnames(threshLow) <- paste("threshLow",channels,sep="_")
 					threshHigh <- matrix(rep(threshHigh,length(sampNames)),ncol=length(channels),byrow=T)
 					colnames(threshHigh) <- paste("threshHigh",channels,sep="_")
 					thresh <- cbind(threshLow,threshHigh)
+					
 			
 			}else{
-					thresh <- matrix(rep(absolute.value,length(sampNames)),ncol=1)		
+					thresh <- matrix(rep(qp@frameProcesses[[1]]@details$absolute.value,length(sampNames)),ncol=1)		
 					colnames(thresh) <- "Threshold"			
 			}
 			sumry <- t(data.frame(lapply(qp@frameProcesses, function(x){
@@ -350,7 +355,7 @@ txtFormatQAObject<- function(qp){
 								 ))	 
 			colnames(sumry) <- "Summary"
 			passed <- sumry
-			passed[,1] <- NA
+			#passed[,1] <- NA
 			colnames(passed) <- "Passed"
 			
 			process<- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
@@ -361,7 +366,7 @@ txtFormatQAObject<- function(qp){
 			channels <- names(qp@frameProcesses[[1]]@frameAggregators)
 			vals <- t(data.frame(lapply(qp@frameProcesses,function(x){
 									tm <-lapply(x@frameAggregators,function(y){
-												y@x
+													y@x
 								})	
 								unlist(tm)		
 					})))
@@ -403,7 +408,7 @@ txtFormatQAObject<- function(qp){
 			colnames(sumry) <- "Summary"
 			
 			passed <- sumry
-			passed[,1] <- NA
+			#passed[,1] <- NA
 			colnames(passed) <- "Passed"
 			process<- matrix( rep(paste(qp@type,qp@name,sep="_"),nrow(vals)),ncol=1)
 			colnames(process) <- "Process"
