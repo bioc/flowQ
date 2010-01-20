@@ -747,7 +747,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
     # system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  # lp, "x1 ", sfile, sep=""))
 
-	sysFun(paste("convert ", " -density 240x240 -size 512x512 +append ",
+	sysFun(paste("convert ", " -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
 	
 	
@@ -926,7 +926,7 @@ qaProcess.2DStatsPlot <- function(
 		sfiles <- c(sfiles, sfile)
 	} ### end of cellType
 	sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240 -size 512x512 +append ",
+	sysFun(paste("convert ", " -density 240x240  +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
 	# system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                                     # lp, "x1 ", sfile, sep=""))
