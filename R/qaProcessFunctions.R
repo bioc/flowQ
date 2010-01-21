@@ -248,7 +248,7 @@ qaProcess.marginevents <- function(set, channels=NULL,side="both", grouping=NULL
         for(j in 1:length(parms))
         {
             ## the frame and parameter specific density plots
-            tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
 			pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -390,7 +390,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
         agTmp <- aggregatorList()
         for(j in seq_len(lp))
         {
-            tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                           gsub("\\..*$", "", parms[j]), ".pdf",
                                           sep=""))
             pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -488,7 +488,7 @@ qaProcess.timeflow <- function(set, outdir, cutoff=2, name="time flow",
     for(i in seq_len(ls))
     { 	agTmp <- aggregatorList()
 		#fnames <- NULL
-	    tfile <- file.path(idir, paste("frame_", sprintf("%0.2d", i), ".pdf",
+	    tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), ".pdf",
                                       sep=""))
         pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
         if(nrow(set[[i]]) >1){
@@ -760,7 +760,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
 		fnames <- NULL
         agTmp <- aggregatorList()
         for(j in seq_len(lp)){  ##over nrow(dyes)
-			tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
+			tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                           gsub("\\..*$", "", j), ".pdf", sep=""))
 			if(is.null(det.dimensions))
 				pdf(file=tfile)
@@ -938,7 +938,7 @@ qaProcess.2DStatsPlot <- function(
         fnames <- NULL
         agTmp <- aggregatorList()
         for(j in seq_len(lp)){  ##over nrow(dyes)
-            tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
+            tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                             gsub("\\..*$", "", j), ".pdf",
                                             sep=""))
             pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
@@ -1115,7 +1115,7 @@ qaProcess.DensityPlot <- function(
 	fnames <- NULL
         agTmp <- aggregatorList()
 	for(j in seq_len(lp)){   #over dupes
-	    tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
+	    tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                           gsub("\\..*$", "", j), ".pdf", sep=""))
 		if(is.null(det.dimensions))
 			pdf(file=tfile)
@@ -1299,13 +1299,14 @@ qaProcess.ECDFPlot <- function(flowList,
     for(i in seq_len(ls)){ #over patient
             fnames <- NULL
             agTmp <- aggregatorList()
-	    for(j in seq_len(lp)){   #over dupes
-                tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
+	    	for(j in seq_len(lp)){   #over dupes
+                tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
                                          gsub("\\..*$", "", j), ".pdf",sep=""))
 				if(is.null(det.dimensions))
 					pdf(file=tfile)
 				else
 					pdf(file=tfile, width=det.dimensions[1], height=det.dimensions[2])
+
                 print(tempgrph[[dupes[j]]][[patientID[i]]])
                 dev.off()
                 fnames <- c(fnames, tfile)
@@ -1314,7 +1315,7 @@ qaProcess.ECDFPlot <- function(flowList,
 					 x=if(is.na(tempDist[[dupes[j]]][[patientID[i]]])) as.numeric(NA) else
 						as.numeric(formatC(tempDist[[dupes[j]]][[patientID[i]]],digits=4))) 				 
                 cat(".")
-            }
+            } ##end of dupes
             names(agTmp) <- dupes
 			nfail <- !sapply(agTmp, slot, "passed")
             val <- if(sum(nfail)==1) factor(2) else factor(0)
@@ -1330,6 +1331,7 @@ qaProcess.ECDFPlot <- function(flowList,
                                                       frameGraphs=fGraphs,
 													  details=list(absolute.value=absolute.value,
 																	alpha=alpha))
+		    cat(".")
     }
     cat("\n")
     return(qaProcess(id=gid, name=name,
@@ -1466,7 +1468,7 @@ qaProcess.KLDistPlot <- function(
 		fnames <- NULL
         agTmp <- aggregatorList()
 		for(j in seq_len(lp)){   #over dupes	
-			tfile <- file.path(idir, paste("frame_", sprintf("%0.2s", i), "_",
+			tfile <- file.path(idir, paste("frame_", sprintf("%0.4d", i), "_",
 									 gsub("\\..*$", "", j), ".pdf",sep=""))
 			if(is.null(det.dimensions))
 				pdf(file=tfile)
