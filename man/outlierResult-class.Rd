@@ -23,10 +23,6 @@ Class \code{"\linkS4class{outlier}"}, directly.
 No methods defined with class "outlierResult" in the signature.
 }
 \references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ }
-
-
 \examples{
 #showClass("outlierResult")
 }

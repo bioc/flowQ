@@ -10,6 +10,6 @@
 \section{Methods}{
 \describe{
 
-\item{x = "flowSet"}{ ~~describe this method here }
+\item{x = "flowSet"}{ Desribe this method here }
 }}
 \keyword{methods}

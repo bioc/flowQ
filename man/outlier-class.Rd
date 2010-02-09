@@ -15,9 +15,6 @@
 No methods defined with class "outlier" in the signature.
 }
 \references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ }
-
 
 \examples{
 ## showClass("outlier")
