@@ -1248,23 +1248,21 @@ qaProcess.ECDFPlot <- function(flowList,
 		else
 			pdf(file=sfile, width=sum.dimensions[1],height=sum.dimensions[2])
 
-		print(ecdfplot(~x|patientID, 
-              data = list(patientID = 
-		      factor(names(tempgrph[[cellType]]),
-              levels = names(tempgrph[[cellType]])),
-		      x = seq_along(tempgrph[[cellType]])), 
-			  xlim=xrange, ylim=c(0,1.2),
-              xlab=as.character(cellType),
-              key=simpleKey(text=parLbl,space="right",
-		      points=F,col=myCol),
-              lwd=2,
-              panel = function(x, y, plot.list) {
-                  do.call(panel.xyplot, 
-			  trellis.panelArgs(
-				  tempgrph[[cellType]][[x]], 1))
-                  }
-              ))
-				   
+	   print(densityplot(~ x | patientID, data = list(patientID = 
+						 factor(names(tempgrph[[cellType]]), levels = names(tempgrph[[cellType]])),
+                         x = seq_along(tempgrph[[cellType]])),
+                        xlim=xrange, ylim=c(0,1.2),
+                        xlab=as.character(cellType),
+                        ylab="ECDF",
+                        key=simpleKey(text=parLbl,space="right",
+                              points=F,col=myCol),
+                        lwd=2,
+                        panel = function(x, y, plot.list) {
+                           do.call(panel.xyplot,
+                                 trellis.panelArgs(
+                                       tempgrph[[cellType]][[x]], 1))
+                        }
+                        ))      
 		dev.off()	
 		sfiles <- c(sfiles, sfile)
 		cat(".")
