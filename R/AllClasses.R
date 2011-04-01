@@ -296,7 +296,7 @@ setMethod("initialize", "qaGraph",
                       newFileName <- file.path(imageDir, paste(bname, convType,
 		      		     	        sep="."))
                       if(!file.exists(newFileName))
-                          sysFun(paste("convert -define pdf:use-cropbox=true -resize", paste(newDims, 
+                          sysFun(paste("convert -resize", paste(newDims, 
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
                       type <- c(ifelse(pdf, "pdf", NA), "jpg")
