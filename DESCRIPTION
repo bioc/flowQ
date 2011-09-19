@@ -1,7 +1,7 @@
 Package: flowQ
 Type: Package
 Title: Quality control for flow cytometry
-Version: 1.13.0
+Version: 1.13.1
 Author: R. Gentleman, F. Hahne, J. Kettman, N. Le Meur, N. Gopalakrishnan
 Maintainer: F. Hahne <florian.hahne@novartis.com>
 Description: Provides quality control and quality assessment tools for flow

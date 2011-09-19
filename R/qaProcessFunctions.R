@@ -771,7 +771,8 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
 			fnames <- c(fnames, tfile)
 			agTmp[[j]] <- new("binaryAggregator", passed=panelFlag[[j]][[patientID[i]]])
 			#   agTmp[[j]] <- new("discreteAggregator", passed=panelFlag[[j]][patientID[i]],x=1)
-			names(agTmp[[j]]) <-paste(dyes[j])
+			##names(agTmp[[j]]) <-paste(dyes[j])
+                        names(agTmp)[j] <-paste(dyes[j])
 			cat(".")
 		}##end of lp
         names(agTmp) <-dupes
@@ -947,7 +948,7 @@ qaProcess.2DStatsPlot <- function(
 			if(!is.null(tempgrph[[j]][[patientID[i]]])){
             fnames <- c(fnames, tfile)}
             agTmp[[j]] <- new("binaryAggregator", passed=panelFlag[[j]][[patientID[i]]])
-            names(agTmp[[j]]) <-paste(dyes[j,1],"/",dyes[j,2],sep="")
+            names(agTmp)[j] <-paste(dyes[j,1],"/",dyes[j,2],sep="")
             cat(".")
         }
         dyeNames<-apply(dyes,1,function(x){ paste("",x[1],"/",x[2],"",sep="")
