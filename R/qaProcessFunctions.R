@@ -7,7 +7,12 @@
 guid <- function(len=10){
        ltrs <- c(LETTERS,letters)
        paste(c(sample(ltrs,1),sample(c(ltrs,0:9),len-1,replace=TRUE)),collapse="")
-}	
+}
+
+
+.mySd <- function(x, na.rm=FALSE){
+    return(if(is.matrix(x)) apply(x, 2, sd, na.rm=na.rm) else sd(x, na.rm=na.rm))
+}
 
 sysFun <- if(.Platform$OS.type=="windows") shell else system
 
@@ -148,6 +153,17 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
 
 
 
+.mybw.nrd0 <- function (x) 
+{
+    if (length(x) < 2L) 
+        stop("need at least 2 data points")
+    hi <- .mySd(x)
+    if (!(lo <- min(hi, IQR(x)/1.34))) 
+        (lo <- hi) || (lo <- abs(x[1L])) || (lo <- 1)
+    0.9 * lo * length(x)^(-0.2)
+}
+
+
 
 ## QA process indicating too many events on the margins in comparison to
 ## average number of margin events for a particular channel. The 'grouping'
@@ -256,14 +272,14 @@ qaProcess.marginevents <- function(set, channels=NULL,side="both", grouping=NULL
 			set <- sset[[thisGrp]]
            	passed <- TRUE
 			if(nrow(set[[i]]) >1){
-				bw <- bw.nrd0(exprs(set[[i]][,parms[j]]))
+				bw <- .mybw.nrd0(exprs(set[[i]][,parms[j]]))
 				dens <-density(exprs(set[[i]][,parms[j]]), bw=bw)
 				rng <- extendrange(range(set[[i]][,parms[j]])[c("min","max"),],f=0.05)
 				plot(dens,xlim=rng, type="n", axes=FALSE, ann=FALSE)
 	     		polygon(dens,col="gray", border="blue")
 				percTmp <- perc[j,grps==as.numeric(thisGrp)]
 				m <- mean(percTmp[!is.na(percTmp)])
-				s <- sd(percTmp[!is.na(percTmp)])
+				s <- .mySd(percTmp[!is.na(percTmp)])
 				## test whether the particular frame and channel passes the check
 				## and use a rangeAggregator to store that information
 				if(!is.na(perc[j,i])){
@@ -606,7 +622,7 @@ qaProcess.cellnumber <- function(set, grouping=NULL, outdir, cFactor=2,
             if(is.null(grouping)) "1" else as.character(pData(set)[i,grouping])
 		cellNum <- cellNumbers[grpsi[[thisGrp]]]
 		cellNum <- cellNum[!is.na(cellNum)]
-        var <- sd(cellNum)
+        var <- .mySd(cellNum)
         m <- mean(cellNum)
         if(is.null(absolute.value))
         {
