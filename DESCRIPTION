@@ -1,13 +1,14 @@
 Package: flowQ
 Type: Package
 Title: Quality control for flow cytometry
-Version: 1.15.0
+Version: 1.15.1
 Author: R. Gentleman, F. Hahne, J. Kettman, N. Le Meur, N. Gopalakrishnan
 Maintainer: F. Hahne <florian.hahne@novartis.com>
 Description: Provides quality control and quality assessment tools for flow
              cytometry data. 
 Depends: R (>= 2.10.0), outliers, lattice, flowViz, methods, mvoutlier, bioDist, parody,RColorBrewer,latticeExtra
-Imports: geneplotter, flowCore, flowViz
+Imports: geneplotter, flowCore, flowViz, IRanges
+Suggests: flowStats
 SystemRequirements: ImageMagick
 License: Artistic-2.0
 biocViews:  Infrastructure, Flowcytometry, CellBasedAssays
