@@ -1,6 +1,6 @@
+importClassesFrom("IRanges", "file")
 import("flowCore")
 importFrom("geneplotter", "multidensity", "closeHtmlPage")
-importClassesFrom("geneplotter", "file")
 
 exportMethods("outliers",
              "initialize",
