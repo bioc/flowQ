@@ -1,4 +1,5 @@
-importClassesFrom("IRanges", "file")
+import("methods")
+import("BiocGenerics")  # for class "file"
 import("flowCore")
 importFrom("geneplotter", "multidensity", "closeHtmlPage")
 
