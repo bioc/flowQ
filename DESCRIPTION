@@ -11,5 +11,5 @@ Imports: methods, BiocGenerics, geneplotter, flowCore, flowViz, IRanges
 Suggests: flowStats
 SystemRequirements: ImageMagick
 License: Artistic-2.0
-biocViews:  Infrastructure, Flowcytometry, CellBasedAssays
+biocViews:  Infrastructure, FlowCytometry, CellBasedAssays
 
