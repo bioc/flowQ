@@ -132,7 +132,7 @@ normalizeSets <- function(flowList,dupes,peaks=NULL)
             } ## end for(j ...
                   
             inSet <- flowSet(inList)
-            norm1 <- normalization(normFun=function(x, parameters, ...)
+            norm1 <- normalization(normFunction=function(x, parameters, ...)
                                    warpSet(x, parameters,peakNr=peaks,...),
                                    parameters=as.character(cellType),
                                    arguments=list(grouping=NULL),

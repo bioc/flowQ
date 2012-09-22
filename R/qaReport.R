@@ -121,7 +121,7 @@ copyGraphs <- function(procs, outdir)
     {   
         relBase <- file.path(outdir, "images",  p@id)
         if(!file.exists(relBase))
-            dir.create(relBase, rec=TRUE)
+            dir.create(relBase, recursive=TRUE)
         sg <- p@summaryGraph@fileNames
         file.copy(sg, relBase)
         for(f in p@frameProcesses)
@@ -154,7 +154,7 @@ writeQAReport  <- function(set, processes=NULL, globalProcess=NULL, outdir="./qa
         warning("Target directory already exists. Content may be ",
                 "overwritten")
     if(!file.exists(file.path(outdir, "images")))
-        dir.create(file.path(outdir, "images"), rec=TRUE)
+        dir.create(file.path(outdir, "images"), recursive=TRUE)
     checkClass(pagebreaks, "logical", 1)
     checkClass(pdf, "logical", 1)
    
