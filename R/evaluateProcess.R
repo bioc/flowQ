@@ -4,7 +4,7 @@ evaluateProcess <- function(process, thresh, ...)
     switch(process@type,
            "time line"=
        {
-           efun <- function(x, c){
+           efun <- function(x, c,two.sided="Missing", absolute.value="Missing"){
                qaScore <- flowViz:::computeQAScore(x@details$raw, c)
                for(i in 1:length(x@frameAggregators)){
                    x@frameAggregators[[i]]@passed <- qaScore[i]==0
@@ -22,7 +22,7 @@ evaluateProcess <- function(process, thresh, ...)
        },
            "margin events"=
        {
-           efun <- function(x, c){
+           efun <- function(x, c,two.sided="Missing", absolute.value="Missing"){
                
                sums <- x@details$events
                m <- x@details$m
@@ -45,7 +45,7 @@ evaluateProcess <- function(process, thresh, ...)
 
            "time flow"=
        {
-           efun <- function(x, c){
+           efun <- function(x, c,two.sided="Missing", absolute.value="Missing"){
                qaScore <- flowViz:::computeQAScore(x@details$raw, c)
                x@summaryAggregator@passed <- qaScore==0
                return(x)
