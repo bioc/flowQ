@@ -1,8 +1,8 @@
 ## check for a valid ImageMagick installation
 .onAttach <- function(...)
 {
-    mysys <- if(.Platform$OS.type == "windows") shell else system
-    vers <- suppressWarnings(mysys("convert -list configure", intern=TRUE, ignore.stderr=TRUE))
+    mysys <- if(.Platform$OS.type == "windows") shell else system2
+    vers <- suppressWarnings(mysys("convert",args=" -list configure", stdout=TRUE, stderr=FALSE))
     path <- gsub("Path: *", "", grep("Path:", vers, value=TRUE))[1]
     vers <- gsub("VERSION *", "", grep("^VERSION", vers, value=TRUE))[1]
     if(!length(vers) || !length(path))

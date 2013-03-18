@@ -14,7 +14,7 @@ guid <- function(len=10){
     return(if(is.matrix(x)) apply(x, 2, sd, na.rm=na.rm) else sd(x, na.rm=na.rm))
 }
 
-sysFun <- if(.Platform$OS.type=="windows") shell else system
+sysFun <- if(.Platform$OS.type=="windows") shell else system2
 
 ## Check for the class of object x and its length and cast error if wrong
 checkClass <- function(x, class, length=NULL, verbose=FALSE,
@@ -392,7 +392,7 @@ qaProcess.timeline <- function(set, channels=NULL, outdir, cutoff=1,
     sampID <- names(summary[[1]])
     ##glue together the summary graphs and create a qaGraph object
     sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240 +append ",
+	sysFun("convert", args = paste(" -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width=max(350,150*lp), pdf=pdf)
 
@@ -763,7 +763,7 @@ qaProcess.BoundaryPlot <- function(flowList, dyes=NULL, outdir="QAReport",
     # system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  # lp, "x1 ", sfile, sep=""))
 
-	sysFun(paste("convert ", " -density 240x240 +append ",
+	sysFun("convert", args = paste(" -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
 	
 	
@@ -943,7 +943,7 @@ qaProcess.2DStatsPlot <- function(
 		sfiles <- c(sfiles, sfile)
 	} ### end of cellType
 	sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240  +append ",
+	sysFun("convert ", args = paste(" -density 240x240  +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
 	# system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                                     # lp, "x1 ", sfile, sep=""))
@@ -1105,7 +1105,7 @@ qaProcess.DensityPlot <- function(
    }
   
     sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240 +append ",
+	sysFun("convert", args = paste(" -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
     sgraph <- qaGraph(fileName=sfile, imageDir=idir, width =max(350,200*lp),
 					  pdf=pdf)
@@ -1286,7 +1286,7 @@ qaProcess.ECDFPlot <- function(flowList,
 	
     } ##end of dupes
     sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240 +append ",
+	sysFun("convert", args = paste(" -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
 	# system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  # lp, "x1 ", sfile, sep=""))
@@ -1456,7 +1456,7 @@ qaProcess.KLDistPlot <- function(
     } ## end of cellType
 
     sfile <- paste(idir, "summary.pdf", sep="/")
-	sysFun(paste("convert ", " -density 240x240 +append ",
+	sysFun("convert", args = paste(" -density 240x240 +append ",
 		  paste(sfiles, collapse=" ")," ",sfile, sep=""))
     # system(paste("montage ", paste(sfiles, collapse=" "), " -geometry +0+0 -tile ",
                  # lp, "x1 ", sfile, sep=""))
