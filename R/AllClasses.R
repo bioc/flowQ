@@ -256,7 +256,6 @@ win2UnixPath <- function(path)
 
 setMethod("initialize", "qaGraph",
           function(.Object, fileName, imageDir, width=NULL, empty=FALSE, pdf=TRUE){
-			sysFun <- if(.Platform$OS.type=="windows") shell else system
               if(!empty){
 	          fileName <- win2UnixPath(fileName)
 	          imageDir <- win2UnixPath(imageDir)
@@ -272,7 +271,7 @@ setMethod("initialize", "qaGraph",
                       dir.create(imageDir, recursive=TRUE)
 		  fn <- basename(fileName)
 		  file.copy(fileName, imageDir)
-		  inf <- basename(sysFun(paste("identify", shQuote(fileName)),
+		  inf <- basename(system(paste("identify", shQuote(fileName)),
                                   intern=TRUE))
                   iInf <- gsub(paste(".*", fn, " ", sep=""), "", inf)
                   imageInfo <- c(fileName, strsplit(iInf, " ")[[1]][1:2])
@@ -296,7 +295,7 @@ setMethod("initialize", "qaGraph",
                       newFileName <- file.path(imageDir, paste(bname, convType,
 		      		     	        sep="."))
                       if(!file.exists(newFileName))
-                          sysFun(paste("convert -resize", paste(newDims, 
+                          system(paste("convert -resize", paste(newDims, 
                             collapse="x"), shQuote(fileName), 
                             shQuote(newFileName)))
                       type <- c(ifelse(pdf, "pdf", NA), "jpg")
@@ -314,9 +313,9 @@ setMethod("initialize", "qaGraph",
                       newFileName <- file.path(imageDir, paste(bname, convType,
                                                                sep="."))
                       if(!file.exists(newFileName) && pdf)
-                          sysFun(paste("convert", fileName, newFileName))
+                          system(paste("convert", fileName, newFileName))
                       if(!file.exists(cf))
-                          sysFun(paste("convert -resize", paste(newDims,
+                          system(paste("convert -resize", paste(newDims,
                                                                 collapse="x"),
                                        shQuote(fileName), shQuote(cf)))
                       type <- c(ifelse(pdf, "pdf", NA), tolower(imageInfo["type"]))
