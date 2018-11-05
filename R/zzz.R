@@ -11,4 +11,8 @@
     path <- dirname(dirname(path))
     packageStartupMessage(sprintf("Using ImageMagic library at %s\n(version %s)\n",
                   path, vers))
+    msg <- sprintf(
+        "Package '%s' is deprecated and will be removed from Bioconductor
+         version %s", pkgname, "3.9")
+    .Deprecated(msg=paste(strwrap(msg, exdent=2), collapse="\n"))
 }
